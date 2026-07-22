@@ -1,10 +1,10 @@
 /* ============================================================
  *  Liz Mobile — projects.css
- *  📌 Corkboard — sticky notes em grid masonry
- *  APENAS mobile (intercell.html), APENAS seção projetos
+ *  🔮 Fragmentos de Vidro — memórias guardadas pela Liz
+ *  APENAS mobile (intercell.html), APENAS seção projetos/memórias
  * ============================================================ */
 
-/* ---- Página de Projetos (container principal) ---- */
+/* ---- Página de Memórias ---- */
 .proj-page {
   min-height: 100%;
   padding-bottom: 100px;
@@ -12,7 +12,7 @@
   animation: fadeIn 0.4s var(--ease-smooth) both;
 }
 
-/* ---- Linha magenta na borda direita ---- */
+/* ---- Linha de energia na borda direita ---- */
 .proj-page::after {
   content: '';
   position: fixed;
@@ -22,130 +22,18 @@
   height: 100%;
   background: linear-gradient(
     180deg,
-    rgba(192, 38, 211, 0.6) 0%,
-    rgba(217, 70, 239, 0.3) 40%,
-    rgba(192, 38, 211, 0.1) 100%
+    rgba(139, 92, 246, 0.5) 0%,
+    rgba(192, 38, 211, 0.2) 40%,
+    transparent 100%
   );
   z-index: 60;
   pointer-events: none;
 }
 
 /* ============================================================
- *  HEADER — duas linhas (Liz · Projetos  +  Projetos / Novo)
+ *  HEADER
  * ============================================================ */
 
-/* Linha 1: coroa + Liz · Projetos + tema */
-.proj-header-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 16px 8px;
-  position: relative;
-  z-index: 10;
-}
-
-.proj-header-crown {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-
-.proj-header-crown svg {
-  width: 100%;
-  height: 100%;
-}
-
-.proj-header-back {
-  width: 20px;
-  height: 20px;
-  color: rgba(255, 255, 255, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: color var(--t-fast);
-}
-
-.proj-header-back:active {
-  color: var(--brand-light);
-}
-
-.proj-header-back svg {
-  width: 14px;
-  height: 14px;
-}
-
-.proj-header-name {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--brand-light);
-  letter-spacing: -0.01em;
-}
-
-.proj-header-sep {
-  color: rgba(255, 255, 255, 0.2);
-  font-size: 0.8rem;
-}
-
-.proj-header-sub {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.4);
-  font-weight: 500;
-}
-
-.proj-header-theme {
-  margin-left: auto;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.4);
-  border-radius: 50%;
-  transition: color var(--t-fast);
-}
-
-.proj-header-theme:active {
-  color: var(--brand-light);
-}
-
-.proj-header-theme svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Divisor com crosshair */
-.proj-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  margin: 0 16px;
-  position: relative;
-  z-index: 10;
-}
-
-.proj-divider-crosshair {
-  position: absolute;
-  top: 50%;
-  left: 42%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.25);
-  background: var(--bg);
-  padding: 2px;
-  border-radius: 4px;
-}
-
-.proj-divider-crosshair svg {
-  width: 12px;
-  height: 12px;
-}
-
-/* Linha 2: voltar + título + badge + coroa + Novo */
 .proj-top {
   display: flex;
   align-items: center;
@@ -178,7 +66,7 @@
   cursor: pointer;
 }
 .proj-back-arrow:active {
-  background: rgba(192, 38, 211, 0.15);
+  background: rgba(139, 92, 246, 0.15);
   color: var(--brand-light);
   transform: scale(0.88);
 }
@@ -201,8 +89,8 @@
   font-size: 0.6rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.15);
   padding: 3px 8px;
   border-radius: var(--radius-full);
   white-space: nowrap;
@@ -214,7 +102,6 @@
   opacity: 0.12;
   flex-shrink: 0;
 }
-
 .proj-top-crown svg {
   width: 100%;
   height: 100%;
@@ -242,12 +129,10 @@
   transition: all var(--t-fast) var(--ease-spring);
   white-space: nowrap;
 }
-
 .proj-new-btn:active {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(192, 38, 211, 0.3));
   transform: scale(0.95);
 }
-
 .proj-new-btn svg {
   width: 14px;
   height: 14px;
@@ -272,7 +157,6 @@
   color: rgba(255, 255, 255, 0.3);
   pointer-events: none;
 }
-
 .proj-search-icon svg {
   width: 100%;
   height: 100%;
@@ -290,11 +174,9 @@
   outline: none;
   transition: all var(--t-fast);
 }
-
 .proj-search input::placeholder {
   color: rgba(255, 255, 255, 0.3);
 }
-
 .proj-search input:focus {
   border-color: rgba(139, 92, 246, 0.4);
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
@@ -314,7 +196,6 @@
   position: relative;
   z-index: 10;
 }
-
 .proj-filters::-webkit-scrollbar {
   display: none;
 }
@@ -330,11 +211,9 @@
   border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.04);
 }
-
 .proj-filter:active {
   transform: scale(0.94);
 }
-
 .proj-filter.is-active {
   background: rgba(139, 92, 246, 0.25);
   color: #e9d5ff;
@@ -342,285 +221,280 @@
 }
 
 /* ============================================================
- *  CORKBOARD — o quadro de cortiça
+ *  ESPAÇO PROFUNDO — fundo do universo de dados da Liz
  * ============================================================ */
-.mesa {
+.mem-deep {
   position: relative;
-  min-height: calc(100vh - 220px);
+  min-height: calc(100vh - 200px);
   padding: 16px 12px 80px;
+  overflow: hidden;
   background:
-    /* Estrias verticais sutis (cortiça) */
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 26px,
-      rgba(90, 60, 30, 0.07) 26px,
-      rgba(90, 60, 30, 0.07) 27px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 53px,
-      rgba(70, 45, 22, 0.05) 53px,
-      rgba(70, 45, 22, 0.05) 54px
-    ),
-    /* Textura granulada */
-    radial-gradient(ellipse 50% 50% at 20% 30%, rgba(80, 55, 30, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 60% at 75% 65%, rgba(70, 48, 25, 0.05) 0%, transparent 50%),
-    /* Gradiente base cortiça escura */
-    linear-gradient(
-      178deg,
-      #1a1008 0%,
-      #1e1309 15%,
-      #170e07 35%,
-      #1c1208 55%,
-      #150d06 75%,
-      #1a1008 100%
-    );
+    /* Grade de pontos tecnológicos */
+    radial-gradient(circle, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-color: #0a0712;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  overflow: visible;
 }
 
-/* Luz ambiente roxa vinda de cima */
-.mesa::before {
+/* Halo de energia central */
+.mem-deep::before {
   content: '';
   position: absolute;
-  top: -40px;
+  top: 20%;
   left: 50%;
   transform: translateX(-50%);
-  width: 140%;
-  height: 280px;
+  width: 300px;
+  height: 300px;
   background: radial-gradient(
-    ellipse 70% 100% at 50% 0%,
-    rgba(139, 92, 246, 0.1) 0%,
-    rgba(124, 58, 237, 0.05) 40%,
+    ellipse 50% 50% at 50% 50%,
+    rgba(139, 92, 246, 0.06) 0%,
+    rgba(124, 58, 237, 0.03) 30%,
     transparent 70%
   );
+  filter: blur(60px);
   pointer-events: none;
   z-index: 1;
+  animation: memHaloPulse 8s ease-in-out infinite;
 }
 
-/* Vinheta escura nas bordas */
-.mesa::after {
+@keyframes memHaloPulse {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+}
+
+/* Brilho sutil nas bordas */
+.mem-deep::after {
   content: '';
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse 80% 70% at 50% 40%,
-    transparent 50%,
-    rgba(0, 0, 0, 0.3) 100%
+    ellipse 60% 50% at 50% 90%,
+    rgba(139, 92, 246, 0.03) 0%,
+    transparent 60%
   );
   pointer-events: none;
   z-index: 1;
 }
 
 /* ============================================================
- *  GRID MASONRY — sticky notes em 2 colunas
+ *  GRID DE FRAGMENTOS — masonry em 2 colunas
  * ============================================================ */
-.mesa-objects {
+.mem-grid {
   position: relative;
   z-index: 3;
   columns: 2;
   column-gap: 12px;
 }
 
-/* ---- Card base (sticky note) ---- */
-.mesa-obj {
+/* ---- Fragmento base ---- */
+.mem-frag {
   break-inside: avoid;
   -webkit-column-break-inside: avoid;
   margin-bottom: 14px;
   position: relative;
   cursor: default;
-  transition: transform 0.3s var(--ease-spring), box-shadow 0.3s var(--ease-smooth), filter 0.15s var(--ease-smooth);
+  transition: transform 0.3s var(--ease-spring),
+              box-shadow 0.3s var(--ease-smooth),
+              filter 0.15s var(--ease-smooth);
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   backface-visibility: hidden;
+  contain: layout style;
 }
 
-/* Card levantado (tap) */
-.mesa-obj.is-lifted {
+/* Fragmento levantado (tap) */
+.mem-frag.is-lifted {
   z-index: 50 !important;
-  transform: scale(1.04) !important;
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(139, 92, 246, 0.15);
-}
-
-.mesa-obj:not(.is-lifted):active {
-  filter: brightness(1.06);
+  transform: scale(1.03) !important;
 }
 
 /* ============================================================
- *  📌 STICKY NOTE — o card principal
+ *  🔮 FRAGMENTO DE VIDRO — o card principal
  * ============================================================ */
-.obj-postit {
-  min-height: 110px;
-  padding: 22px 14px 14px;
-  border-radius: 3px;
+.mem-card {
   position: relative;
+  padding: 18px 16px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(139, 92, 246, 0.1);
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.3),
-    0 1px 4px rgba(0, 0, 0, 0.15);
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  transition: border-color 0.3s ease,
+              background 0.3s ease,
+              box-shadow 0.3s ease;
 }
 
-/* Cores — rosa e amarelo (alternados via JS) */
-.obj-postit.postit-pink {
-  background: linear-gradient(170deg, #f5c6d0 0%, #eeb0be 100%);
-}
-
-.obj-postit.postit-yellow {
-  background: linear-gradient(170deg, #f5e6a3 0%, #eed98a 100%);
-}
-
-/* Sombra interna sutil (profundidade do papel) */
-.obj-postit::before {
+/* Brilho interno sutil (energia roxa percorrendo) */
+.mem-card::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.03) 0%,
+    transparent 40%,
+    rgba(192, 38, 211, 0.02) 60%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 
-/* Canto dobrado (bottom-right) */
-.obj-postit::after {
+/* Borda animada de energia (hover) */
+.mem-card::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
+  inset: -1px;
+  border-radius: 15px;
   background: linear-gradient(
-    45deg,
-    rgba(0, 0, 0, 0.1) 0%,
-    rgba(0, 0, 0, 0.1) 50%,
-    transparent 50%
+    135deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.08) 20%,
+    rgba(192, 38, 211, 0.05) 40%,
+    transparent 60%,
+    rgba(139, 92, 246, 0.06) 80%,
+    transparent 100%
   );
-  border-radius: 0 0 3px 0;
-  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 1px;
 }
 
-/* ---- 📍 Pushpin (alfinete vermelho) ---- */
-.obj-pin {
+.mem-frag:not(.is-lifted):hover .mem-card::after {
+  opacity: 1;
+}
+
+/* Card levantado — glow mais intenso */
+.mem-frag.is-lifted .mem-card {
+  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(139, 92, 246, 0.08);
+}
+
+.mem-frag.is-lifted .mem-card::after {
+  opacity: 1;
+}
+
+/* ---- 💎 Cristal decorativo no canto ---- */
+.mem-crystal {
   position: absolute;
   top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f87171, #b91c1c 70%);
-  box-shadow:
-    0 2px 5px rgba(0, 0, 0, 0.4),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* Brilho no pushpin */
-.obj-pin::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  left: 2px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* ---- ⭐ Favorito (estrela no canto superior direito) ---- */
-.obj-fav {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.08);
-  color: rgba(0, 0, 0, 0.25);
-  z-index: 10;
-  transition: all var(--t-fast) var(--ease-spring);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.obj-fav:active {
-  transform: scale(0.85);
-}
-
-.obj-fav.is-fav {
-  color: #d97706;
-  background: rgba(217, 119, 6, 0.15);
-  border-color: rgba(217, 119, 6, 0.2);
-}
-
-.obj-fav svg {
-  width: 13px;
-  height: 13px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.1;
+  color: rgba(139, 92, 246, 0.4);
   pointer-events: none;
 }
-
-/* ---- Conteúdo do sticky note ---- */
-.obj-postit .obj-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 0.7);
-  margin-bottom: 5px;
-  margin-top: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 24px; /* espaço pra estrela */
-}
-
-.obj-postit .obj-desc {
-  font-size: 0.7rem;
-  color: rgba(0, 0, 0, 0.45);
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.obj-postit .obj-date {
-  font-size: 0.6rem;
-  color: rgba(0, 0, 0, 0.3);
-  margin-top: 8px;
-}
-
-/* ---- 👑 Coroa marcadora (card especial, borda direita) ---- */
-.obj-crown-flag {
-  position: absolute;
-  right: -8px;
-  bottom: 16px;
-  width: 22px;
-  height: 22px;
-  z-index: 6;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.obj-crown-flag svg {
+.mem-crystal svg {
   width: 100%;
   height: 100%;
 }
 
-/* ============================================================
- *  ANOTAÇÃO DA LIZ (ao levantar card)
- * ============================================================ */
-.obj-liz-note {
+/* ---- ⭐ Favorito ---- */
+.mem-fav {
   position: absolute;
-  bottom: -32px;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.35);
+  z-index: 10;
+  transition: all var(--t-fast) var(--ease-spring);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mem-fav:active {
+  transform: scale(0.85);
+}
+.mem-fav.is-fav {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.2);
+}
+.mem-fav svg {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+/* ---- Nome da memória ---- */
+.mem-card .mem-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+  padding-right: 28px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Descrição ---- */
+.mem-card .mem-desc {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- Data ---- */
+.mem-card .mem-date {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.2);
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Tag de tipo ---- */
+.mem-tag {
+  display: inline-block;
+  font-size: 0.55rem;
+  font-weight: 500;
+  color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: auto;
+}
+
+/* ---- Anotação da Liz (ao levantar) ---- */
+.mem-liz-note {
+  position: absolute;
+  bottom: -28px;
   left: 50%;
   transform: translateX(-50%) translateY(6px);
-  background: rgba(20, 14, 30, 0.9);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(16, 12, 24, 0.92);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: var(--radius-sm);
-  padding: 6px 12px;
+  padding: 5px 12px;
   font-size: 0.62rem;
   color: var(--brand-light);
   white-space: nowrap;
@@ -631,66 +505,61 @@
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
-
-.mesa-obj.is-lifted .obj-liz-note {
+.mem-frag.is-lifted .mem-liz-note {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
 
-/* ============================================================
- *  MENU RADIAL (ao levantar card)
- * ============================================================ */
-.obj-radial {
+/* ---- Menu radial (ao levantar) ---- */
+.mem-radial {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 70;
   display: none;
-  gap: 6px;
+  gap: 8px;
 }
-
-.mesa-obj.is-lifted .obj-radial {
+.mem-frag.is-lifted .mem-radial {
   display: flex;
 }
 
-.obj-radial-btn {
-  width: 36px;
-  height: 36px;
+.mem-radial-btn {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20, 14, 30, 0.92);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(16, 12, 24, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   color: var(--brand-light);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   transition: all var(--t-fast) var(--ease-spring);
   animation: radialPop 0.25s var(--ease-spring) both;
 }
+.mem-radial-btn:nth-child(1) { animation-delay: 0s; }
+.mem-radial-btn:nth-child(2) { animation-delay: 0.04s; }
+.mem-radial-btn:nth-child(3) { animation-delay: 0.08s; }
 
-.obj-radial-btn:nth-child(1) { animation-delay: 0s; }
-.obj-radial-btn:nth-child(2) { animation-delay: 0.04s; }
-.obj-radial-btn:nth-child(3) { animation-delay: 0.08s; }
-
-.obj-radial-btn:active {
-  transform: scale(0.88);
+.mem-radial-btn:active {
+  transform: scale(0.85);
   background: rgba(139, 92, 246, 0.25);
 }
-
-.obj-radial-btn svg {
-  width: 15px;
-  height: 15px;
+.mem-radial-btn svg {
+  width: 16px;
+  height: 16px;
   pointer-events: none;
 }
-
-.obj-radial-btn.danger {
+.mem-radial-btn.danger {
   color: rgba(239, 68, 68, 0.7);
   border-color: rgba(239, 68, 68, 0.2);
 }
-
-.obj-radial-btn.danger:active {
+.mem-radial-btn.danger:active {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
 }
@@ -703,31 +572,33 @@
 /* ============================================================
  *  PRESENÇA DA LIZ
  * ============================================================ */
-.mesa-liz-presence {
+.mem-liz-presence {
   position: fixed;
   bottom: calc(80px + var(--safe-b));
   right: 16px;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   z-index: 40;
-  opacity: 0.5;
+  opacity: 0.4;
   animation: breathe 3s ease-in-out infinite;
   pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.2));
 }
-
-.mesa-liz-presence svg {
+.mem-liz-presence svg {
   width: 100%;
   height: 100%;
 }
 
 /* Sussurro da Liz */
-.mesa-whisper {
+.mem-whisper {
   position: fixed;
-  bottom: calc(120px + var(--safe-b));
+  bottom: calc(116px + var(--safe-b));
   left: 50%;
   transform: translateX(-50%) translateY(10px);
-  background: rgba(20, 14, 30, 0.92);
-  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: rgba(16, 12, 24, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: var(--radius-full);
   padding: 8px 18px;
   font-size: 0.72rem;
@@ -742,9 +613,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
-
-.mesa-whisper.is-visible {
+.mem-whisper.is-visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
@@ -752,7 +623,7 @@
 /* ============================================================
  *  ESTADO VAZIO
  * ============================================================ */
-.mesa-empty {
+.mem-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -764,34 +635,33 @@
   z-index: 3;
 }
 
-.mesa-empty-crown {
-  width: 52px;
-  height: 52px;
-  opacity: 0.1;
+.mem-empty-crown {
+  width: 48px;
+  height: 48px;
+  opacity: 0.08;
   margin-bottom: 16px;
   animation: breathe 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.1));
 }
-
-.mesa-empty-crown svg {
+.mem-empty-crown svg {
   width: 100%;
   height: 100%;
 }
 
-.mesa-empty h2 {
+.mem-empty h2 {
   font-size: 1rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 6px;
 }
-
-.mesa-empty p {
+.mem-empty p {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.35);
   margin-bottom: 20px;
   font-style: italic;
 }
 
-.mesa-empty-btn {
+.mem-empty-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -804,111 +674,33 @@
   font-weight: 600;
   transition: all var(--t-fast) var(--ease-spring);
 }
-
-.mesa-empty-btn:active {
+.mem-empty-btn:active {
   transform: scale(0.95);
   background: rgba(139, 92, 246, 0.25);
 }
-
-.mesa-empty-btn svg {
+.mem-empty-btn svg {
   width: 16px;
   height: 16px;
 }
 
 /* ============================================================
- *  OVERLAY DE FUNDO (ao levantar card)
+ *  OVERLAY (ao levantar card)
  * ============================================================ */
-.mesa-dim {
+.mem-dim {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 30;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s var(--ease-smooth);
 }
-
-.mesa-dim.is-active {
+.mem-dim.is-active {
   opacity: 1;
   pointer-events: auto;
 }
-
-/* ============================================================
- *  TEMA CLARO
- * ============================================================ */
-[data-theme="light"] .mesa {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 26px,
-      rgba(160, 120, 70, 0.06) 26px,
-      rgba(160, 120, 70, 0.06) 27px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 53px,
-      rgba(180, 140, 90, 0.04) 53px,
-      rgba(180, 140, 90, 0.04) 54px
-    ),
-    linear-gradient(
-      178deg,
-      #d4c4a8 0%,
-      #cbb998 20%,
-      #d0c0a2 40%,
-      #c8b694 60%,
-      #d2c2a6 80%,
-      #cbb998 100%
-    );
-}
-
-[data-theme="light"] .mesa::before {
-  background: radial-gradient(
-    ellipse 70% 100% at 50% 0%,
-    rgba(139, 92, 246, 0.06) 0%,
-    transparent 60%
-  );
-}
-
-[data-theme="light"] .mesa::after {
-  background: radial-gradient(
-    ellipse 80% 70% at 50% 40%,
-    transparent 50%,
-    rgba(0, 0, 0, 0.08) 100%
-  );
-}
-
-[data-theme="light"] .proj-page::after {
-  background: linear-gradient(
-    180deg,
-    rgba(192, 38, 211, 0.35) 0%,
-    rgba(217, 70, 239, 0.15) 100%
-  );
-}
-
-[data-theme="light"] .proj-header-name { color: var(--brand-dark); }
-[data-theme="light"] .proj-header-sub { color: rgba(0, 0, 0, 0.4); }
-[data-theme="light"] .proj-header-back { color: rgba(0, 0, 0, 0.35); }
-[data-theme="light"] .proj-header-theme { color: rgba(0, 0, 0, 0.4); }
-[data-theme="light"] .proj-divider { background: rgba(0, 0, 0, 0.08); }
-[data-theme="light"] .proj-divider-crosshair { color: rgba(0, 0, 0, 0.25); background: var(--bg); }
-[data-theme="light"] .proj-back-arrow { color: rgba(45, 36, 22, 0.45); background: rgba(45, 36, 22, 0.06); border-color: rgba(45, 36, 22, 0.1); }
-[data-theme="light"] .proj-top h1 { color: #2d2416; }
-[data-theme="light"] .proj-count { color: rgba(45, 36, 22, 0.5); background: rgba(45, 36, 22, 0.05); border-color: rgba(45, 36, 22, 0.08); }
-[data-theme="light"] .proj-new-btn { background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(192, 38, 211, 0.12)); color: var(--brand-dark); border-color: rgba(139, 92, 246, 0.25); }
-[data-theme="light"] .proj-search input { background: rgba(45, 36, 22, 0.06); border-color: rgba(45, 36, 22, 0.12); color: #2d2416; }
-[data-theme="light"] .proj-search input::placeholder { color: rgba(45, 36, 22, 0.35); }
-[data-theme="light"] .proj-search-icon { color: rgba(45, 36, 22, 0.35); }
-[data-theme="light"] .proj-filter { color: rgba(45, 36, 22, 0.5); background: rgba(45, 36, 22, 0.05); }
-[data-theme="light"] .proj-filter.is-active { background: rgba(139, 92, 246, 0.12); color: var(--brand-dark); border-color: rgba(139, 92, 246, 0.25); }
-[data-theme="light"] .mesa-empty h2 { color: rgba(45, 36, 22, 0.7); }
-[data-theme="light"] .mesa-empty p { color: rgba(45, 36, 22, 0.4); }
-[data-theme="light"] .obj-fav { background: rgba(0, 0, 0, 0.06); color: rgba(0, 0, 0, 0.2); border-color: rgba(0, 0, 0, 0.05); }
-[data-theme="light"] .obj-liz-note { background: rgba(255, 255, 255, 0.92); color: var(--brand-dark); border-color: rgba(139, 92, 246, 0.2); }
-[data-theme="light"] .mesa-whisper { background: rgba(255, 255, 255, 0.92); color: var(--brand-dark); }
-[data-theme="light"] .obj-radial-btn { background: rgba(255, 255, 255, 0.92); color: var(--brand-dark); }
-[data-theme="light"] .mesa-dim { background: rgba(0, 0, 0, 0.2); }
 
 /* ============================================================
  *  MODAIS DA LIZ
@@ -917,23 +709,22 @@
   width: 100%;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
   font-size: 0.9rem;
   font-family: inherit;
   outline: none;
   transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
-
 .liz-modal-field input:focus {
-  border-color: rgba(139, 92, 246, 0.45);
+  border-color: rgba(139, 92, 246, 0.5);
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
 }
 
 .liz-modal-msg {
   font-size: 0.88rem;
-  color: var(--text-sec);
+  color: rgba(255, 255, 255, 0.6);
   line-height: 1.5;
   margin: 0 0 6px;
 }
@@ -948,15 +739,14 @@
   flex: 1;
   min-height: 44px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.86rem;
   font-weight: 600;
   font-family: inherit;
   transition: all var(--t-fast) var(--ease-spring);
 }
-
 .liz-modal-btn:active { transform: scale(0.97); }
 
 .liz-modal-btn.primary {
@@ -964,7 +754,6 @@
   border-color: rgba(139, 92, 246, 0.32);
   color: var(--brand-light);
 }
-
 .liz-modal-btn.danger {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.28);
@@ -972,20 +761,90 @@
 }
 
 /* ============================================================
+ *  TEMA CLARO
+ * ============================================================ */
+[data-theme="light"] .proj-page::after {
+  background: linear-gradient(
+    180deg,
+    rgba(139, 92, 246, 0.35) 0%,
+    rgba(192, 38, 211, 0.12) 100%
+  );
+}
+
+[data-theme="light"] .proj-back-arrow {
+  color: rgba(45, 36, 22, 0.45);
+  background: rgba(45, 36, 22, 0.06);
+  border-color: rgba(45, 36, 22, 0.1);
+}
+[data-theme="light"] .proj-top h1 { color: #2d2416; }
+[data-theme="light"] .proj-count {
+  color: rgba(45, 36, 22, 0.5);
+  background: rgba(139, 92, 246, 0.06);
+  border-color: rgba(139, 92, 246, 0.12);
+}
+[data-theme="light"] .proj-new-btn {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(192, 38, 211, 0.1));
+  color: var(--brand-dark);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+[data-theme="light"] .proj-search input {
+  background: rgba(45, 36, 22, 0.06);
+  border-color: rgba(45, 36, 22, 0.12);
+  color: #2d2416;
+}
+[data-theme="light"] .proj-search input::placeholder { color: rgba(45, 36, 22, 0.35); }
+[data-theme="light"] .proj-search-icon { color: rgba(45, 36, 22, 0.35); }
+[data-theme="light"] .proj-filter { color: rgba(45, 36, 22, 0.5); background: rgba(45, 36, 22, 0.05); }
+[data-theme="light"] .proj-filter.is-active { background: rgba(139, 92, 246, 0.12); color: var(--brand-dark); border-color: rgba(139, 92, 246, 0.25); }
+
+[data-theme="light"] .mem-deep {
+  background-color: #f4efe8;
+  background-image: radial-gradient(circle, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .mem-deep::before {
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    rgba(139, 92, 246, 0.04) 0%,
+    transparent 60%
+  );
+}
+
+[data-theme="light"] .mem-card {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(139, 92, 246, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] .mem-card .mem-name { color: #2d2416; }
+[data-theme="light"] .mem-card .mem-desc { color: rgba(45, 36, 22, 0.5); }
+[data-theme="light"] .mem-card .mem-date { color: rgba(45, 36, 22, 0.3); }
+[data-theme="light"] .mem-tag { color: rgba(139, 92, 246, 0.6); background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.1); }
+[data-theme="light"] .mem-crystal { opacity: 0.06; }
+[data-theme="light"] .mem-fav { background: rgba(0, 0, 0, 0.04); color: rgba(45, 36, 22, 0.2); border-color: rgba(0, 0, 0, 0.04); }
+[data-theme="light"] .mem-fav.is-fav { color: #d97706; background: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.12); }
+[data-theme="light"] .mem-liz-note { background: rgba(255, 255, 255, 0.92); color: var(--brand-dark); border-color: rgba(139, 92, 246, 0.2); }
+[data-theme="light"] .mem-whisper { background: rgba(255, 255, 255, 0.92); color: var(--brand-dark); }
+[data-theme="light"] .mem-radial-btn { background: rgba(255, 255, 255, 0.9); color: var(--brand-dark); border-color: rgba(139, 92, 246, 0.15); }
+[data-theme="light"] .mem-dim { background: rgba(0, 0, 0, 0.15); backdrop-filter: blur(2px); }
+[data-theme="light"] .mem-empty h2 { color: rgba(45, 36, 22, 0.7); }
+[data-theme="light"] .mem-empty p { color: rgba(45, 36, 22, 0.4); }
+
+/* ============================================================
  *  PERFORMANCE + REDUCED MOTION
  * ============================================================ */
-.mesa-objects { contain: layout style; }
+.mem-grid { contain: layout style; }
 
 @media (prefers-reduced-motion: reduce) {
-  .mesa-obj,
-  .mesa-obj.is-lifted,
-  .obj-liz-note,
-  .mesa-whisper,
-  .mesa-dim,
-  .obj-radial-btn {
+  .mem-frag,
+  .mem-frag.is-lifted,
+  .mem-liz-note,
+  .mem-whisper,
+  .mem-dim,
+  .mem-radial-btn,
+  .mem-card::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
-  .mesa-liz-presence { animation: none; opacity: 0.4; }
-  .mesa-empty-crown { animation: none; }
+  .mem-liz-presence { animation: none; opacity: 0.3; }
+  .mem-empty-crown { animation: none; }
+  .mem-deep::before { animation: none; }
 }
