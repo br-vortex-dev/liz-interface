@@ -1,0 +1,302 @@
+/* ============================================================
+ *  Liz — responsive.css
+ *  Todos os breakpoints para mobile e tablets
+ * ============================================================ */
+
+/* === NOTEBOOK === */
+@media (max-width: 1100px) {
+  :root { --float-menu-width: 68px; }
+  .float-pill { width: 48px; height: 48px; }
+  .liz-main-float-panel,
+  .liz-proj-float-panel {
+    left: 80px !important;
+    width: 300px !important;
+  }
+}
+
+/* === TABLET === */
+@media (max-width: 860px) {
+  :root { --float-menu-width: 62px; }
+  .float-pill { width: 44px; height: 44px; border-radius: 15px; }
+  .float-pill-ico { width: 20px; height: 20px; }
+  .empty-crown { width: 84px; }
+  .hero-crown-slot { width: 84px; height: 84px; }
+  .empty-name { font-size: 1.7rem; }
+  .messages-list { padding: 24px 18px; }
+  .panel-grid { grid-template-columns: repeat(2, 1fr); }
+  .liz-main-float-panel,
+  .liz-proj-float-panel { width: 280px !important; }
+  .liz-proj-container { padding: 28px 24px 48px; }
+  .liz-proj-header-title { font-size: 1.9rem; }
+  .liz-proj-header-sub { padding-left: 0; }
+  .liz-proj-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+}
+
+/* === MOBILE (≤ 700px) === */
+@media (max-width: 700px) {
+  /* --- Esconde mini-menu dos projetos --- */
+  .liz-proj-mini-menu { display: none !important; }
+
+  /* --- Menu vira barra inferior --- */
+  .floating-menu {
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0;
+    width: 100%; height: auto; flex-direction: row;
+    justify-content: space-around; gap: 4px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(10, 8, 16, 0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--color-border-brand); z-index: 30;
+  }
+  [data-theme="light"] .floating-menu { background: rgba(245, 245, 247, 0.92); }
+
+  .float-pill {
+    width: auto; height: auto; flex: 1; flex-direction: column; gap: 2px;
+    border-radius: 10px; padding: 5px 2px; box-shadow: none;
+    background: transparent; border-color: transparent; animation: none;
+  }
+  .float-pill:hover { transform: none; box-shadow: none; }
+  .float-pill-ico { width: 20px; height: 20px; }
+  .float-pill-label {
+    position: static; transform: none; opacity: 1; background: transparent;
+    border: none; box-shadow: none; padding: 0; font-size: 0.55rem; color: inherit;
+  }
+  .float-pill.is-active { background: rgba(139, 92, 246, 0.15); }
+  .float-pill.is-active::before { display: none; }
+
+  /* --- Header --- */
+  .header-mobile-btn { display: flex; }
+  .header-btn { display: none; }
+  .chat-header { padding: 0 12px; gap: 8px; height: 52px; }
+  .header-brand-crown { margin-left: 0; margin-right: 6px; width: 22px; height: 22px; }
+  .header-title { font-size: 0.9rem; }
+  .header-status { font-size: 0.72rem; }
+  .header-status-text { max-width: 100px; }
+
+  /* --- Float panels (settings, tools, convs) --- */
+  .liz-main-float-panel,
+  .liz-proj-float-panel {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    top: 60px !important;
+    bottom: auto !important;
+    width: auto !important;
+    max-height: min(420px, calc(100dvh - 80px)) !important;
+  }
+
+  /* --- Área de conteúdo --- */
+  .content-wrap { padding-bottom: 60px; }
+  .chat-main { padding-top: 52px; }
+
+  /* --- Empty state (tela inicial) --- */
+  .empty-crown { width: 64px; margin-bottom: 10px; }
+  .hero-crown-slot { width: 64px; height: 64px; margin-bottom: 10px; }
+  .empty-crown::before { width: 180px; height: 180px; }
+  .empty-name { font-size: 1.3rem; margin-bottom: 4px; }
+  .empty-subtitle { font-size: 0.8rem; margin-bottom: 18px; }
+  .empty-state { justify-content: flex-start; padding-top: 20px; min-height: 0; padding-bottom: 10px; }
+
+  .suggestions { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; max-width: 100%; gap: 6px; }
+  .suggestion { flex-shrink: 0; padding: 7px 14px; font-size: 0.78rem; }
+  .suggestion-ico { width: 22px; height: 22px; }
+  .suggestion-ico svg { width: 12px; height: 12px; }
+
+  .starters { grid-template-columns: 1fr; max-width: 100%; margin-top: 10px; gap: 6px; }
+  .starter { padding: 8px 12px; border-radius: 12px; }
+  .starter-ico { width: 28px; height: 28px; }
+  .starter-ico svg { width: 14px; height: 14px; }
+  .starter-label { font-size: 0.8rem; }
+  .starter-arrow { display: none; }
+
+  /* --- Mensagens --- */
+  .messages-list { padding: 16px 12px 20px; gap: 14px; }
+  .msg-user { padding-left: 5%; }
+  .msg-liz { padding-right: 3%; }
+  .msg-avatar { width: 26px; height: 26px; }
+  .msg-bubble { padding: 8px 12px; border-radius: 14px; }
+  .msg-text { font-size: 0.85rem; }
+  .msg-time { font-size: 0.55rem; }
+  .msg-actions { opacity: 0.7; transform: translateY(0); }
+  .msg-user-actions { opacity: 0.7; transform: translateY(0); }
+
+  .code-block { padding: 10px 12px; }
+  .code-block code { font-size: 0.72rem; }
+
+  /* --- Composer --- */
+  .composer { padding: 6px 10px calc(64px + env(safe-area-inset-bottom)); }
+  .composer-inner { padding: 4px 4px 4px 6px; }
+  .composer-input { font-size: 0.85rem; padding: 8px 6px; }
+  .composer-btn { width: 30px; height: 30px; }
+  .send-btn { width: 32px; height: 32px; }
+  .send-btn svg { width: 16px; height: 16px; }
+
+  /* --- Search bar --- */
+  .search-bar { padding: 0 12px 4px; }
+  .search-bar-inner { padding: 6px 6px 6px 10px; font-size: 0.8rem; }
+  .search-bar-inner input { font-size: 0.8rem; }
+
+  /* --- Painéis modais (fullscreen) --- */
+  .panel {
+    width: 100vw; max-height: 100dvh; height: 100dvh;
+    border-radius: 0; top: 0; left: 0; transform: translateY(100%);
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+  }
+  .panel.is-open { transform: translateY(0); }
+  .panel-head { padding: 14px 16px; }
+  .panel-body { padding: 14px 16px; }
+  .panel-title { font-size: 0.95rem; }
+
+  .panel-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tool-card, .project-card { padding: 12px; }
+  .tool-card-ico, .project-card-ico { width: 28px; height: 28px; }
+  .tool-card-title { font-size: 0.78rem; }
+
+  .conv-card { padding: 10px 12px; }
+  .conv-card-title { font-size: 0.82rem; }
+  .conv-card-preview { font-size: 0.72rem; }
+
+  /* --- Projetos --- */
+  .liz-proj-container { padding: 16px 12px 24px; }
+  .liz-proj-header { margin-bottom: 16px; }
+  .liz-proj-header-title { font-size: 1.4rem; }
+  .liz-proj-header-sub { font-size: 0.76rem; padding-left: 0; }
+  .liz-proj-header::after { margin-top: 14px; }
+  .liz-proj-controls { flex-wrap: wrap; gap: 8px; }
+  .liz-proj-search { max-width: 100%; flex: 1 1 100%; }
+  .liz-proj-search input { font-size: 0.78rem; }
+  .liz-proj-create-btn { font-size: 0.78rem; padding: 8px 16px; justify-content: center; }
+  .liz-proj-nav { width: 100%; justify-content: center; overflow-x: auto; }
+  .liz-proj-nav-btn { font-size: 0.74rem; padding: 5px 12px; white-space: nowrap; }
+  .liz-proj-grid { grid-template-columns: 1fr; gap: 8px; }
+  .liz-proj-card-content { padding: 14px 14px 10px; }
+  .liz-proj-card-name { font-size: 0.9rem; }
+  .liz-proj-card-insight { font-size: 0.72rem; }
+  .liz-proj-card-desc { font-size: 0.72rem; }
+  .liz-proj-card-actions { opacity: 1; transform: translateY(0); }
+  .liz-proj-card-updated { font-size: 0.6rem; }
+  .liz-proj-card-accent { width: 2px; }
+
+  .liz-proj-empty { padding: 40px 16px; }
+  .liz-proj-empty-crown { width: 100px; height: 72px; }
+  .liz-proj-empty-title { font-size: 0.9rem; }
+  .liz-proj-empty-desc { font-size: 0.76rem; }
+
+  .liz-proj-topbar { height: 40px; padding: 0 12px; }
+  .liz-proj-topbar-crown { width: 36px; height: 36px; }
+  .liz-proj-topbar-name { display: none; }
+  .liz-proj-topbar-btn { width: 26px; height: 26px; }
+  .liz-proj-topbar-avatar { width: 24px; height: 24px; font-size: 0.6rem; }
+  .liz-proj-topbar-right .panel-close { width: 26px; height: 26px; }
+
+  /* --- Modal de criação de projeto --- */
+  .liz-proj-modal { padding: 20px 18px 16px; }
+  .liz-proj-modal-title { font-size: 0.9rem; }
+  .liz-proj-modal-field input,
+  .liz-proj-modal-field textarea { font-size: 0.8rem; }
+  .liz-proj-modal-submit { font-size: 0.8rem; }
+
+  /* --- Settings/Ajustes (float panel) --- */
+  .liz-float-settings-page .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .liz-float-settings-page .settings-input,
+  .liz-float-settings-page .settings-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .liz-float-settings-page .segmented {
+    width: 100%;
+    justify-content: center;
+  }
+  .liz-float-settings-page .seg-btn {
+    flex: 1;
+    text-align: center;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  /* --- Galeria --- */
+  .gallery-modal {
+    width: 100vw !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    height: 100dvh !important;
+  }
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+    padding: 12px !important;
+    max-height: calc(100dvh - 60px) !important;
+  }
+  .upload-panel-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
+  .upload-panel { width: 100vw !important; max-height: 100dvh !important; height: 100dvh !important; border-radius: 0 !important; top: 0 !important; left: 0 !important; transform: translateY(100%) !important; }
+  .upload-panel.is-open { transform: translateY(0) !important; }
+
+  /* --- Preview --- */
+  .preview-content img { max-height: 60vh; }
+  .preview-close { top: -40px; width: 34px; height: 34px; }
+
+  /* --- Toast --- */
+  .liz-toast {
+    bottom: 80px;
+    font-size: 0.76rem;
+    padding: 8px 14px;
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+    text-align: center;
+  }
+
+  /* --- Focus exit button --- */
+  .focus-exit-btn { top: 12px; right: 12px; padding: 6px 12px 6px 10px; }
+  .focus-exit-label { font-size: 0.72rem; }
+
+  /* --- Tab nav indicator --- */
+  .tab-nav-indicator {
+    bottom: 76px;
+    font-size: 0.65rem;
+    padding: 6px 12px;
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+  }
+}
+
+/* === MOBILE PEQUENO (≤ 380px) === */
+@media (max-width: 380px) {
+  .msg-avatar { width: 24px; height: 24px; }
+  .msg-bubble { padding: 7px 10px; border-radius: 12px; }
+  .msg-text { font-size: 0.8rem; }
+  .msg-user { padding-left: 2%; }
+  .msg-liz { padding-right: 1%; }
+  .panel-grid { grid-template-columns: 1fr; }
+  .header-status-text { max-width: 80px; }
+  .header-title { font-size: 0.82rem; }
+  .empty-crown { width: 52px; }
+  .hero-crown-slot { width: 52px; height: 52px; }
+  .empty-name { font-size: 1.1rem; }
+  .empty-subtitle { font-size: 0.72rem; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* === TOUCH DEVICES: melhorar áreas clicáveis === */
+@media (hover: none) and (pointer: coarse) {
+  .float-pill { min-height: 44px; }
+  .float-pill-label { position: static; transform: none; opacity: 1; background: transparent; border: none; box-shadow: none; padding: 0; }
+  .liz-proj-card-action-btn { width: 32px; height: 32px; }
+  .msg-action { padding: 6px 10px; }
+}
+
+/* === LANDSCAPE MOBILE === */
+@media (max-width: 700px) and (orientation: landscape) {
+  .empty-state { padding-top: 8px; }
+  .empty-crown { width: 44px; }
+  .hero-crown-slot { width: 44px; height: 44px; }
+  .empty-name { font-size: 1rem; }
+  .empty-subtitle { font-size: 0.72rem; margin-bottom: 10px; }
+  .suggestions { gap: 4px; }
+  .suggestion { padding: 4px 10px; font-size: 0.7rem; }
+  .composer { padding: 4px 10px calc(58px + env(safe-area-inset-bottom)); }
+  .content-wrap { padding-bottom: 54px; }
+  .header-status-text { max-width: 80px; }
+}

@@ -1,0 +1,392 @@
+/* ============================================================
+ *  Liz Mobile — layout.css
+ *  App shell, header glass, dock de ferramentas, composer
+ * ============================================================ */
+
+/* ---- App Shell ---- */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Header Glass ---- */
+.header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  padding-top: var(--safe-t);
+  gap: 10px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 30;
+  position: relative;
+}
+
+/* Coroa no header — botão principal */
+.header-crown-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.header-crown-liz {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  filter: drop-shadow(0 0 12px var(--brand-glow));
+  transition: filter var(--t-fast), transform var(--t-fast) var(--ease-spring);
+}
+
+.header-crown-liz svg {
+  width: 100%;
+  height: 100%;
+}
+
+.header-crown-btn:active .header-crown-liz {
+  transform: scale(0.88);
+  filter: drop-shadow(0 0 20px var(--brand-glow)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.2));
+}
+
+/* Glow ring atrás da coroa */
+.header-crown-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  animation: breathe 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Título */
+.header-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #c084fc 0%, #a78bfa 30%, #8b5cf6 60%, #a78bfa 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 5s ease-in-out infinite;
+}
+
+[data-theme="light"] .header-title {
+  -webkit-text-fill-color: #1a1a2e;
+  background: none;
+  color: #1a1a2e;
+}
+
+.header-sep {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+.header-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Botões do header */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.header-theme,
+.header-close-btn,
+.header-back {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all var(--t-fast);
+}
+
+.header-theme:active,
+.header-close-btn:active,
+.header-back:active {
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--brand-light);
+  transform: scale(0.9);
+}
+
+.header-theme svg,
+.header-close-btn svg,
+.header-back svg {
+  width: 17px;
+  height: 17px;
+}
+
+.header-back {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all var(--t-fast);
+}
+
+/* ---- Dock de Ferramentas (flutuante, vidro) ---- */
+.tools-bar {
+  position: fixed;
+  left: 10px;
+  top: calc(68px + var(--safe-t));
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-pill {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  border: 1px solid var(--border-brand);
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease-spring);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Brilho interno sutil */
+.tool-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+
+.tool-pill:active {
+  transform: scale(0.88);
+  border-color: var(--border-brand-strong);
+  color: var(--brand-light);
+}
+
+.tool-pill:active::before {
+  opacity: 1;
+}
+
+.tool-pill.is-active {
+  color: var(--brand-light);
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.1);
+  box-shadow: var(--shadow-glow), var(--shadow-sm);
+}
+
+.tool-pill.is-active::before {
+  opacity: 1;
+}
+
+/* Indicador lateral no ativo */
+.tool-pill.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--brand-light), var(--brand-dark));
+  box-shadow: 0 0 8px var(--brand-glow);
+}
+
+.tool-pill svg {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Collapse / Expand com stagger */
+.tools-bar.is-collapsed .tool-pill {
+  animation: dockCollapse 0.3s var(--ease-out-expo) forwards;
+  pointer-events: none;
+}
+
+/* A barra recolhida continua ocupando sua área fixa durante a animação.
+   Desativar eventos no contêiner evita que ela cubra controles da página. */
+.tools-bar.is-collapsed {
+  pointer-events: none;
+}
+
+.tools-bar.is-expanded .tool-pill {
+  animation: dockExpand 0.4s var(--ease-spring) forwards;
+}
+
+.tools-bar.is-expanded .tool-pill:nth-child(1) { animation-delay: 0s; }
+.tools-bar.is-expanded .tool-pill:nth-child(2) { animation-delay: 0.05s; }
+.tools-bar.is-expanded .tool-pill:nth-child(3) { animation-delay: 0.1s; }
+.tools-bar.is-expanded .tool-pill:nth-child(4) { animation-delay: 0.15s; }
+.tools-bar.is-expanded .tool-pill:nth-child(5) { animation-delay: 0.2s; }
+
+@keyframes dockCollapse {
+  0% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-12px) scale(0.85); }
+}
+
+@keyframes dockExpand {
+  0% { opacity: 0; transform: translateX(-12px) scale(0.85); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ---- Main / Pages ---- */
+.main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity var(--t-normal) var(--ease-smooth),
+              transform var(--t-normal) var(--ease-smooth);
+}
+
+.page.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* ---- Composer Flutuante ---- */
+.composer-wrap {
+  flex-shrink: 0;
+  padding: 8px 12px calc(10px + var(--safe-b));
+  background: transparent;
+  z-index: 10;
+  position: relative;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 5px 5px 5px 16px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1.5px solid var(--border-brand);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.composer:focus-within {
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: var(--shadow-md), var(--shadow-glow-strong);
+}
+
+.composer-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 9px 4px;
+  max-height: 100px;
+  resize: none;
+  line-height: 1.45;
+}
+
+.composer-input::placeholder {
+  color: var(--text-subtle);
+}
+
+.composer-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+  color: #fff;
+  border: none;
+  transition: transform var(--t-fast) var(--ease-spring),
+              box-shadow var(--t-fast),
+              opacity var(--t-fast);
+  box-shadow: 0 3px 12px rgba(139, 92, 246, 0.3);
+}
+
+.composer-send:active {
+  transform: scale(0.85);
+}
+
+.composer-send:disabled {
+  opacity: 0.25;
+  box-shadow: none;
+  transform: none;
+}
+
+.composer-send svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ---- Chat page layout ---- */
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.composer-fixed {
+  flex-shrink: 0;
+}
+
+#pageChat {
+  overflow-y: hidden;
+}

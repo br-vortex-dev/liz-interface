@@ -1,0 +1,108 @@
+/* ============================================================
+ *  Liz — theme.css
+ *  Tema escuro/claro, tamanho fonte, densidade, fonte do código
+ * ============================================================ */
+
+/* Theme transition — apenas opacity e transform para performance */
+html {
+  transition: none;
+}
+.chat-header,
+.floating-menu,
+.composer-inner,
+.panel,
+.empty-state,
+.liz-toast,
+.overlay {
+  transition: background 0.3s ease;
+}
+.header-title,
+.header-status,
+.empty-name,
+.empty-subtitle,
+.msg-text,
+.panel-title {
+  transition: color 0.3s ease;
+}
+
+/* Tema claro */
+[data-theme="light"] {
+  --color-bg-page: #faf5f0;
+  --color-bg-card: rgba(255, 255, 255, 0.7);
+  --color-bg-card-hover: rgba(255, 255, 255, 0.9);
+  --color-bg-elevated: rgba(255, 255, 255, 0.85);
+  --color-text-primary: #2d1b2e;
+  --color-text-secondary: rgba(45, 27, 46, 0.65);
+  --color-text-muted: rgba(45, 27, 46, 0.5);
+  --color-text-subtle: rgba(45, 27, 46, 0.45);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-brand: rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="light"] body {
+  background: #faf5f0;
+}
+
+/* ===================== TAMANHO DA FONTE ===================== */
+html[data-font-size="small"] {
+  --font-scale: 0.9;
+}
+html[data-font-size="small"] body,
+html[data-font-size="small"] .composer-input,
+html[data-font-size="small"] .msg-text,
+html[data-font-size="small"] .empty-name,
+html[data-font-size="small"] .header-title {
+  font-size: calc(1em * var(--font-scale, 1));
+}
+html[data-font-size="large"] {
+  --font-scale: 1.1;
+}
+html[data-font-size="large"] body,
+html[data-font-size="large"] .composer-input,
+html[data-font-size="large"] .msg-text,
+html[data-font-size="large"] .empty-name,
+html[data-font-size="large"] .header-title {
+  font-size: calc(1em * var(--font-scale, 1));
+}
+
+/* ===================== DENSIDADE ===================== */
+html[data-density="compact"] {
+  --space-sm: 4px;
+  --space-md: 8px;
+  --space-lg: 12px;
+}
+html[data-density="compact"] .msg {
+  margin-bottom: 8px !important;
+}
+html[data-density="compact"] .empty-state {
+  padding-top: 40px !important;
+}
+html[data-density="compact"] .chat-header {
+  height: 52px !important;
+}
+html[data-density="compact"] .composer {
+  padding: 8px 24px 12px !important;
+}
+
+/* ===================== FONTE DO CÓDIGO ===================== */
+html[data-code-font="fira"] .code-inline,
+html[data-code-font="fira"] .code-block code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
+}
+html[data-code-font="source"] .code-inline,
+html[data-code-font="source"] .code-block code {
+  font-family: 'Source Code Pro', 'JetBrains Mono', monospace !important;
+}
+html[data-code-font="cascadia"] .code-inline,
+html[data-code-font="cascadia"] .code-block code {
+  font-family: 'Cascadia Code', 'JetBrains Mono', monospace !important;
+}
+
+/* Theme morphing — simplificado, sem box-shadow/filter animation */
+html.theme-morphing .theme-toggle-track {
+  transition: transform 0.2s ease;
+  transform: scale(0.94);
+}
+html.theme-morphing .theme-toggle-thumb {
+  transition: transform 0.2s ease;
+}

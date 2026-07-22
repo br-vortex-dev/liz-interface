@@ -1,0 +1,134 @@
+/* ============================================================
+ *  Liz — menu.css
+ *  Menu flutuante lateral (pílulas de vidro)
+ * ============================================================ */
+
+.floating-menu {
+  position: relative;
+  z-index: 25;
+  flex-shrink: 0;
+  width: var(--float-menu-width);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 0;
+  padding-top: calc(var(--header-height) + 10px);
+}
+.float-pill {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border-brand);
+  background: rgba(20, 14, 30, 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s var(--ease-spring), border-color 0.25s ease,
+              box-shadow 0.25s ease, color 0.25s ease, background 0.25s ease;
+  animation: pillEntrance 0.5s var(--ease-out-expo) both;
+}
+[data-theme="light"] .float-pill {
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.12);
+}
+.float-pill:nth-child(1) { animation-delay: 0.05s; }
+.float-pill:nth-child(2) { animation-delay: 0.10s; }
+.float-pill:nth-child(3) { animation-delay: 0.15s; }
+.float-pill:nth-child(4) { animation-delay: 0.20s; }
+.float-pill:nth-child(5) { animation-delay: 0.25s; }
+.float-pill-ico {
+  width: 22px;
+  height: 22px;
+  display: flex;
+}
+.float-pill-ico svg { width: 100%; height: 100%; }
+.float-pill-label {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: rgba(20, 14, 30, 0.92);
+  border: 1px solid var(--color-border-brand);
+  padding: 5px 10px;
+  border-radius: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal) 80ms ease, transform var(--transition-normal) 80ms var(--ease-out-expo);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  z-index: 30;
+}
+[data-theme="light"] .float-pill-label {
+  background: rgba(255, 255, 255, 0.95);
+}
+.float-pill:hover {
+  color: var(--color-brand-light);
+  border-color: rgba(139, 92, 246, 0.45);
+  background: var(--color-bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(139, 92, 246, 0.22);
+}
+.float-pill:hover .float-pill-label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+.float-pill.is-active {
+  color: #fff;
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgba(139, 92, 246, 0.14);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 8px 24px rgba(139, 92, 246, 0.3);
+  animation: pillClick 0.4s var(--ease-spring);
+}
+.float-pill.is-active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, var(--color-brand-light), var(--color-brand-dark));
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.7);
+  animation: activeBarIn 0.35s var(--ease-out-expo) forwards, activeBarGlow 2.5s ease-in-out 0.4s infinite;
+}
+.float-pill:not(.is-active):active {
+  animation: pillClick 0.35s var(--ease-spring);
+}
+
+/* Tools wrapper (collapsible) */
+.menu-tools-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  overflow: visible;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  transform-origin: top center;
+}
+.floating-menu.is-collapsed .menu-tools-wrap {
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleY(0.8);
+}
+.floating-menu.is-collapsed .menu-tools-wrap .float-pill {
+  animation: toolCollapse 0.4s var(--ease-out-expo) forwards;
+}
+.floating-menu.is-expanded .menu-tools-wrap .float-pill {
+  animation: toolExpand 0.45s var(--ease-out-expo) forwards;
+}
+.floating-menu.is-expanded .menu-tools-wrap .float-pill:nth-child(1) { animation-delay: 0.00s; }
+.floating-menu.is-expanded .menu-tools-wrap .float-pill:nth-child(2) { animation-delay: 0.06s; }
+.floating-menu.is-expanded .menu-tools-wrap .float-pill:nth-child(3) { animation-delay: 0.12s; }
+.floating-menu.is-expanded .menu-tools-wrap .float-pill:nth-child(4) { animation-delay: 0.18s; }
+.floating-menu.is-expanded .menu-tools-wrap .float-pill:nth-child(5) { animation-delay: 0.24s; }

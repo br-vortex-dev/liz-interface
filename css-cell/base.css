@@ -1,0 +1,245 @@
+/* ============================================================
+ *  Liz Mobile — base.css
+ *  Design tokens, reset, background aurora, utilitários
+ * ============================================================ */
+
+/* ---- Design Tokens ---- */
+:root {
+  /* Brand */
+  --brand: #8b5cf6;
+  --brand-light: #a78bfa;
+  --brand-dark: #7c3aed;
+  --brand-glow: rgba(139, 92, 246, 0.4);
+  --brand-accent: #c084fc;
+
+  /* Superfícies */
+  --bg: #050505;
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-elevated: rgba(20, 14, 30, 0.72);
+  --surface-glass: rgba(20, 14, 30, 0.55);
+
+  /* Texto */
+  --text: #ffffff;
+  --text-sec: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.38);
+  --text-subtle: rgba(255, 255, 255, 0.25);
+
+  /* Bordas */
+  --border: rgba(255, 255, 255, 0.06);
+  --border-brand: rgba(139, 92, 246, 0.14);
+  --border-brand-strong: rgba(139, 92, 246, 0.3);
+
+  /* Radii */
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+  --radius-full: 999px;
+
+  /* Sombras */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.15);
+  --shadow-glow-strong: 0 0 30px rgba(139, 92, 246, 0.25);
+
+  /* Transições */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 0.15s;
+  --t-normal: 0.25s;
+  --t-slow: 0.4s;
+
+  /* Safe area */
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+/* ---- Tema Claro ---- */
+[data-theme="light"] {
+  --bg: #f5f5f7;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --surface-glass: rgba(255, 255, 255, 0.6);
+  --text: #1a1a2e;
+  --text-sec: rgba(0, 0, 0, 0.6);
+  --text-muted: rgba(0, 0, 0, 0.45);
+  --text-subtle: rgba(0, 0, 0, 0.3);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-brand: rgba(139, 92, 246, 0.12);
+  --border-brand-strong: rgba(139, 92, 246, 0.25);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.08);
+  --shadow-glow-strong: 0 0 30px rgba(139, 92, 246, 0.12);
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  -webkit-appearance: none;
+}
+
+input, textarea {
+  font-family: inherit;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.15);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.3);
+}
+
+/* ---- Background Aurora ---- */
+.app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(124, 58, 237, 0.07) 0%, transparent 45%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(168, 85, 247, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 40% at 80% 15%, rgba(88, 28, 135, 0.06) 0%, transparent 40%);
+}
+
+[data-theme="light"] .app::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(124, 58, 237, 0.04) 0%, transparent 45%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(168, 85, 247, 0.03) 0%, transparent 60%);
+}
+
+/* Grid sutil */
+.app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 70%);
+}
+
+[data-theme="light"] .app::after {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.015) 1px, transparent 1px);
+}
+
+/* ---- Toast ---- */
+.toast {
+  position: fixed;
+  bottom: calc(90px + var(--safe-b));
+  left: 50%;
+  transform: translateX(-50%) translateY(16px) scale(0.95);
+  background: var(--surface-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-brand);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--t-normal) var(--ease-spring);
+  z-index: 200;
+  max-width: calc(100vw - 48px);
+  text-align: center;
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+/* ---- Utilitários ---- */
+.is-hidden { display: none !important; }
+
+/* ---- Keyframes base ---- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(139, 92, 246, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.25); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}

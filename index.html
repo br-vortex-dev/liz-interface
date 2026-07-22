@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark" class="liz-booting">
+<head>
+  <script>if(/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)&&window.innerWidth<700){window.location.replace("intercell.html");}</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Liz — sua assistente com inteligência artificial." />
+  <title>Liz · Chat</title>
+
+  <style>
+    html.liz-booting .chat-app {
+      opacity: 0;
+      pointer-events: none;
+    }
+    html.liz-intro-complete .chat-app {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+
+  <!-- Tipografia Inter (mesma das telas de Login/Cadastro) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Favicon com a coroa oficial -->
+  <link rel="icon" type="image/svg+xml" href="coroa.svg" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/accessibility.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/header.css" />
+  <link rel="stylesheet" href="css/menu.css" />
+  <link rel="stylesheet" href="css/chat.css" />
+  <link rel="stylesheet" href="css/panels.css" />
+  <link rel="stylesheet" href="css/settings.css" />
+  <link rel="stylesheet" href="css/projects.css" />
+  <link rel="stylesheet" href="css/gallery.css" />
+  <link rel="stylesheet" href="css/focus-mode.css" />
+  <link rel="stylesheet" href="css/intro.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <div class="chat-app">
+
+    <!-- ===================================================
+         SVGs DECORATIVOS — mesmas formas geométricas flutuantes
+         das telas de Login/Cadastro (hexágonos, triângulo,
+         círculos, diamante) com pulso suave "tecnológico".
+    ==================================================== -->
+    <svg class="bg-deco" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polygon class="deco deco-hex-1" points="720,80 830,143 830,269 720,332 610,269 610,143" />
+      <polygon class="deco deco-hex-2" points="200,500 260,535 260,605 200,640 140,605 140,535" />
+      <polygon class="deco deco-tri" points="1200,120 1260,220 1140,220" />
+      <circle class="deco deco-circle-1" cx="1350" cy="300" r="50" />
+      <circle class="deco deco-circle-2" cx="100" cy="750" r="35" />
+      <polygon class="deco deco-diamond" points="1350,550 1375,590 1350,630 1325,590" />
+    </svg>
+
+    <!-- ===================================================
+         HEADER — full-width sobre o menu lateral
+    ==================================================== -->
+    <header class="chat-header">
+      <button class="header-mobile-btn" id="mobile-menu-btn" type="button" aria-label="Abrir menu">
+        <span></span>
+      </button>
+
+      <div class="header-brand">
+        <img class="header-brand-crown" id="crown-toggle" src="coroa.svg" alt="Liz — mostrar ou ocultar ferramentas" role="button" tabindex="0" aria-expanded="true" />
+        <div class="header-titles">
+          <h1 class="header-title" id="chat-title">Liz</h1>
+          <span class="header-status" id="chat-status" aria-hidden="true">
+            <span class="header-status-sep">·</span>
+            <span class="header-status-text">Nova conversa</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Ativar modo claro" title="Modo claro">
+          <span class="theme-toggle-track">
+            <span class="theme-toggle-thumb" style="transform: translateX(0px) rotate(0deg);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            </span>
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================================================
+         MENU FLUTUANTE — lateral esquerda (ilhas de vidro)
+    ==================================================== -->
+    <nav class="floating-menu" id="floating-menu" aria-label="Menu flutuante">
+      <div class="menu-tools-wrap" id="menu-tools-wrap">
+        <button class="float-pill" data-action="new" type="button" aria-label="Nova conversa">
+          <span class="float-pill-ico"></span>
+          <span class="float-pill-label">Novo</span>
+        </button>
+        <button class="float-pill" data-action="conversations" type="button" aria-label="Conversas">
+          <span class="float-pill-ico"></span>
+          <span class="float-pill-label">Conversas</span>
+        </button>
+        <button class="float-pill" data-action="tools" type="button" aria-label="Ferramentas">
+          <span class="float-pill-ico"></span>
+          <span class="float-pill-label">Ferramentas</span>
+        </button>
+        <button class="float-pill" data-action="projects" type="button" aria-label="Projetos">
+          <span class="float-pill-ico"></span>
+          <span class="float-pill-label">Projetos</span>
+        </button>
+
+        <button class="float-pill" data-action="settings" type="button" aria-label="Ajustes">
+          <span class="float-pill-ico"></span>
+          <span class="float-pill-label">Ajustes</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ===================================================
+         ÁREA PRINCIPAL
+    ==================================================== -->
+    <main class="chat-main">
+
+      <!-- Área de conteúdo (welcome + mensagens) -->
+      <div class="content-wrap" id="content-wrap">
+
+        <!-- Tela inicial — coroa no centro -->
+        <div class="empty-state" id="empty-state">
+          <div class="hero-crown-slot">
+            <div class="hero-crown-positioner">
+              <div class="empty-crown" id="empty-crown"></div>
+            </div>
+          </div>
+          <h2 class="empty-name">Liz</h2>
+          <p class="empty-subtitle">Como posso te ajudar hoje?</p>
+
+          <div class="suggestions" id="suggestions">
+            <!-- cards de sugestão via JS -->
+          </div>
+
+          <!-- 2º nível: mini cards "comece com" -->
+          <div class="starters" id="starters">
+            <!-- starters via JS -->
+          </div>
+        </div>
+
+        <!-- Lista de mensagens (modo conversa) -->
+        <div class="messages-list is-hidden" id="messages-list">
+          <!-- mensagens via JS -->
+        </div>
+      </div>
+
+      <!-- Composer (input inferior flutuante) -->
+      <form class="composer" id="chat-form" autocomplete="off">
+        <div class="composer-inner">
+          <button class="composer-btn" id="attach-btn" type="button" aria-label="Anexar arquivo" title="Anexar">
+            <span></span>
+          </button>
+
+          <textarea
+            class="composer-input"
+            id="chat-input"
+            rows="1"
+            placeholder="Digite sua mensagem para a Liz..."
+            aria-label="Mensagem"></textarea>
+
+          <button class="send-btn" id="send-btn" type="submit" aria-label="Enviar mensagem" disabled>
+            <span></span>
+          </button>
+        </div>
+      </form>
+
+    </main>
+
+    <!-- ===================================================
+         OVERLAY + PAINÉIS MODAIS (glass)
+    ==================================================== -->
+    <div class="overlay" id="overlay" aria-hidden="true"></div>
+
+    <!-- Painel: Conversas -->
+    <section class="panel" id="panel-conversations" role="dialog" aria-modal="true" aria-labelledby="panel-conversations-title" aria-hidden="true">
+      <header class="panel-head">
+        <h3 class="panel-title" id="panel-conversations-title">Conversas recentes</h3>
+        <button class="panel-close" data-close type="button" aria-label="Fechar">
+          <span></span>
+        </button>
+      </header>
+      <div class="panel-body">
+        <div class="panel-search">
+          <span class="panel-search-ico"></span>
+          <input type="text" id="conversations-search" placeholder="Buscar conversa..." autocomplete="off" />
+        </div>
+        <div id="conversations-content"></div>
+      </div>
+    </section>
+
+    <!-- Painel: Ferramentas -->
+    <section class="panel" id="panel-tools" role="dialog" aria-modal="true" aria-labelledby="panel-tools-title" aria-hidden="true">
+      <header class="panel-head">
+        <h3 class="panel-title" id="panel-tools-title">Ferramentas da Liz</h3>
+        <button class="panel-close" data-close type="button" aria-label="Fechar">
+          <span></span>
+        </button>
+      </header>
+      <div class="panel-body">
+        <div class="panel-grid" id="tools-content"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================
+         PAINEL: PROJETOS — experiência completa estilo SO da Liz
+    ==================================================== -->
+    <section class="panel panel-fullscreen liz-projects-panel" id="panel-projects" role="dialog" aria-modal="true" aria-labelledby="panel-projects-title" aria-hidden="true">
+      <!-- Mini topbar minimalista -->
+      <div class="liz-proj-topbar">
+        <div class="liz-proj-topbar-left">
+          <span class="liz-proj-topbar-crown">
+            <img src="coroa.svg" alt="Liz" />
+          </span>
+          <span class="header-title">Liz</span>
+        </div>
+        <div class="liz-proj-topbar-right">
+          <button class="liz-proj-topbar-btn" id="proj-settings-btn" type="button" aria-label="Configurações dos projetos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+          <span class="liz-proj-topbar-avatar">V</span>
+          <button class="panel-close" data-close type="button" aria-label="Fechar painel de projetos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Conteúdo principal injetado via JS -->
+      <div class="panel-body liz-proj-body" id="projects-content"></div>
+    </section>
+
+
+
+    <!-- Toast -->
+    <div class="liz-toast" id="liz-toast"></div>
+
+    <!-- Tab Navigation Indicator -->
+    <div class="tab-nav-indicator" id="tab-nav-indicator" aria-hidden="true">
+      <kbd>Tab</kbd>
+      <span class="tab-nav-arrow">→</span>
+      <span>Navegar entre elementos</span>
+      <kbd>Enter</kbd>
+      <span class="tab-nav-arrow">·</span>
+      <span>Selecionar</span>
+      <kbd>Esc</kbd>
+      <span class="tab-nav-arrow">·</span>
+      <span>Sair</span>
+    </div>
+
+    <!-- File input (hidden) -->
+    <input type="file" id="file-input" hidden multiple
+      accept="image/*,.pdf,.doc,.docx,.txt,.csv,.json,.js,.ts,.py,.html,.css,.md,.zip,.rar" />
+
+    <!-- Preview modal -->
+    <div class="preview-overlay" id="preview-overlay" aria-hidden="true">
+      <div class="preview-modal" role="dialog" aria-modal="true" aria-label="Preview de imagem">
+        <button class="preview-close" id="preview-close" type="button" aria-label="Fechar preview">
+          <span class="preview-close-icon"></span>
+        </button>
+        <div class="preview-content" id="preview-content">
+          <img id="preview-img" src="" alt="Preview" />
+        </div>
+        <div class="preview-info" id="preview-info">
+          <span id="preview-filename"></span>
+          <button class="preview-download" id="preview-download" type="button" aria-label="Download"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Focus mode exit button (flutuante) -->
+    <button class="focus-exit-btn" id="focus-exit-btn" type="button" aria-label="Sair do modo foco" title="Sair do modo foco (Esc)">
+      <span></span>
+      <span class="focus-exit-label">Sair do foco</span>
+    </button>
+  </div>
+
+  <!-- ===================================================
+       SCRIPTS — ordem importa (config → data → ui → chat)
+  ==================================================== -->
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/ui-core.js"></script>
+  <script src="js/ui-chat.js"></script>
+  <script src="js/ui-panels.js"></script>
+  <script src="js/ui-gallery.js"></script>
+  <script src="js/ui-projects.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/chat.js"></script>
+</body>
+</html>

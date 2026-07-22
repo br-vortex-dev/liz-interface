@@ -1,0 +1,93 @@
+/* ============================================================
+ *  Liz — layout.css
+ *  Layout principal, app background, formas decorativas
+ * ============================================================ */
+
+.chat-app {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  overflow: hidden;
+  background: transparent;
+  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.chat-app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(circle at center, black 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+[data-theme="light"] .chat-app::before {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.025) 1px, transparent 1px);
+}
+.chat-app::after {
+  content: '';
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  right: -120px;
+  top: -120px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12), transparent 65%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Decorative floating shapes */
+.bg-deco {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.deco {
+  fill: none;
+  stroke: rgba(139, 92, 246, 0.08);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: decoPulse 12s ease-in-out infinite;
+}
+.deco-hex-1 { stroke: rgba(139, 92, 246, 0.1); animation-duration: 10s; }
+.deco-hex-2 { stroke: rgba(168, 85, 247, 0.08); animation-duration: 12s; animation-delay: 3s; }
+.deco-tri { stroke: rgba(124, 58, 237, 0.08); animation-duration: 11s; animation-delay: 1.5s; }
+.deco-circle-1 { stroke: rgba(139, 92, 246, 0.08); animation-duration: 14s; animation-delay: 5s; }
+.deco-circle-2 { stroke: rgba(168, 85, 247, 0.08); animation-duration: 13s; animation-delay: 2s; }
+.deco-diamond { stroke: rgba(124, 58, 237, 0.08); animation-duration: 15s; animation-delay: 4s; }
+@keyframes decoPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+[data-theme="light"] .deco { stroke: rgba(124, 58, 237, 0.12); }
+
+/* Main content area */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+  padding-top: var(--header-height);
+}
+.content-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+  padding-bottom: 8px;
+}

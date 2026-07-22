@@ -1,0 +1,150 @@
+/* ============================================================
+ *  Liz — panels.css
+ *  Overlay, painéis modais, cards, tool cards, search
+ * ============================================================ */
+
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none; transition: opacity var(--transition-normal); z-index: 40;
+}
+.overlay.is-visible { opacity: 1; pointer-events: auto; }
+
+.panel {
+  position: fixed; z-index: 50; top: 50%; left: 50%;
+  transform: translate(-50%, -46%) scale(0.985);
+  width: min(640px, calc(100vw - 48px)); max-height: calc(100vh - 80px);
+  display: flex; flex-direction: column;
+  background: rgba(16, 11, 26, 0.78); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--color-border-brand); border-radius: 24px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(139, 92, 246, 0.08);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--transition-normal), transform var(--transition-normal) var(--ease-out-expo);
+}
+[data-theme="light"] .panel {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 80px rgba(124, 58, 237, 0.22), 0 0 0 1px rgba(139, 92, 246, 0.12);
+}
+.panel.is-open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+.panel-fullscreen {
+  width: 100vw !important; max-height: 100dvh !important; height: 100dvh !important;
+  border-radius: 0 !important; top: 0 !important; left: 0 !important;
+  transform: translateY(100%) !important;
+  background: rgba(8, 6, 14, 0.92) !important;
+  backdrop-filter: blur(32px) !important; -webkit-backdrop-filter: blur(32px) !important;
+  border: none !important; box-shadow: none !important;
+  transition: transform 0.35s var(--ease-out-expo), opacity 0.35s ease !important;
+}
+[data-theme="light"] .panel-fullscreen { background: rgba(245, 245, 247, 0.96) !important; }
+.panel-fullscreen.is-open { transform: translateY(0) !important; opacity: 1 !important; }
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 22px; border-bottom: 1px solid var(--color-border);
+}
+.panel-title {
+  font-size: 1.05rem; font-weight: 600; color: var(--color-text-primary);
+}
+.panel-close {
+  width: 34px; height: 34px; border-radius: 10px;
+  border: 1px solid var(--color-border); background: var(--color-bg-card);
+  color: var(--color-text-secondary); display: flex; align-items: center; justify-content: center;
+  transition: color var(--transition-normal), background var(--transition-normal), border-color var(--transition-normal), transform var(--transition-fast);
+}
+.panel-close svg { width: 18px; height: 18px; transition: transform 0.3s var(--ease-spring); transform-origin: center center; }
+.panel-close:hover {
+  color: #fff; background: rgba(139, 92, 246, 0.18); border-color: rgba(139, 92, 246, 0.5);
+}
+.panel-close:hover svg { transform: rotate(90deg) scale(1.1); }
+.panel.is-closing { animation: panelOut 0.25s var(--ease-out-expo) forwards; pointer-events: none; }
+.overlay.is-closing { animation: overlayOut 0.2s ease forwards; }
+.panel-body { padding: 18px 22px 22px; overflow-y: auto; }
+
+/* Search in panels */
+.panel-search { position: relative; margin-bottom: 18px; }
+.panel-search-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--color-text-muted); pointer-events: none; }
+.panel-search-ico svg { width: 100%; height: 100%; }
+.panel-search input {
+  width: 100%; padding: 11px 14px 11px 40px;
+  background: rgba(255, 255, 255, 0.04); border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input); color: var(--color-text-primary);
+  font-size: 0.88rem; font-family: inherit; outline: none;
+}
+[data-theme="light"] .panel-search input { background: rgba(255, 255, 255, 0.6); }
+.panel-search input:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); background: rgba(255, 255, 255, 0.06); }
+
+/* Group titles */
+.panel-group-title {
+  font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--color-text-muted); margin: 14px 2px 8px;
+}
+.panel-group-title:first-child { margin-top: 0; }
+
+/* Conversation card */
+.conv-card {
+  display: block; width: 100%; text-align: left; padding: 12px 14px;
+  margin-bottom: 8px; border-radius: var(--radius-input);
+  border: 1px solid transparent; background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+}
+.conv-card:hover { background: var(--color-bg-card-hover); border-color: var(--color-border-brand); transform: translateX(2px); }
+.conv-card-title { font-size: 0.9rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 3px; }
+.conv-card-preview { font-size: 0.78rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Tool / project card grid */
+.panel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tool-card, .project-card {
+  padding: 16px 14px; border-radius: var(--radius-input);
+  border: 1px solid var(--color-border); background: var(--color-bg-card);
+  color: var(--color-text-secondary); text-align: left; display: flex; flex-direction: column; gap: 4px;
+}
+.tool-card:hover, .project-card:hover {
+  transform: translateY(-3px); border-color: rgba(139, 92, 246, 0.45);
+  background: var(--color-bg-card-hover); box-shadow: 0 10px 26px rgba(139, 92, 246, 0.2);
+}
+.tool-card-ico, .project-card-ico {
+  width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+  background: rgba(139, 92, 246, 0.14); border: 1px solid var(--color-border-brand);
+  color: var(--color-brand-light); margin-bottom: 4px;
+}
+.tool-card-ico svg, .project-card-ico svg { width: 17px; height: 17px; }
+.tool-card-title, .project-card-title { font-size: 0.86rem; font-weight: 600; color: var(--color-text-primary); }
+.project-card-desc { font-size: 0.74rem; color: var(--color-text-muted); }
+
+/* Float panel (main menu) */
+.liz-main-float-panel {
+  position: fixed; left: calc(var(--float-menu-width, 76px) + 6px);
+  top: calc(var(--header-height, 64px) + 12px);
+  width: 340px; max-height: min(420px, calc(100dvh - 100px));
+  background: rgba(16, 12, 24, 0.88); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(139, 92, 246, 0.12); border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); z-index: 60;
+  display: flex; flex-direction: column; overflow: hidden;
+  opacity: 0; pointer-events: none; transform: translateX(-8px);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-theme="light"] .liz-main-float-panel { background: rgba(250, 245, 240, 0.95); border-color: rgba(139, 92, 246, 0.15); }
+.liz-main-float-panel.is-visible { opacity: 1; pointer-events: auto; transform: translateX(0); }
+.liz-main-float-panel .liz-proj-float-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); flex-shrink: 0; }
+[data-theme="light"] .liz-main-float-panel .liz-proj-float-head { border-bottom-color: rgba(0, 0, 0, 0.04); }
+.liz-main-float-panel .liz-proj-float-title { font-size: 0.82rem; font-weight: 600; color: #fff; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; }
+[data-theme="light"] .liz-main-float-panel .liz-proj-float-title { color: #2d1b2e; }
+.liz-main-float-panel .liz-proj-float-title-ico { width: 16px; height: 16px; opacity: 0.4; color: var(--color-brand-light); }
+.liz-main-float-panel .liz-proj-float-close { width: 24px; height: 24px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: rgba(152, 146, 168, 0.25); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.liz-main-float-panel .liz-proj-float-close:hover { background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.1); color: rgba(139, 92, 246, 0.4); }
+.liz-main-float-panel .liz-proj-float-body { flex: 1; overflow-y: auto; padding: 10px 12px 14px; min-height: 60px; }
+.liz-main-float-panel .liz-proj-float-convs { display: flex; flex-direction: column; gap: 2px; }
+.liz-main-float-panel .liz-proj-float-conv { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: #9892A8; font-size: 0.78rem; font-weight: 480; cursor: pointer; width: 100%; text-align: left; }
+[data-theme="light"] .liz-main-float-panel .liz-proj-float-conv { color: rgba(45, 27, 46, 0.6); }
+.liz-main-float-panel .liz-proj-float-conv:hover { background: rgba(139, 92, 246, 0.04); color: #fff; }
+[data-theme="light"] .liz-main-float-panel .liz-proj-float-conv:hover { color: #2d1b2e; }
+.liz-main-float-panel .liz-proj-float-conv-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.liz-main-float-panel .liz-proj-float-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.liz-main-float-panel .liz-proj-float-tool { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.03); background: rgba(255, 255, 255, 0.02); color: rgba(152, 146, 168, 0.8); font-size: 0.78rem; cursor: pointer; }
+.liz-main-float-panel .liz-proj-float-tool:hover { background: rgba(139, 92, 246, 0.06); border-color: rgba(139, 92, 246, 0.1); color: var(--color-brand-light); }
+.liz-main-float-panel .liz-proj-float-settings { display: flex; flex-direction: column; gap: 3px; }
+.liz-main-float-panel .liz-proj-float-set-btn { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: #9892A8; font-size: 0.78rem; cursor: pointer; width: 100%; text-align: left; }
+.liz-main-float-panel .liz-proj-float-set-btn:hover { background: rgba(139, 92, 246, 0.04); color: #fff; }
+.liz-main-float-panel .liz-proj-float-set-ico { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.35; }
+.liz-main-float-panel .liz-proj-float-set-arrow { margin-left: auto; width: 12px; height: 12px; opacity: 0.15; color: #9892A8; }
+[data-theme="light"] .liz-main-float-panel .liz-proj-float-set-btn { color: rgba(45, 27, 46, 0.6); }
+[data-theme="light"] .liz-main-float-panel .liz-proj-float-set-btn:hover { color: #2d1b2e; }

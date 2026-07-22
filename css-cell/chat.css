@@ -1,0 +1,300 @@
+/* ============================================================
+ *  Liz Mobile — chat.css
+ *  Empty state "breathing crown", mensagens "glass river",
+ *  chips de sugestão, typing indicator
+ * ============================================================ */
+
+/* ---- Empty State ---- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 60px 28px 40px;
+  text-align: center;
+  animation: fadeIn 0.6s var(--ease-smooth) both;
+}
+
+/* Coroa com breathing glow */
+.empty-crown {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.empty-crown svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 24px var(--brand-glow));
+  animation: floatSoft 4s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+/* Anel de glow pulsante atrás da coroa */
+.empty-crown::before {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 50%, transparent 70%);
+  animation: breathe 3.5s ease-in-out infinite;
+}
+
+/* Segundo anel mais amplo */
+.empty-crown::after {
+  content: '';
+  position: absolute;
+  inset: -32px;
+  border-radius: 50%;
+  border: 1px solid rgba(139, 92, 246, 0.06);
+  animation: breathe 3.5s ease-in-out infinite 0.5s;
+}
+
+/* Título "Liz" com gradiente animado */
+.empty-t {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #c084fc 0%, #a78bfa 25%, #8b5cf6 50%, #a78bfa 75%, #c084fc 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 5s ease-in-out infinite;
+  margin-bottom: 4px;
+}
+
+[data-theme="light"] .empty-t {
+  -webkit-text-fill-color: #1a1a2e;
+  background: none;
+  color: #1a1a2e;
+}
+
+/* Subtítulo */
+.empty-s {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 4px 0 28px;
+  letter-spacing: 0.01em;
+  animation: fadeUp 0.5s var(--ease-smooth) 0.2s both;
+}
+
+/* ---- Chips de Sugestão ---- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  animation: fadeUp 0.5s var(--ease-smooth) 0.35s both;
+}
+
+.chip {
+  padding: 9px 16px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--text-sec);
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: all var(--t-fast) var(--ease-spring);
+  box-shadow: var(--shadow-sm);
+}
+
+.chip:active {
+  transform: scale(0.93);
+  border-color: var(--border-brand-strong);
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--brand-light);
+  box-shadow: var(--shadow-glow);
+}
+
+.chip svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.chip:active svg {
+  opacity: 1;
+}
+
+/* ---- Mensagens (Glass River) ---- */
+.msg-list {
+  padding: 16px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.msg {
+  display: flex;
+  gap: 9px;
+  max-width: 100%;
+  animation: msgIn 0.3s var(--ease-smooth) both;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Mensagem do usuário — alinhada à direita */
+.msg-user {
+  flex-direction: row-reverse;
+  padding-left: 18%;
+}
+
+/* Mensagem da Liz — alinhada à esquerda */
+.msg-liz {
+  padding-right: 6%;
+}
+
+/* Avatar da Liz */
+.msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  align-self: flex-end;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.08);
+}
+
+.msg-avatar svg {
+  width: 15px;
+  height: 15px;
+  filter: drop-shadow(0 0 3px var(--brand-glow));
+}
+
+/* Bolhas */
+.msg-bubble {
+  padding: 11px 15px;
+  border-radius: 18px;
+  max-width: 100%;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  position: relative;
+}
+
+/* Bolha do usuário — gradiente roxo profundo */
+.msg-bubble-user {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.9) 0%, rgba(88, 28, 135, 0.95) 100%);
+  border-bottom-right-radius: 5px;
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 3px 12px rgba(124, 58, 237, 0.2);
+}
+
+/* Bolha da Liz — glass com borda sutil */
+.msg-bubble-liz {
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  border-bottom-left-radius: 5px;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .msg-bubble-liz {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(139, 92, 246, 0.08);
+}
+
+/* Nome "Liz" na bolha */
+.msg-name {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--brand-light);
+  margin-bottom: 3px;
+  display: block;
+  letter-spacing: 0.04em;
+}
+
+/* Timestamp */
+.msg-time {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  opacity: 0.5;
+}
+
+.msg-user .msg-time {
+  text-align: right;
+}
+
+/* ---- Typing Indicator ---- */
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-light);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ---- Código inline/block nas mensagens ---- */
+.msg-bubble code {
+  background: rgba(139, 92, 246, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.82em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.msg-bubble pre {
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.msg-bubble pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+[data-theme="light"] .msg-bubble pre {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ---- Imagens nas mensagens ---- */
+.msg-bubble img {
+  max-width: 220px;
+  border-radius: var(--radius-sm);
+  display: block;
+  margin: 4px 0;
+}

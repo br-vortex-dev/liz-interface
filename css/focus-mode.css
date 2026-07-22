@@ -1,0 +1,28 @@
+/* ============================================================
+ *  Liz — focus-mode.css
+ *  Modo foco para leitura sem distrações
+ * ============================================================ */
+
+.chat-app.is-focused .floating-menu { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.2s ease; }
+.chat-app.is-focused .chat-header { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.2s ease; }
+.chat-app.is-focused .chat-main { padding-top: 0; }
+.chat-app.is-focused .content-wrap { flex: 1; min-height: 0; }
+.chat-app.is-focused .bg-deco,
+.chat-app.is-focused .chat-app::before,
+.chat-app.is-focused .chat-app::after { opacity: 0.15; }
+
+.focus-exit-btn {
+  position: fixed; top: 20px; right: 20px; z-index: 500;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px 8px 12px; border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-brand);
+  background: rgba(20, 14, 30, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  color: var(--color-text-secondary); cursor: pointer;
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.focus-exit-btn.is-visible { opacity: 1; pointer-events: auto; }
+.focus-exit-btn:hover { color: var(--color-brand-light); border-color: rgba(139, 92, 246, 0.45); }
+.focus-exit-label { font-size: 0.8rem; font-weight: 500; }
+[data-theme="light"] .focus-exit-btn { background: rgba(255, 255, 255, 0.9); }
