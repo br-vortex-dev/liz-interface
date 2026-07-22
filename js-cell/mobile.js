@@ -78,17 +78,15 @@ App._tabs=function(){
       $$('.page').forEach(pg=>pg.classList.remove('is-active'));
       // Minimiza ferramentas ao entrar em outras seções
       if(a!=='chat'){$('.tools-bar').classList.add('is-collapsed');$('.tools-bar').classList.remove('is-expanded');
-        // Projects: sem seta no header, X não
-        if(a==='projects'){$('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';}
-        else{$('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';}
-        $('#hSep').style.display='';$('#hSub').textContent={projects:'Memórias',settings:'Ajustes',tools:'Ferramentas'}[a]||'';}
+        $('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';
+        $('#hSep').style.display='';$('#hSub').textContent={settings:'Ajustes',tools:'Ferramentas'}[a]||'';}
       else{$('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
         $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';}
       if(a==='newchat'){this._newChat();return;}
+      if(a==='mural'){LizUI.polaroidWall.open();return;}
       if(a==='chat'){document.getElementById('pChat')?.classList.add('is-active');$('#ht').textContent='Liz';return;}
-      const map={projects:'pProjects',settings:'pSettings',tools:'pTools'};
+      const map={settings:'pSettings',tools:'pTools'};
       const pid=map[a];if(pid){const pg=document.getElementById(pid);if(pg)pg.classList.add('is-active');}
-      if(a==='projects')this._projects();
       if(a==='settings')this._settings();
       if(a==='tools')this._tools();
       $('#ht').textContent='Liz';
@@ -148,19 +146,6 @@ App._chat=function(){
   this._send=function(){const t=input.value.trim();if(t)this._sendMsg(t);};
 };
 
-/* ---- Fragmentos: seeded random (consistência entre renders) ---- */
-function _memRand(id,salt){let h=0;const s=String(id)+String(salt||'');for(let i=0;i<s.length;i++){h=((h<<5)-h+s.charCodeAt(i))|0;}return(Math.abs(h)%1000)/1000;}
-
-/* ---- Fragmentos: sussurros da Liz ---- */
-const _memWhispers=[
-  'Cada fragmento guarda uma história...',
-  'Estou aqui, cuidando das nossas memórias...',
-  'O arquivo da Liz guarda tudo com carinho...',
-  'Que bom te ver de novo por aqui...',
-  'Essas lembranças são preciosas...',
-  'O universo de dados da Liz está completo...'
-];
-
 /* ---- Feedback tátil ---- */
 App._buzz=function(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}};
 
@@ -191,230 +176,11 @@ App._confirmModal=function(title,message,okLabel,danger,cb){
   const okBtn=$('#lizModalOk');if(okBtn)okBtn.addEventListener('click',()=>{this._closeModal();cb();});
 };
 
-/* ---- 🔮 Fragmentos de Vidro: render da seção de memórias ---- */
-App._projects=function(){
-  LizData.loadProjects();let list=[...LizData.projectList];const p=document.getElementById('pProjects');if(!p)return;
-  const q=this._projQ||'';const fl=this._projFl||'all';const sort=this._projSort||'recent';
-
-  // Filtro
-  if(fl==='favorites')list=list.filter(x=>x.fav);
-  if(fl==='recent')list=list.filter(x=>x.status!=='archived');
-  if(fl==='archived')list=list.filter(x=>x.status==='archived');
-
-  // Busca
-  if(q)list=list.filter(x=>x.name.toLowerCase().includes(q)||(x.desc||'').toLowerCase().includes(q));
-
-  // Ordenação
-  if(sort==='recent'||sort==='old')list.sort((a,b)=>{const d=(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0);return sort==='recent'?d:-d;});
-  if(sort==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
-
-  const starSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
-  const starFill='<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
-
-  // Ícone de cristal
-  const crystalSvg='<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 4,20 20,20"/></svg>';
-
-  let h='<div class="proj-page">';
-
-  // ---- Header: voltar + Memórias + badge + coroa + Novo ----
-  const memCount=list.length+(list.length===1?' memória':' memórias');
-  h+='<div class="proj-top"><div class="proj-top-left">'+
-    '<button class="proj-back-arrow" id="projBackArrow" type="button" aria-label="Voltar ao chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>'+
-    '<h1>Memórias</h1><span class="proj-count">'+memCount+'</span>'+
-    '<span class="proj-top-crown">'+LizConfig.crown+'</span></div>'+
-    '<div class="proj-top-right">'+
-    '<button class="proj-new-btn" id="projNewBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova</button></div></div>';
-
-  // Search
-  h+='<div class="proj-search"><span class="proj-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span><input type="text" id="projSearch" placeholder="Explorar memórias..." value="'+this._e(q)+'" /></div>';
-
-  // Filters
-  const filters=[{id:'all',label:'Todas'},{id:'recent',label:'Recentes'},{id:'favorites',label:'Favoritas'},{id:'archived',label:'Arquivadas'}];
-  h+='<div class="proj-filters">';filters.forEach(f=>{h+='<button class="proj-filter'+(f.id===fl?' is-active':'')+'" data-f="'+f.id+'">'+f.label+'</button>';});h+='</div>';
-
-  // ---- Espaço profundo ----
-  h+='<div class="mem-deep">';
-
-  if(!list.length){
-    h+='<div class="mem-empty"><div class="mem-empty-crown">'+LizConfig.crown+'</div>'+
-      '<h2>Nenhuma memória ainda</h2>'+
-      '<p>"O arquivo da Liz está esperando por novos fragmentos..."</p>'+
-      '<button class="mem-empty-btn" id="projEmptyBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Criar primeira memória</button></div>';
-  }else{
-    // Grid masonry — fragmentos em 2 colunas via CSS columns
-    h+='<div class="mem-grid" id="memGrid">';
-    list.forEach((pj,i)=>{
-      const seed=pj.id||i;
-      const dateStr=pj.updatedAt||pj.createdAt||'';
-      const lizNote='Liz guardou este fragmento'+(dateStr?' em '+this._e(dateStr):'')+(pj.desc?' — '+this._e(pj.desc.slice(0,40)):'');
-
-      // Tag de tipo (seeded)
-      const types=['dados','imagem','código','texto','áudio'];
-      const typeTag=types[Math.floor(_memRand(seed,'type')*types.length)];
-
-      const inner='<div class="mem-card">'+
-        '<span class="mem-crystal">'+crystalSvg+'</span>'+
-        '<div class="mem-name">'+this._e(pj.name)+'</div>'+
-        '<div class="mem-desc">'+(pj.desc?this._e(pj.desc):'Fragmento de memória')+'</div>'+
-        '<div class="mem-date"><span class="mem-tag">'+typeTag+'</span>'+this._e(dateStr)+'</div>'+
-        '</div>';
-
-      // Favorito + menu radial + anotação da Liz
-      const favBtn='<button class="mem-fav'+(pj.fav?' is-fav':'')+'" data-id="'+pj.id+'">'+(pj.fav?starFill:starSvg)+'</button>';
-      const radial='<div class="mem-radial">'+
-        '<button class="mem-radial-btn" data-act="open" data-id="'+pj.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>'+
-        '<button class="mem-radial-btn" data-act="fav" data-id="'+pj.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>'+
-        '<button class="mem-radial-btn danger" data-act="del" data-id="'+pj.id+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'+
-        '</div>';
-      const note='<div class="mem-liz-note">'+lizNote+'</div>';
-
-      h+='<div class="mem-frag" data-id="'+pj.id+'">'+inner+favBtn+radial+note+'</div>';
-    });
-    h+='</div>';
-  }
-
-  h+='</div>'; // fecha .mem-deep
-
-  // Presença da Liz (coroa pulsando)
-  h+='<div class="mem-liz-presence">'+LizConfig.crown+'</div>';
-  // Sussurro
-  h+='<div class="mem-whisper" id="memWhisper"></div>';
-  // Dim overlay
-  h+='<div class="mem-dim" id="memDim"></div>';
-
-  h+='</div>'; // fecha .proj-page
-  p.innerHTML=h;
-
-  // Seta voltar → chat
-  const _ba=document.getElementById('projBackArrow');
-  if(_ba)_ba.addEventListener('click',()=>this._goChat());
-
-  // ---- Animação de entrada escalonada ----
-  if(!window.matchMedia||!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    const frags=p.querySelectorAll('.mem-frag');
-    frags.forEach((el,i)=>{
-      try{
-        el.animate(
-          [{opacity:0,transform:'translateY(14px) scale(0.96)'},{opacity:1,transform:'translateY(0) scale(1)'}],
-          {duration:320,delay:Math.min(i*32,380),easing:'cubic-bezier(0.22,1,0.36,1)',fill:'backwards'}
-        );
-      }catch(e){}
-    });
-  }
-
-  // ---- Sussurro da Liz (aparece após 4s) ----
-  this._memWhisperTimer&&clearTimeout(this._memWhisperTimer);
-  this._memWhisperTimer=setTimeout(()=>{
-    const w=document.getElementById('memWhisper');
-    if(w&&this.tab==='projects'){
-      w.textContent=_memWhispers[Math.floor(Math.random()*_memWhispers.length)];
-      w.classList.add('is-visible');
-      setTimeout(()=>w.classList.remove('is-visible'),3500);
-    }
-  },4000);
-
-  // ---- Event delegation ----
-  if(!p.dataset.delegated){p.dataset.delegated='1';
-
-    const getDim=()=>document.getElementById('memDim');
-    const getLifted=()=>p.querySelector('.mem-frag.is-lifted');
-    const clearLift=()=>{const l=getLifted();if(l)l.classList.remove('is-lifted');const d=getDim();if(d)d.classList.remove('is-active');};
-
-    p.addEventListener('click',(e)=>{
-      if(e.target.classList&&e.target.classList.contains('mem-dim')){
-        clearLift();return;
-      }
-
-      // Seta voltar → chat
-      const backArrow=e.target.closest('.proj-back-arrow');
-      if(backArrow){
-        clearLift();
-        this._goChat();
-        return;
-      }
-
-      // Nova memória
-      const newBtn=e.target.closest('#projNewBtn,#projEmptyBtn');
-      if(newBtn){
-        this._buzz(10);
-        this._inputModal('Nova memória','Nome da memória','Criar',(n)=>{
-          LizData.createProject(n);
-          this._projects();
-          this._toast('Fragmento criado! 💜');
-        });
-        return;
-      }
-
-      // Filtro
-      const filter=e.target.closest('.proj-filter');
-      if(filter){this._projFl=filter.dataset.f;this._projQ='';this._projects();return;}
-
-      // Favorito (estrela no fragmento)
-      const fav=e.target.closest('.mem-fav');
-      if(fav){e.stopPropagation();this._buzz(12);const id=fav.dataset.id;const pr=LizData.projectList.find(x=>x.id===id);if(pr){pr.fav=!pr.fav;LizData._persistProjects();this._projects();this._toast(pr.fav?'Guardado com carinho ✦':'Removido dos favoritos');}return;}
-
-      // Menu radial
-      const radBtn=e.target.closest('.mem-radial-btn');
-      if(radBtn){
-        e.stopPropagation();
-        const act=radBtn.dataset.act;const id=radBtn.dataset.id;
-        const pr=LizData.projectList.find(x=>x.id===id);
-        if(act==='open'&&pr){this._buzz(10);this._toast('Abrindo: '+pr.name);}
-        else if(act==='fav'&&pr){this._buzz(12);pr.fav=!pr.fav;LizData._persistProjects();this._projects();this._toast(pr.fav?'Guardado com carinho ✦':'Removido');}
-        else if(act==='del'&&pr){
-          clearLift();
-          this._confirmModal('Excluir memória','Excluir "'+this._e(pr.name)+'"?','Excluir',true,()=>{
-            LizData.projectList=LizData.projectList.filter(x=>x.id!==id);
-            LizData._persistProjects();this._projects();
-            this._toast('Essa memória se foi, mas o que vivemos fica...');
-          });
-          return;
-        }
-        clearLift();
-        return;
-      }
-
-      // Tap no fragmento → levanta / abaixa
-      const obj=e.target.closest('.mem-frag');
-      if(obj){
-        this._buzz(8);
-        const wasLifted=obj.classList.contains('is-lifted');
-        clearLift();
-        if(!wasLifted){
-          obj.classList.add('is-lifted');
-          const d=getDim();if(d)d.classList.add('is-active');
-        }
-        return;
-      }
-    });
-
-    // Search com debounce
-    let _searchTimer=null;
-    p.addEventListener('input',(e)=>{
-      if(e.target.id==='projSearch'){
-        const el=e.target;
-        const val=el.value;
-        const pos=(el.selectionStart==null)?val.length:el.selectionStart;
-        const hadFocus=(document.activeElement===el);
-        clearTimeout(_searchTimer);
-        _searchTimer=setTimeout(()=>{
-          this._projQ=val;
-          this._projects();
-          if(hadFocus){
-            const inp=document.getElementById('projSearch');
-            if(inp){inp.focus();try{inp.setSelectionRange(pos,pos);}catch(e){}}
-          }
-        },300);
-      }
-    });
-  }
-};
-
 App._handleFiles=function(files){
   [...files].forEach(file=>{
     if(file.size>10*1024*1024){this._toast('Arquivo grande demais');return;}
     const r=new FileReader();
-    r.onload=(e)=>{LizData.saveUploadedFile({name:file.name,size:file.size,type:file.type,dataUrl:e.target.result,convTitle:'Memórias'});this._toast('Arquivo salvo!');if(this.tab==='projects')this._projects();};
+    r.onload=(e)=>{LizData.saveUploadedFile({name:file.name,size:file.size,type:file.type,dataUrl:e.target.result,convTitle:'Arquivos'});this._toast('Arquivo salvo!');};
     r.readAsDataURL(file);
   });
 };

@@ -435,19 +435,3 @@
 }
 .upload-panel-empty-icon svg { width: 36px; height: 36px; }
 
-/* ---- Galeria de Projetos ---- */
-.panel-body.is-drag-over {
-  border-color: var(--color-brand) !important;
-  box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.2);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-@media (max-width: 700px) {
-  .projects-gallery-grid {
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 8px;
-  }
-  .projects-gallery-upload-btn {
-    font-size: 0.75rem;
-    padding: 6px 12px;
-  }
-}

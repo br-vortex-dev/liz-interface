@@ -1,6 +1,6 @@
 /* ============================================================
  *  Liz — ui-gallery.js
- *  Preview, galeria, upload panel, file messages, project gallery
+ *  Preview, galeria, upload panel, file messages
  * ============================================================ */
 
 // ===================== FILE MESSAGE =====================
@@ -96,64 +96,3 @@ LizUI.closeUploadPanel = function() {
   document.body.style.overflow = '';
 };
 
-// ===================== PROJECT GALLERY (legado) =====================
-LizUI.renderProjectsGallery = function() {
-  const content = this.el.projectsContent;
-  if (!content) return;
-  LizData.loadUploadedFiles();
-  const files = LizData.uploadedFiles;
-  const images = files.filter((f) => f.type && f.type.startsWith('image/'));
-  const docs = files.filter((f) => !f.type || !f.type.startsWith('image/'));
-  let html = '<div class="projects-gallery-header"><span class="projects-gallery-count">' + files.length + ' arquivo' + (files.length !== 1 ? 's' : '') + '</span>' +
-    '<button class="projects-gallery-upload-btn" type="button" id="projects-upload-btn">' + LizConfig.icons.upload + ' Upload</button></div>';
-  if (files.length === 0) {
-    html += '<div class="projects-gallery-empty"><span class="projects-gallery-empty-icon">' + LizConfig.icons.folder + '</span><p class="projects-gallery-empty-text">Nenhum arquivo ainda</p><p class="projects-gallery-empty-hint">Clique em "Upload" ou arraste arquivos para adicionar</p></div>';
-  } else {
-    if (images.length > 0) {
-      html += '<div class="projects-gallery-section"><p class="projects-gallery-section-title">Imagens (' + images.length + ')</p><div class="projects-gallery-grid" id="projects-gallery-grid">';
-      images.forEach((f) => { html += '<div class="projects-gallery-item" data-file-id="' + this._esc(f.id) + '"><img src="' + f.dataUrl + '" alt="' + this._esc(f.name) + '" loading="lazy" /><div class="projects-gallery-item-overlay"><span class="projects-gallery-item-name">' + this._esc(f.name) + '</span><button class="projects-gallery-item-delete" data-delete-id="' + this._esc(f.id) + '" type="button" aria-label="Remover">' + LizConfig.icons.trash + '</button></div></div>'; });
-      html += '</div></div>';
-    }
-    if (docs.length > 0) {
-      html += '<div class="projects-gallery-section"><p class="projects-gallery-section-title">Documentos (' + docs.length + ')</p><div class="projects-gallery-docs">';
-      docs.forEach((f) => { html += '<div class="projects-gallery-doc" data-file-id="' + this._esc(f.id) + '"><span class="projects-gallery-doc-icon">' + LizConfig.icons.file + '</span><div class="projects-gallery-doc-info"><span class="projects-gallery-doc-name">' + this._esc(f.name) + '</span><span class="projects-gallery-doc-meta">' + this._formatFileSize(f.size) + '</span></div><button class="projects-gallery-doc-delete" data-delete-id="' + this._esc(f.id) + '" type="button" aria-label="Remover">' + LizConfig.icons.trash + '</button></div>'; });
-      html += '</div></div>';
-    }
-  }
-  content.innerHTML = html;
-  const uploadBtn = document.getElementById('projects-upload-btn');
-  if (uploadBtn) {
-    uploadBtn.addEventListener('click', () => {
-      const input = document.createElement('input'); input.type = 'file'; input.multiple = true;
-      input.accept = 'image/*,.pdf,.doc,.docx,.txt,.csv,.json,.js,.ts,.py,.html,.css,.md,.zip,.rar';
-      input.onchange = (e) => { this._galleryUploadFiles(e.target.files); input.value = ''; };
-      input.click();
-    });
-  }
-  content.querySelectorAll('.projects-gallery-item').forEach((item) => {
-    item.addEventListener('click', (e) => { if (e.target.closest('.projects-gallery-item-delete')) return; const img = item.querySelector('img'); const name = item.querySelector('.projects-gallery-item-name'); if (img) this.openPreview(img.src, name ? name.textContent : 'Imagem'); });
-  });
-  content.querySelectorAll('.projects-gallery-item-delete').forEach((btn) => { btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.deleteId; if (id) { LizData.deleteUploadedFile(id); this.renderProjectsGallery(); } }); });
-  content.querySelectorAll('.projects-gallery-doc-delete').forEach((btn) => { btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.deleteId; if (id) { LizData.deleteUploadedFile(id); this.renderProjectsGallery(); } }); });
-  const galleryBody = content.closest('.panel-body');
-  if (galleryBody && !this._galleryDragInited) {
-    this._galleryDragInited = true;
-    galleryBody.addEventListener('dragenter', (e) => { e.preventDefault(); e.stopPropagation(); galleryBody.classList.add('is-drag-over'); });
-    galleryBody.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); });
-    galleryBody.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); if (!galleryBody.contains(e.relatedTarget)) galleryBody.classList.remove('is-drag-over'); });
-    galleryBody.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); galleryBody.classList.remove('is-drag-over'); if (e.dataTransfer.files.length) this._galleryUploadFiles(e.dataTransfer.files); });
-  }
-};
-
-LizUI._galleryUploadFiles = function(files) {
-  const MAX_SIZE = 10 * 1024 * 1024;
-  const validFiles = [];
-  for (const file of files) { if (file.size > MAX_SIZE) { if (typeof LizChat !== 'undefined') LizChat.toast('Arquivo muito grande (máx. 10 MB): ' + file.name); continue; } validFiles.push(file); }
-  if (validFiles.length === 0) return;
-  let completed = 0;
-  validFiles.forEach((file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => { LizData.saveUploadedFile({ name: file.name, size: file.size, type: file.type, dataUrl: e.target.result, convTitle: 'Projetos' }); completed++; if (completed === validFiles.length) this.renderProjectsGallery(); };
-    reader.readAsDataURL(file);
-  });
-};

@@ -1,6 +1,6 @@
 /* ============================================================
  *  Liz Mobile — panels.css
- *  Modal glass, settings, tools, projects, files
+ *  Modal glass, settings, tools, files
  * ============================================================ */
 
 /* ---- Modal Overlay ---- */
@@ -277,33 +277,6 @@
 .pct {
   font-size: 0.58rem;
   color: var(--text-muted);
-}
-
-/* ---- Projects (lista simples) ---- */
-.proj-fab {
-  position: fixed;
-  bottom: calc(24px + var(--safe-b));
-  right: 20px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 24px rgba(139, 92, 246, 0.35), var(--shadow-glow);
-  z-index: 10;
-  transition: transform var(--t-fast) var(--ease-spring);
-}
-
-.proj-fab:active {
-  transform: scale(0.88);
-}
-
-.proj-fab svg {
-  width: 22px;
-  height: 22px;
 }
 
 .pe {

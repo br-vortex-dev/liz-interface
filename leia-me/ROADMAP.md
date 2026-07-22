@@ -11,7 +11,7 @@
 ### Galeria
 - ~~Modal de galeria com grid~~ ✅
 - ~~Preview de imagens com download~~ ✅
-- ~~Upload para galeria (projetos)~~ ✅
+- ~~Upload para galeria~~ ✅
 - ~~Histórico de uploads~~ ✅
 - ~~Deletar mídia da galeria~~ ✅
 
@@ -42,7 +42,7 @@
 - [x] Empty state com coroa breathing + anéis pulsantes ✅
 - [x] Mensagens "glass river" com bolhas translúcidas ✅
 - [x] Modal glass com spring animation ✅
-- [x] Projetos com cards glass e filtros ✅
+- [x] Mural de Polaroids com fio e pregadores ✅
 - [x] Tema claro completo ✅
 - [x] prefers-reduced-motion ✅
 - [ ] Animação de introdução da coroa (como no desktop)
@@ -51,7 +51,6 @@
 - [ ] Swipe gestures para navegação
 
 ### Galeria
-- [ ] Unificar as duas galerias (modal + painel de projetos)
 - [ ] Criar entrada/botão na UI para a galeria modal
 - [ ] Melhorar transições entre imagens no preview
 - [ ] Feedback visual de loading durante upload

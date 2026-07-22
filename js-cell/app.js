@@ -20,7 +20,7 @@ const App = {
       crownIcon: document.getElementById('crownIcon'), crownOverlay: document.getElementById('crownOverlay'),
       modalOverlay: document.getElementById('modalOverlay'), modalTitle: document.getElementById('modalTitle'),
       modalBody: document.getElementById('modalBody'), modalClose: document.getElementById('modalClose'),
-      pages: { chat: document.getElementById('pageChat'), projects: document.getElementById('pageProjects'), settings: document.getElementById('pageSettings'), files: document.getElementById('pageFiles'), convs: document.getElementById('pageConvs') },
+      pages: { chat: document.getElementById('pageChat'), settings: document.getElementById('pageSettings'), files: document.getElementById('pageFiles'), convs: document.getElementById('pageConvs') },
     };
   },
   _renderBrand() {
@@ -79,12 +79,12 @@ const App = {
   _switchTab(tab) {
     this.currentTab = tab;
     Object.values(this.el.pages).forEach(p => p.classList.remove('is-active'));
-    const map = { chat: 'chat', convs: 'convs', projects: 'projects', settings: 'settings', files: 'files' };
+    const map = { chat: 'chat', convs: 'convs', settings: 'settings', files: 'files' };
     const key = map[tab]; if (key && this.el.pages[key]) this.el.pages[key].classList.add('is-active');
-    if (tab === 'projects') this._renderProjects(); if (tab === 'settings') this._renderSettings();
+    if (tab === 'settings') this._renderSettings();
     if (tab === 'files') this._renderFiles(); if (tab === 'convs') this._renderConvs();
     const cw = document.getElementById('composerWrap'); if (cw) cw.style.display = tab === 'chat' ? '' : 'none';
-    const names = { chat: 'Online', convs: 'Histórico', projects: 'Projetos', settings: 'Ajustes', files: 'Arquivos' };
+    const names = { chat: 'Online', convs: 'Histórico', settings: 'Ajustes', files: 'Arquivos' };
     this.el.status.textContent = names[tab] || ''; this.el.headerTitle.textContent = tab === 'chat' ? 'Liz' : names[tab] || '';
     if (key && this.el.pages[key]) this.el.pages[key].scrollTop = 0;
   },
@@ -137,18 +137,6 @@ const App = {
     else{h+='<div style="padding:8px 14px 20px;display:flex;flex-direction:column;gap:6px">';g.forEach(gr=>{h+='<p style="font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin:8px 2px 4px">'+this._esc(gr.period)+'</p>';gr.items.forEach(it=>{h+='<button class="conv-card" data-id="'+this._esc(it.id)+'"><span class="conv-card-icon">'+LizConfig.icons.chats+'</span><div class="conv-card-info"><div class="conv-card-title">'+this._esc(it.title)+'</div><div class="conv-card-preview">'+this._esc(it.preview||'')+'</div></div></button>';});});h+='</div>';}
     p.innerHTML=h;p.querySelectorAll('.conv-card').forEach(c=>c.addEventListener('click',()=>{const id=c.dataset.id;const s=LizData.getConversationById(id);if(s&&s.messages.length){this.messages=s.messages.map(m=>({...m}));this.currentTitle=s.title;this.el.emptyState.classList.add('is-hidden');this.el.msgList.classList.remove('is-hidden');this._renderAllMsgs();this.el.status.textContent=s.title;this._switchTab('chat');}}));
   },
-  _renderProjects(){
-    LizData.loadProjects();const list=LizData.projectList;const p=this.el.pages.projects;if(!p)return;
-    let h='<div class="proj-header"><h2>Projetos</h2><button class="proj-add" id="projAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>';
-    if(!list.length){h+='<div class="proj-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p>Nenhum projeto</p></div>';}
-    else{h+='<div class="proj-list">';list.forEach(pj=>{h+='<div class="proj-card"><div class="proj-card-accent" style="background:'+(pj.color||'#8b5cf6')+'"></div><div class="proj-card-info"><div class="proj-card-name">'+this._esc(pj.name)+'</div><div class="proj-card-desc">'+(pj.desc?this._esc(pj.desc):'')+'</div></div><span class="proj-card-time">'+this._esc(pj.updatedAt||'')+'</span></div>';});h+='</div>';}
-    p.innerHTML=h;const ab=document.getElementById('projAddBtn');if(ab)ab.addEventListener('click',()=>this._openNewProject());
-  },
-  _openNewProject(){
-    this._openModal('Novo Projeto','<div class="modal-field"><label>Nome</label><input id="projName" type="text" placeholder="Nome" /></div><div class="modal-field"><label>Descrição</label><textarea id="projDesc" placeholder="Opcional" rows="2"></textarea></div><button class="modal-btn" id="projSave">Criar</button>');
-    setTimeout(()=>document.getElementById('projName')?.focus(),150);
-    document.getElementById('projSave')?.addEventListener('click',()=>{const n=document.getElementById('projName')?.value.trim();if(!n){this._toast('Digite um nome');return;}LizData.createProject(n,document.getElementById('projDesc')?.value.trim()||'');this._closeModal();this._renderProjects();this._toast('Criado!');});
-  },
   _renderSettings(){
     const p=this.el.pages.settings;if(!p)return;
     p.innerHTML='<div style="padding:16px 14px 8px"><h2 style="font-size:1rem;font-weight:700">Ajustes</h2></div><div class="set-list">'+
@@ -164,7 +152,7 @@ const App = {
   _renderFiles(){
     LizData.loadUploadedFiles();const files=LizData.uploadedFiles;const p=this.el.pages.files;if(!p)return;
     const imgs=files.filter(f=>f.type?.startsWith('image/'));const docs=files.filter(f=>!f.type?.startsWith('image/'));
-    let h='<div class="proj-header"><h2>Arquivos</h2><button class="proj-add" id="fileAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button></div>';
+    let h='<div class="files-header"><h2>Arquivos</h2><button class="files-add" id="fileAddBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button></div>';
     if(!files.length){h+='<div class="files-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg><p>Nenhum arquivo</p></div>';}
     else{h+='<div class="files-grid">';imgs.forEach(f=>h+='<div class="files-item"><img src="'+f.dataUrl+'" alt="'+this._esc(f.name)+'" loading="lazy" /></div>');docs.forEach(f=>h+='<div class="files-item-doc"><span class="doc-icon">'+LizConfig.icons.file+'</span><span>'+this._esc(f.name)+'</span></div>');h+='</div>';}
     p.innerHTML=h;const ab=document.getElementById('fileAddBtn');if(ab)ab.addEventListener('click',()=>this.el.fileInput.click());

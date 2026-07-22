@@ -1,4 +1,4 @@
-# PROJECT.md
+# LIZ.md
 
 # Liz AI
 

@@ -1,0 +1,656 @@
+/* ============================================================
+ *  Liz — polaroid-wall.css
+ *  Mural de Polaroids com fio, pregadores e física real
+ * ============================================================ */
+
+/* ---- Overlay do Mural ---- */
+.polaroid-wall-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #f5f0eb;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.6) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease-out-expo);
+  overflow: hidden;
+}
+
+.polaroid-wall-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---- Header do Mural ---- */
+.polaroid-wall-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(to bottom, rgba(245, 240, 235, 0.95) 0%, rgba(245, 240, 235, 0) 100%);
+}
+
+.polaroid-wall-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #4a4540;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.polaroid-wall-back:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: translateX(-2px);
+}
+
+.polaroid-wall-back svg {
+  width: 16px;
+  height: 16px;
+}
+
+.polaroid-wall-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.polaroid-wall-action-btn {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
+  color: #4a4540;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.polaroid-wall-action-btn:hover {
+  background: rgba(192, 38, 211, 0.15);
+  color: #C026D3;
+  transform: scale(1.05);
+}
+
+.polaroid-wall-action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- Coroa da Liz no canto ---- */
+.polaroid-wall-crown {
+  position: absolute;
+  top: 70px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  z-index: 5;
+  filter: drop-shadow(0 4px 12px rgba(192, 38, 211, 0.3));
+  animation: crownFloat 4s ease-in-out infinite;
+}
+
+@keyframes crownFloat {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+
+/* ---- Container dos Fios ---- */
+.polaroid-wall-container {
+  position: absolute;
+  inset: 0;
+  padding: 100px 0 60px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---- Fio Horizontal ---- */
+.polaroid-string-row {
+  position: relative;
+  height: 280px;
+  margin-bottom: 40px;
+  padding: 0 40px;
+}
+
+.polaroid-string {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right,
+    transparent 0%,
+    #8b7355 5%,
+    #a0826d 50%,
+    #8b7355 95%,
+    transparent 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+.polaroid-string::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.08), transparent);
+  filter: blur(4px);
+}
+
+/* ---- Track de Scroll Horizontal ---- */
+.polaroid-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 0 60px;
+  cursor: grab;
+  will-change: transform;
+  transition: transform 0.1s linear;
+}
+
+.polaroid-track.is-dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.polaroid-track.is-settling {
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ---- Card Polaroid ---- */
+.polaroid-card {
+  position: relative;
+  flex-shrink: 0;
+  width: 200px;
+  transform-origin: top center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.polaroid-card:nth-child(odd) {
+  margin-top: 0px;
+}
+
+.polaroid-card:nth-child(even) {
+  margin-top: 24px;
+}
+
+.polaroid-card:nth-child(3n) {
+  margin-top: 12px;
+}
+
+/* ---- Pregador de Madeira ---- */
+.polaroid-clip {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 36px;
+  z-index: 3;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+}
+
+.polaroid-clip svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Corpo da Polaroid ---- */
+.polaroid-body {
+  position: relative;
+  background: #ffffff;
+  padding: 12px 12px 48px;
+  border-radius: 2px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  transform: rotate(var(--rotation, 0deg));
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.polaroid-card:nth-child(4n+1) .polaroid-body { --rotation: -2deg; }
+.polaroid-card:nth-child(4n+2) .polaroid-body { --rotation: 1.5deg; }
+.polaroid-card:nth-child(4n+3) .polaroid-body { --rotation: -1deg; }
+.polaroid-card:nth-child(4n+4) .polaroid-body { --rotation: 2deg; }
+
+.polaroid-card:hover .polaroid-body {
+  transform: rotate(0deg) scale(1.02);
+}
+
+/* ---- Animação de Balanço (Pêndulo) ---- */
+.polaroid-card.is-swinging {
+  animation: polaroidSwing 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes polaroidSwing {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(4deg); }
+  30% { transform: rotate(-3deg); }
+  45% { transform: rotate(2deg); }
+  60% { transform: rotate(-1.5deg); }
+  75% { transform: rotate(1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ---- Conteúdo da Polaroid ---- */
+.polaroid-content {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #f8f8f8;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.polaroid-content img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---- Legenda da Polaroid ---- */
+.polaroid-caption {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #4a4540;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Variações de Card ---- */
+
+/* Bilhete escrito à mão */
+.polaroid-card[data-type="text"] .polaroid-content {
+  background: #fffef5;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 23px,
+      rgba(100, 100, 180, 0.15) 23px,
+      rgba(100, 100, 180, 0.15) 24px
+    );
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.polaroid-card[data-type="text"] .polaroid-text {
+  font-family: 'Segoe UI', 'Comic Sans MS', cursive;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #3a3530;
+  text-align: center;
+  transform: rotate(-1deg);
+}
+
+/* Recorte de código */
+.polaroid-card[data-type="code"] .polaroid-content {
+  background: #1e1e2e;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 19px,
+      rgba(255, 255, 255, 0.03) 19px,
+      rgba(255, 255, 255, 0.03) 20px
+    );
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  color: #a6e3a1;
+  overflow: hidden;
+}
+
+.polaroid-card[data-type="code"] .polaroid-code {
+  white-space: pre-wrap;
+  word-break: break-all;
+  opacity: 0.9;
+}
+
+/* Cartão genérico */
+.polaroid-card[data-type="generic"] .polaroid-content {
+  background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+}
+
+.polaroid-card[data-type="generic"] .polaroid-icon {
+  width: 48px;
+  height: 48px;
+  color: #C026D3;
+  opacity: 0.7;
+}
+
+.polaroid-card[data-type="generic"] .polaroid-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.polaroid-card[data-type="generic"] .polaroid-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4a4540;
+  text-align: center;
+  word-break: break-word;
+}
+
+/* ---- Card Arquivado (verso) ---- */
+.polaroid-card.is-archived .polaroid-body {
+  background: #e8e0d8;
+}
+
+.polaroid-card.is-archived .polaroid-content {
+  background: #d5ccc2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.polaroid-card.is-archived .polaroid-back-label {
+  font-size: 0.7rem;
+  color: #8b7355;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---- Favorito (clipe dourado) ---- */
+.polaroid-favorite {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  z-index: 4;
+  filter: drop-shadow(0 2px 6px rgba(212, 175, 55, 0.4));
+  opacity: 0;
+  transform: scale(0) rotate(-20deg);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.polaroid-card.is-favorite .polaroid-favorite {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.polaroid-favorite svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Estado Vazio ---- */
+.polaroid-wall-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+}
+
+.polaroid-wall-empty-string {
+  position: relative;
+  width: 300px;
+  height: 3px;
+  background: #a0826d;
+  margin: 0 auto 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.polaroid-wall-empty-clip {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 36px;
+}
+
+.polaroid-wall-empty-note {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  background: #fff;
+  padding: 16px 24px;
+  border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  font-size: 0.85rem;
+  color: #4a4540;
+  white-space: nowrap;
+}
+
+.polaroid-wall-empty-text {
+  margin-top: 80px;
+  font-size: 0.9rem;
+  color: #8b7355;
+  font-style: italic;
+}
+
+/* ---- Sussurro da Liz ---- */
+.polaroid-wall-whisper {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: #a0826d;
+  font-style: italic;
+  opacity: 0.7;
+  text-align: center;
+  z-index: 5;
+}
+
+/* ---- Responsivo Mobile ---- */
+@media (max-width: 700px) {
+  .polaroid-wall-header {
+    padding: 12px 16px;
+  }
+
+  .polaroid-wall-crown {
+    top: 60px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .polaroid-string-row {
+    height: 240px;
+    margin-bottom: 32px;
+    padding: 0 20px;
+  }
+
+  .polaroid-card {
+    width: 160px;
+  }
+
+  .polaroid-track {
+    gap: 24px;
+    padding: 0 40px;
+  }
+
+  .polaroid-wall-empty-string {
+    width: 240px;
+  }
+}
+
+/* ---- Scrollbar sutil ---- */
+.polaroid-wall-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.polaroid-wall-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.polaroid-wall-container::-webkit-scrollbar-thumb {
+  background: rgba(139, 115, 85, 0.3);
+  border-radius: 3px;
+}
+
+.polaroid-wall-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 115, 85, 0.5);
+}
+
+/* ============================================================
+ *  TEMA ESCURO — fundo premium escuro, polaroids físicas claras
+ *  (contraste de fotos reais num mural noturno da Liz)
+ * ============================================================ */
+[data-theme="dark"] .polaroid-wall-overlay {
+  background: #0a0810;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(192, 38, 211, 0.07) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .polaroid-wall-header {
+  background: linear-gradient(to bottom, rgba(10, 8, 16, 0.92) 0%, rgba(10, 8, 16, 0) 100%);
+}
+
+[data-theme="dark"] .polaroid-wall-back {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .polaroid-wall-back:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .polaroid-wall-action-btn {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .polaroid-wall-action-btn:hover {
+  background: rgba(192, 38, 211, 0.2);
+  color: #e879f9;
+}
+
+/* Fio do varal — marrom levemente iluminado no escuro */
+[data-theme="dark"] .polaroid-string {
+  background: linear-gradient(to right,
+    transparent 0%,
+    #9c8264 5%,
+    #b89a80 50%,
+    #9c8264 95%,
+    transparent 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .polaroid-string::before {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent);
+}
+
+/* Polaroid física — mantém o papel claro, sombra mais profunda */
+[data-theme="dark"] .polaroid-body {
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.5),
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Verso arquivado — escuro */
+[data-theme="dark"] .polaroid-card.is-archived .polaroid-body {
+  background: #1a1620;
+}
+
+[data-theme="dark"] .polaroid-card.is-archived .polaroid-content {
+  background: #14111a;
+}
+
+[data-theme="dark"] .polaroid-card.is-archived .polaroid-back-label {
+  color: #b89a80;
+}
+
+/* Cartão genérico — escuro com ícone magenta brilhante */
+[data-theme="dark"] .polaroid-card[data-type="generic"] .polaroid-content {
+  background: linear-gradient(135deg, #17131f 0%, #20182b 100%);
+}
+
+[data-theme="dark"] .polaroid-card[data-type="generic"] .polaroid-icon {
+  color: #e879f9;
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .polaroid-card[data-type="generic"] .polaroid-name {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Estado vazio */
+[data-theme="dark"] .polaroid-wall-empty-string {
+  background: #b89a80;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .polaroid-wall-empty-note {
+  background: #16121e;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .polaroid-wall-empty-text {
+  color: #b89a80;
+}
+
+/* Sussurro da Liz */
+[data-theme="dark"] .polaroid-wall-whisper {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Scrollbar no escuro */
+[data-theme="dark"] .polaroid-wall-container::-webkit-scrollbar-thumb {
+  background: rgba(184, 154, 128, 0.3);
+}
+
+[data-theme="dark"] .polaroid-wall-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 154, 128, 0.5);
+}
+
+/* Transição suave ao trocar de tema */
+.polaroid-wall-overlay,
+.polaroid-wall-header,
+.polaroid-wall-back,
+.polaroid-wall-action-btn,
+.polaroid-body,
+.polaroid-wall-empty-note {
+  transition: background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
+}

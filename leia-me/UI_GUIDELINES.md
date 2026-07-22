@@ -1,6 +1,6 @@
 # 🎨 Liz — Diretrizes de Interface (UI Guidelines)
 
-Este documento define o sistema de design do projeto **Liz**, compartilhado entre o Chat (Vanilla JS) e a Tela de Login (Vanilla JS). Todas as cores, medidas e componentes derivam dos tokens CSS definidos nos dois projetos.
+Este documento define o sistema de design do projeto **Liz**, compartilhado entre o Chat (Vanilla JS) e a Tela de Login (Vanilla JS). Todas as cores, medidas e componentes derivam dos tokens CSS definidos nas duas interfaces.
 
 ---
 
@@ -104,7 +104,7 @@ Uma **grid sutil** é adicionada via pseudo-elemento `::before`:
 | Texto de mensagem | `0.9rem` | `400` | `1.6` |
 | Texto de input | `0.92rem` | `400` | `1.5` |
 | Card de conversa | `0.9rem` | `600` | `1.4` |
-| Card tool/project | `0.86rem` | `600` | `1.4` |
+| Card tool | `0.86rem` | `600` | `1.4` |
 | Chip sugestão | `0.84rem` | `500` | `1.3` |
 | Status header | `0.84rem` | `400` | `1.3` |
 | Toast / ações | `0.82rem` | `500` | `1.3` |
@@ -291,20 +291,6 @@ O projeto não usa um sistema de spacing fixo (como 4px/8px), mas segue um padr�
   align-items: center;
   justify-content: center;
   gap: 10px;
-}
-```
-
-### Upload Button (Galeria)
-
-```css
-.projects-gallery-upload-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border-brand);
-  background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(124,58,237,0.1));
-  color: var(--color-brand-light);
-  font-size: 0.82rem;
-  font-weight: 600;
 }
 ```
 
@@ -573,22 +559,6 @@ input:checked + .toggle-track .toggle-thumb {
 
 Ícone do card: `32×32px`, `border-radius: 9px`, BG roxo translúcido.
 
-### Card de Projeto (Legado — substituído pela Galeria)
-
-```css
-.project-card {
-  /* mesmas propriedades do .tool-card */
-}
-
-.project-wide {
-  grid-column: 1 / -1;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 18px;
-}
-```
-
 ### Starter (Card de Ação Rápida)
 
 ```css
@@ -610,66 +580,6 @@ input:checked + .toggle-track .toggle-thumb {
   transform: translateY(-2px);
   border-color: rgba(139, 92, 246, 0.4);
   box-shadow: 0 8px 22px rgba(139, 92, 246, 0.16);
-}
-```
-
-### Galeria de Imagens (Projetos)
-
-```css
-.projects-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-}
-
-.projects-gallery-item {
-  aspect-ratio: 1;
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-  transition: transform var(--transition-fast) var(--ease-spring),
-              border-color var(--transition-normal);
-}
-
-.projects-gallery-item:hover {
-  transform: scale(1.04);
-  border-color: var(--color-brand);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
-  z-index: 2;
-}
-
-/* Overlay com nome + delete no hover */
-.projects-gallery-item-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 50%);
-  opacity: 0;
-  transition: opacity var(--transition-normal);
-}
-
-.projects-gallery-item:hover .projects-gallery-item-overlay {
-  opacity: 1;
-}
-```
-
-### Documento (Galeria)
-
-```css
-.projects-gallery-doc {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-}
-
-.projects-gallery-doc:hover {
-  background: var(--color-bg-card-hover);
-  border-color: var(--color-border-brand);
 }
 ```
 

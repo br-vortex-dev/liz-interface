@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="css/chat.css" />
   <link rel="stylesheet" href="css/panels.css" />
   <link rel="stylesheet" href="css/settings.css" />
-  <link rel="stylesheet" href="css/projects.css" />
   <link rel="stylesheet" href="css/gallery.css" />
+  <link rel="stylesheet" href="css/polaroid-wall.css" />
   <link rel="stylesheet" href="css/focus-mode.css" />
   <link rel="stylesheet" href="css/intro.css" />
   <link rel="stylesheet" href="css/responsive.css" />
@@ -108,9 +108,9 @@
           <span class="float-pill-ico"></span>
           <span class="float-pill-label">Ferramentas</span>
         </button>
-        <button class="float-pill" data-action="projects" type="button" aria-label="Projetos">
+        <button class="float-pill" data-action="polaroid-wall" type="button" aria-label="Mural">
           <span class="float-pill-ico"></span>
-          <span class="float-pill-label">Projetos</span>
+          <span class="float-pill-label">Mural</span>
         </button>
 
         <button class="float-pill" data-action="settings" type="button" aria-label="Ajustes">
@@ -211,40 +211,6 @@
       </div>
     </section>
 
-    <!-- ===================================================
-         PAINEL: PROJETOS — experiência completa estilo SO da Liz
-    ==================================================== -->
-    <section class="panel panel-fullscreen liz-projects-panel" id="panel-projects" role="dialog" aria-modal="true" aria-labelledby="panel-projects-title" aria-hidden="true">
-      <!-- Mini topbar minimalista -->
-      <div class="liz-proj-topbar">
-        <div class="liz-proj-topbar-left">
-          <span class="liz-proj-topbar-crown">
-            <img src="coroa.svg" alt="Liz" />
-          </span>
-          <span class="header-title">Liz</span>
-        </div>
-        <div class="liz-proj-topbar-right">
-          <button class="liz-proj-topbar-btn" id="proj-settings-btn" type="button" aria-label="Configurações dos projetos">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </button>
-          <span class="liz-proj-topbar-avatar">V</span>
-          <button class="panel-close" data-close type="button" aria-label="Fechar painel de projetos">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
-              <path d="M18 6 6 18M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Conteúdo principal injetado via JS -->
-      <div class="panel-body liz-proj-body" id="projects-content"></div>
-    </section>
-
-
-
     <!-- Toast -->
     <div class="liz-toast" id="liz-toast"></div>
 
@@ -297,7 +263,7 @@
   <script src="js/ui-chat.js"></script>
   <script src="js/ui-panels.js"></script>
   <script src="js/ui-gallery.js"></script>
-  <script src="js/ui-projects.js"></script>
+  <script src="js/ui-polaroid-wall.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/chat.js"></script>
 </body>

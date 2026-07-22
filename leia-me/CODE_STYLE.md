@@ -1,6 +1,6 @@
 # 📐 Liz — Guia de Estilo (Code Style)
 
-Este documento define os padrões de código do projeto **Liz**. Siga estas convenções para manter consistência entre os dois projetos: Chat (Vanilla JS) e Tela de Login (Vanilla JS).
+Este documento define os padrões de código do projeto **Liz**. Siga estas convenções para manter consistência entre as duas interfaces: Chat (Vanilla JS) e Tela de Login (Vanilla JS).
 
 ---
 
@@ -131,7 +131,6 @@ Scripts são carregados no HTML em ordem. A ordem importa:
 <script src="js/ui-chat.js"></script>     <!-- 4º: mensagens e chat -->
 <script src="js/ui-panels.js"></script>   <!-- 5º: painéis e tema -->
 <script src="js/ui-gallery.js"></script>  <!-- 6º: galeria e upload -->
-<script src="js/ui-projects.js"></script> <!-- 7º: projetos -->
 <script src="js/settings.js"></script>    <!-- 8º: ajustes -->
 <script src="js/chat.js"></script>        <!-- 9º: orquestração -->
 ```

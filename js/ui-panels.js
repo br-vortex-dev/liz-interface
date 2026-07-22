@@ -55,7 +55,6 @@ LizUI.openPanel = function(name) {
 };
 
 LizUI.closePanel = function() {
-  this._hideFloatPanel();
   this._hideMainFloatPanel();
   if (!this.activePanel) return;
   if (this._closePanelTimer) { clearTimeout(this._closePanelTimer); this._closePanelTimer = null; }
@@ -80,70 +79,12 @@ LizUI.closePanel = function() {
   this.clearActivePill();
 };
 
-// ===================== FLOAT PANEL (menu principal) =====================
-LizUI._showFloatPanel = function(action) {
-  const existing = document.getElementById('proj-float-panel');
-  if (existing && existing.classList.contains('is-visible') && existing.dataset.action === action) { this._hideFloatPanel(); return; }
-  const old = document.getElementById('proj-float-panel');
-  if (old) old.remove();
-  const panel = document.createElement('div');
-  panel.id = 'proj-float-panel';
-  panel.className = 'liz-proj-float-panel';
-  panel.dataset.action = action;
-  const titles = { conversations: 'Conversas recentes', tools: 'Ferramentas da Liz', settings: 'Ajustes' };
-  const icons = { conversations: LizConfig.icons.chats || '', tools: LizConfig.icons.tools || '', settings: LizConfig.icons.settings || '' };
-  const title = titles[action] || action;
-  let bodyHtml = '';
-  if (action === 'tools') {
-    bodyHtml = '<div class="liz-proj-float-tools">' + LizData.tools.map((t) =>
-      '<button class="liz-proj-float-tool" type="button"><span class="liz-proj-float-tool-ico">' + (LizConfig.icons[t.icon] || LizConfig.icons.sparkle) + '</span><span>' + t.title + '</span></button>'
-    ).join('') + '</div>';
-  } else if (action === 'conversations') {
-    const groups = typeof LizData.getConversationGroups === 'function' ? LizData.getConversationGroups() : [];
-    if (!groups.length || !groups[0].items.length) {
-      bodyHtml = '<div class="liz-proj-float-empty">Nenhuma conversa ainda</div>';
-    } else {
-      bodyHtml = '<div class="liz-proj-float-convs">';
-      groups.forEach((g) => g.items.forEach((item) => {
-        bodyHtml += '<button class="liz-proj-float-conv" type="button"><span class="liz-proj-float-conv-ico">' + (LizConfig.icons.chats || '') + '</span><span class="liz-proj-float-conv-title">' + item.title + '</span></button>';
-      }));
-      bodyHtml += '</div>';
-    }
-  }
-  panel.innerHTML = '<div class="liz-proj-float-head"><span class="liz-proj-float-title"><span class="liz-proj-float-title-ico">' + (icons[action] || '') + '</span>' + title + '</span>' +
-    '<button class="liz-proj-float-close" type="button">' + (LizConfig.icons.close || '×') + '</button></div><div class="liz-proj-float-body">' + bodyHtml + '</div>';
-  document.body.appendChild(panel);
-  void panel.offsetHeight;
-  panel.classList.add('is-visible');
-  panel.querySelector('.liz-proj-float-close').addEventListener('click', () => this._hideFloatPanel());
-  setTimeout(() => {
-    const handler = (e) => {
-      if (!panel.contains(e.target) && !e.target.closest('.liz-proj-mini-pill')) { this._hideFloatPanel(); document.removeEventListener('click', handler); }
-    };
-    document.addEventListener('click', handler);
-    panel._outsideHandler = handler;
-  }, 10);
-  const escHandler = (e) => { if (e.key === 'Escape') { this._hideFloatPanel(); document.removeEventListener('keydown', escHandler); } };
-  document.addEventListener('keydown', escHandler);
-  panel._escHandler = escHandler;
-};
-
-LizUI._hideFloatPanel = function() {
-  const panel = document.getElementById('proj-float-panel');
-  if (!panel) return;
-  panel.classList.remove('is-visible');
-  if (panel._outsideHandler) document.removeEventListener('click', panel._outsideHandler);
-  if (panel._escHandler) document.removeEventListener('keydown', panel._escHandler);
-  setTimeout(() => panel.remove(), 260);
-};
-
 // ===================== MAIN FLOAT PANEL =====================
 LizUI._showMainFloatPanel = function(action) {
   const existing = document.getElementById('main-float-panel');
   if (existing && existing.classList.contains('is-visible') && existing.dataset.action === action) { this._hideMainFloatPanel(); return; }
   const old = document.getElementById('main-float-panel');
   if (old) old.remove();
-  this._hideFloatPanel();
   this.setActivePill(action);
   const panel = document.createElement('div');
   panel.id = 'main-float-panel';
@@ -154,27 +95,27 @@ LizUI._showMainFloatPanel = function(action) {
   const title = titles[action] || action;
   let bodyHtml = '';
   if (action === 'tools') {
-    bodyHtml = '<div class="liz-proj-float-tools">' + LizData.tools.map((t) =>
-      '<button class="liz-proj-float-tool" type="button"><span class="liz-proj-float-tool-ico">' + (LizConfig.icons[t.icon] || LizConfig.icons.sparkle) + '</span><span>' + t.title + '</span></button>'
+    bodyHtml = '<div class="liz-float-tools">' + LizData.tools.map((t) =>
+      '<button class="liz-float-tool" type="button"><span class="liz-float-tool-ico">' + (LizConfig.icons[t.icon] || LizConfig.icons.sparkle) + '</span><span>' + t.title + '</span></button>'
     ).join('') + '</div>';
   } else if (action === 'conversations') {
     const groups = typeof LizData.getConversationGroups === 'function' ? LizData.getConversationGroups() : [];
     if (!groups.length || !groups[0].items.length) {
-      bodyHtml = '<div class="liz-proj-float-empty">Nenhuma conversa ainda</div>';
+      bodyHtml = '<div class="liz-float-empty">Nenhuma conversa ainda</div>';
     } else {
-      bodyHtml = '<div class="liz-proj-float-convs">';
+      bodyHtml = '<div class="liz-float-convs">';
       groups.forEach((g) => g.items.forEach((item) => {
-        bodyHtml += '<button class="liz-proj-float-conv" type="button"><span class="liz-proj-float-conv-ico">' + (LizConfig.icons.chats || '') + '</span><span class="liz-proj-float-conv-title">' + item.title + '</span></button>';
+        bodyHtml += '<button class="liz-float-conv" type="button"><span class="liz-float-conv-ico">' + (LizConfig.icons.chats || '') + '</span><span class="liz-float-conv-title">' + item.title + '</span></button>';
       }));
       bodyHtml += '</div>';
     }
   }
-  panel.innerHTML = '<div class="liz-proj-float-head"><span class="liz-proj-float-title"><span class="liz-proj-float-title-ico">' + (icons[action] || '') + '</span>' + title + '</span>' +
-    '<button class="liz-proj-float-close" type="button">' + (LizConfig.icons.close || '×') + '</button></div><div class="liz-proj-float-body">' + bodyHtml + '</div>';
+  panel.innerHTML = '<div class="liz-float-head"><span class="liz-float-title"><span class="liz-float-title-ico">' + (icons[action] || '') + '</span>' + title + '</span>' +
+    '<button class="liz-float-close" type="button">' + (LizConfig.icons.close || '×') + '</button></div><div class="liz-float-body">' + bodyHtml + '</div>';
   document.body.appendChild(panel);
   void panel.offsetHeight;
   panel.classList.add('is-visible');
-  panel.querySelector('.liz-proj-float-close').addEventListener('click', () => this._hideMainFloatPanel());
+  panel.querySelector('.liz-float-close').addEventListener('click', () => this._hideMainFloatPanel());
   setTimeout(() => {
     const handler = (e) => {
       if (!panel.contains(e.target) && !e.target.closest('.float-pill')) { this._hideMainFloatPanel(); document.removeEventListener('click', handler); }
@@ -203,7 +144,6 @@ LizUI.renderPanels = function() {
   this.el.toolsContent.innerHTML = LizData.tools.map((t) =>
     '<button class="tool-card" type="button"><span class="tool-card-ico">' + (LizConfig.icons[t.icon] || LizConfig.icons.sparkle) + '</span><span class="tool-card-title">' + this._esc(t.title) + '</span></button>'
   ).join('');
-  this.el.projectsContent.innerHTML = '';
   this._syncThemeSegmented();
   this._initSettingsEvents();
 };

@@ -197,10 +197,6 @@ const MobileChat = {
       this._newConversation();
       return;
     }
-    if (action === 'projects') {
-      this._showProjects();
-      return;
-    }
     if (action === 'settings') {
       this._showSettingsMenu();
       return;
@@ -280,26 +276,6 @@ const MobileChat = {
     MobileUI.el.sendBtn.disabled = true;
     this._showEmptyState();
     MobileUI.toast('Nova conversa');
-  },
-
-  _showProjects() {
-    MobileUI.setActiveNav('projects');
-    LizData.loadProjects();
-    const list = LizData.projectList;
-    let html = '<div class="sheet-head"><h3 class="sheet-title">Projetos</h3><button class="sheet-close" onclick="MobileUI.closePanel()">' + LizConfig.icons.close + '</button></div>';
-    if (list.length === 0) {
-      html += '<div style="text-align:center;padding:40px 20px;color:var(--color-text-muted);font-size:0.85rem"><p>Nenhum projeto ainda</p></div>';
-    } else {
-      html += '<div style="padding:12px 16px">';
-      list.forEach((p) => {
-        html += '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--color-border);margin-bottom:8px;background:var(--color-surface)">' +
-          '<div style="width:3px;height:32px;border-radius:2px;background:' + (p.color || '#8b5cf6') + '"></div>' +
-          '<div style="flex:1"><div style="font-weight:600;font-size:0.88rem">' + MobileUI._esc(p.name) + '</div>' +
-          '<div style="font-size:0.72rem;color:var(--color-text-muted)">' + (p.desc || 'Sem descrição') + '</div></div></div>';
-      });
-      html += '</div>';
-    }
-    MobileUI.openPanel(html);
   },
 
   _showSettingsMenu() {

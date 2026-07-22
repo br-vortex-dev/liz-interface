@@ -33,12 +33,10 @@ const LizUI = {
       panels: {
         conversations: document.getElementById('panel-conversations'),
         tools: document.getElementById('panel-tools'),
-        projects: document.getElementById('panel-projects'),
       },
       conversationsContent: document.getElementById('conversations-content'),
       conversationsSearch: document.getElementById('conversations-search'),
       toolsContent: document.getElementById('tools-content'),
-      projectsContent: document.getElementById('projects-content'),
       toast: document.getElementById('liz-toast'),
       fileInput: document.getElementById('file-input'),
       previewOverlay: document.getElementById('preview-overlay'),
@@ -54,7 +52,7 @@ const LizUI = {
    * =========================================================== */
   renderBrand() {
     this.el.emptyCrown.innerHTML = LizConfig.crown;
-    const iconMap = { new: 'newChat', conversations: 'chats', tools: 'tools', projects: 'projects', settings: 'settings' };
+    const iconMap = { new: 'newChat', conversations: 'chats', tools: 'tools', 'polaroid-wall': 'gallery', settings: 'settings' };
     document.querySelectorAll('.float-pill[data-action]').forEach((pill) => {
       const ico = pill.querySelector('.float-pill-ico');
       if (ico) ico.innerHTML = LizConfig.icons[iconMap[pill.dataset.action]];

@@ -46,31 +46,31 @@ const LizSettings = {
         { id: 'account', icon: 'settings', label: 'Conta' },
         { id: 'language', icon: 'filter', label: 'Idioma e Região' },
       ];
-      bodyHtml = '<div class="liz-proj-float-settings" id="main-float-settings-hub">';
+      bodyHtml = '<div class="liz-float-settings" id="main-float-settings-hub">';
       cats.forEach((c) => {
-        bodyHtml += '<button class="liz-proj-float-set-btn" data-cat="' + c.id + '" type="button">' +
-          '<span class="liz-proj-float-set-ico">' + (LizConfig.icons[c.icon] || LizConfig.icons.sparkle) + '</span>' +
+        bodyHtml += '<button class="liz-float-set-btn" data-cat="' + c.id + '" type="button">' +
+          '<span class="liz-float-set-ico">' + (LizConfig.icons[c.icon] || LizConfig.icons.sparkle) + '</span>' +
           '<span>' + c.label + '</span>' +
-          '<span class="liz-proj-float-set-arrow">' + (LizConfig.icons.continue || '') + '</span>' +
+          '<span class="liz-float-set-arrow">' + (LizConfig.icons.continue || '') + '</span>' +
           '</button>';
       });
       bodyHtml += '</div>';
     }
 
-    panel.innerHTML = '<div class="liz-proj-float-head">' +
-      '<span class="liz-proj-float-title">' +
-        '<span class="liz-proj-float-title-ico">' + (icons[action] || '') + '</span>' + title +
+    panel.innerHTML = '<div class="liz-float-head">' +
+      '<span class="liz-float-title">' +
+        '<span class="liz-float-title-ico">' + (icons[action] || '') + '</span>' + title +
       '</span>' +
-      '<button class="liz-proj-float-close" type="button">' + (LizConfig.icons.close || '×') + '</button>' +
+      '<button class="liz-float-close" type="button">' + (LizConfig.icons.close || '×') + '</button>' +
       '</div>' +
-      '<div class="liz-proj-float-body">' + bodyHtml + '</div>';
+      '<div class="liz-float-body">' + bodyHtml + '</div>';
 
     document.body.appendChild(panel);
     void panel.offsetHeight;
     panel.classList.add('is-visible');
 
-    panel.querySelector('.liz-proj-float-close').addEventListener('click', () => this.hideFloatPanel());
-    panel.querySelectorAll('.liz-proj-float-set-btn[data-cat]').forEach((btn) => {
+    panel.querySelector('.liz-float-close').addEventListener('click', () => this.hideFloatPanel());
+    panel.querySelectorAll('.liz-float-set-btn[data-cat]').forEach((btn) => {
       btn.addEventListener('click', () => this.showSettingsPage(btn.dataset.cat));
     });
 
@@ -105,7 +105,7 @@ const LizSettings = {
   showSettingsPage(pageId) {
     const panel = document.getElementById('main-float-panel');
     if (!panel) return;
-    const body = panel.querySelector('.liz-proj-float-body');
+    const body = panel.querySelector('.liz-float-body');
     if (!body) return;
 
     const titles = {
@@ -142,17 +142,17 @@ const LizSettings = {
             { id: 'account', icon: 'settings', label: 'Conta' },
             { id: 'language', icon: 'filter', label: 'Idioma e Região' },
           ];
-          let html = '<div class="liz-proj-float-settings" id="main-float-settings-hub">';
+          let html = '<div class="liz-float-settings" id="main-float-settings-hub">';
           cats.forEach((c, i) => {
-            html += '<button class="liz-proj-float-set-btn settings-cat-anim" data-cat="' + c.id + '" type="button" style="animation-delay:' + (i * 0.03) + 's">' +
-              '<span class="liz-proj-float-set-ico">' + (LizConfig.icons[c.icon] || LizConfig.icons.sparkle) + '</span>' +
+            html += '<button class="liz-float-set-btn settings-cat-anim" data-cat="' + c.id + '" type="button" style="animation-delay:' + (i * 0.03) + 's">' +
+              '<span class="liz-float-set-ico">' + (LizConfig.icons[c.icon] || LizConfig.icons.sparkle) + '</span>' +
               '<span>' + c.label + '</span>' +
-              '<span class="liz-proj-float-set-arrow">' + (LizConfig.icons.continue || '') + '</span>' +
+              '<span class="liz-float-set-arrow">' + (LizConfig.icons.continue || '') + '</span>' +
               '</button>';
           });
           html += '</div>';
           body.innerHTML = html;
-          body.querySelectorAll('.liz-proj-float-set-btn[data-cat]').forEach((btn) => {
+          body.querySelectorAll('.liz-float-set-btn[data-cat]').forEach((btn) => {
             btn.addEventListener('click', () => this.showSettingsPage(btn.dataset.cat));
           });
         }, 120);

@@ -7,8 +7,7 @@
 @media (max-width: 1100px) {
   :root { --float-menu-width: 68px; }
   .float-pill { width: 48px; height: 48px; }
-  .liz-main-float-panel,
-  .liz-proj-float-panel {
+  .liz-main-float-panel {
     left: 80px !important;
     width: 300px !important;
   }
@@ -24,19 +23,11 @@
   .empty-name { font-size: 1.7rem; }
   .messages-list { padding: 24px 18px; }
   .panel-grid { grid-template-columns: repeat(2, 1fr); }
-  .liz-main-float-panel,
-  .liz-proj-float-panel { width: 280px !important; }
-  .liz-proj-container { padding: 28px 24px 48px; }
-  .liz-proj-header-title { font-size: 1.9rem; }
-  .liz-proj-header-sub { padding-left: 0; }
-  .liz-proj-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .liz-main-float-panel { width: 280px !important; }
 }
 
 /* === MOBILE (≤ 700px) === */
 @media (max-width: 700px) {
-  /* --- Esconde mini-menu dos projetos --- */
-  .liz-proj-mini-menu { display: none !important; }
-
   /* --- Menu vira barra inferior --- */
   .floating-menu {
     position: fixed; top: auto; bottom: 0; left: 0; right: 0;
@@ -72,8 +63,7 @@
   .header-status-text { max-width: 100px; }
 
   /* --- Float panels (settings, tools, convs) --- */
-  .liz-main-float-panel,
-  .liz-proj-float-panel {
+  .liz-main-float-panel {
     position: fixed !important;
     left: 8px !important;
     right: 8px !important;
@@ -147,53 +137,14 @@
   .panel-title { font-size: 0.95rem; }
 
   .panel-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .tool-card, .project-card { padding: 12px; }
-  .tool-card-ico, .project-card-ico { width: 28px; height: 28px; }
+  .tool-card { padding: 12px; }
+  .tool-card-ico { width: 28px; height: 28px; }
   .tool-card-title { font-size: 0.78rem; }
 
   .conv-card { padding: 10px 12px; }
   .conv-card-title { font-size: 0.82rem; }
   .conv-card-preview { font-size: 0.72rem; }
 
-  /* --- Projetos --- */
-  .liz-proj-container { padding: 16px 12px 24px; }
-  .liz-proj-header { margin-bottom: 16px; }
-  .liz-proj-header-title { font-size: 1.4rem; }
-  .liz-proj-header-sub { font-size: 0.76rem; padding-left: 0; }
-  .liz-proj-header::after { margin-top: 14px; }
-  .liz-proj-controls { flex-wrap: wrap; gap: 8px; }
-  .liz-proj-search { max-width: 100%; flex: 1 1 100%; }
-  .liz-proj-search input { font-size: 0.78rem; }
-  .liz-proj-create-btn { font-size: 0.78rem; padding: 8px 16px; justify-content: center; }
-  .liz-proj-nav { width: 100%; justify-content: center; overflow-x: auto; }
-  .liz-proj-nav-btn { font-size: 0.74rem; padding: 5px 12px; white-space: nowrap; }
-  .liz-proj-grid { grid-template-columns: 1fr; gap: 8px; }
-  .liz-proj-card-content { padding: 14px 14px 10px; }
-  .liz-proj-card-name { font-size: 0.9rem; }
-  .liz-proj-card-insight { font-size: 0.72rem; }
-  .liz-proj-card-desc { font-size: 0.72rem; }
-  .liz-proj-card-actions { opacity: 1; transform: translateY(0); }
-  .liz-proj-card-updated { font-size: 0.6rem; }
-  .liz-proj-card-accent { width: 2px; }
-
-  .liz-proj-empty { padding: 40px 16px; }
-  .liz-proj-empty-crown { width: 100px; height: 72px; }
-  .liz-proj-empty-title { font-size: 0.9rem; }
-  .liz-proj-empty-desc { font-size: 0.76rem; }
-
-  .liz-proj-topbar { height: 40px; padding: 0 12px; }
-  .liz-proj-topbar-crown { width: 36px; height: 36px; }
-  .liz-proj-topbar-name { display: none; }
-  .liz-proj-topbar-btn { width: 26px; height: 26px; }
-  .liz-proj-topbar-avatar { width: 24px; height: 24px; font-size: 0.6rem; }
-  .liz-proj-topbar-right .panel-close { width: 26px; height: 26px; }
-
-  /* --- Modal de criação de projeto --- */
-  .liz-proj-modal { padding: 20px 18px 16px; }
-  .liz-proj-modal-title { font-size: 0.9rem; }
-  .liz-proj-modal-field input,
-  .liz-proj-modal-field textarea { font-size: 0.8rem; }
-  .liz-proj-modal-submit { font-size: 0.8rem; }
 
   /* --- Settings/Ajustes (float panel) --- */
   .liz-float-settings-page .settings-row {
@@ -283,7 +234,6 @@
 @media (hover: none) and (pointer: coarse) {
   .float-pill { min-height: 44px; }
   .float-pill-label { position: static; transform: none; opacity: 1; background: transparent; border: none; box-shadow: none; padding: 0; }
-  .liz-proj-card-action-btn { width: 32px; height: 32px; }
   .msg-action { padding: 6px 10px; }
 }
 

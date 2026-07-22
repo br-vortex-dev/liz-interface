@@ -278,10 +278,6 @@ const LizChat = {
       LizUI.el.input.focus();
     });
 
-    // Projetos — o render completo (renderProjectsPage) cuida de todos os
-    // eventos internamente (filtros, busca, criar, arquivar, excluir).
-    // O upload de arquivos é tratado globalmente via LizChat._handleFiles.
-
     // Tab Navigation Mode — ciclo fechado de navegação
     this._initTabNavigation();
 
@@ -309,7 +305,7 @@ const LizChat = {
       '.float-pill[data-action="new"]',
       '.float-pill[data-action="conversations"]',
       '.float-pill[data-action="tools"]',
-      '.float-pill[data-action="projects"]',
+      '.float-pill[data-action="polaroid-wall"]',
       '.float-pill[data-action="settings"]',
       '#attach-btn',
       '#chat-input',
@@ -387,14 +383,9 @@ const LizChat = {
       this.newConversation();
       return;
     }
-    // Projetos → abrem painel fullscreen
-    if (action === 'projects') {
-      if (LizUI.activePanel === action) {
-        LizUI.closePanel();
-      } else {
-        LizUI.renderProjectsPage();
-        LizUI.openPanel(action);
-      }
+    // Mural de Polaroids → overlay fullscreen
+    if (action === 'polaroid-wall') {
+      LizUI.polaroidWall.open();
       return;
     }
     // Conversas / Ferramentas → float panel ao lado do menu
