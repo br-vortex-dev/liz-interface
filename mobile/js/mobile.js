@@ -190,81 +190,63 @@ App._previewImg=function(url,name){
   this._openModal(name||'Imagem','<img src="'+url+'" style="width:100%;border-radius:8px;display:block" />');
 };
 
-/* ---- ✦ Arquivo Estelar ---- */
+/* ---- 📁 Lista de Arquivos ---- */
 App._archive=function(){
   const p=document.getElementById('pArchive');if(!p)return;
   LizData.loadUploadedFiles();
   const files=LizData.uploadedFiles;
 
-  const starSvg='<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  // Ícones
+  const imgIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+  const fileIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
 
-  // Determinar tipo do arquivo
   function getType(f){
     if(f.type&&f.type.startsWith('image/'))return'image';
-    if(f.name.match(/\.(txt|md|doc|docx)$/i))return'text';
-    if(f.name.match(/\.(js|ts|py|html|css|json|java|cpp|c|rb|go|rs)$/i))return'code';
-    if(f.name.match(/\.(mp3|wav|ogg|flac|aac)$/i))return'audio';
-    return'generic';
+    return'file';
   }
 
-  // Tamanho seeded (consistente entre renders)
-  function getSize(id,i){
-    var h=0;var s=String(id||i||'');
-    for(var j=0;j<s.length;j++){h=((h<<5)-h+s.charCodeAt(j))|0;}
-    var v=Math.abs(h)%100/100;
-    if(v<0.25)return'sm';
-    if(v<0.6)return'md';
-    if(v<0.85)return'lg';
-    return'xl';
-  }
-
-  // Delay seeded pra animação
-  function getDelay(id,i){
-    var h=0;var s=String(id||i||'');
-    for(var j=0;j<s.length;j++){h=((h<<5)-h+s.charCodeAt(j))|0;}
-    return(Math.abs(h)%4000)/1000+'s';
-  }
-
-  var html='<div class="archive-page"><div class="archive-sky">';
+  let h='<div style="padding:16px 14px 4px"><h2 style="font-size:1.1rem;font-weight:700">Arquivos</h2></div>';
 
   if(!files.length){
-    html+='<div class="archive-empty"><div class="archive-empty-crown">'+LizConfig.crown+'</div>'+
-      '<h2>O céu da Liz está vazio</h2><p>Compartilhe arquivos no chat para vê-los brilhar aqui</p></div>';
+    h+='<div style="padding:40px 20px;text-align:center;color:var(--text-muted);font-size:0.85rem">'+
+      'Nenhum arquivo guardado ainda.<br>Compartilhe arquivos no chat com a Liz.</div>';
   }else{
-    html+='<div class="archive-stars">';
+    h+='<div style="padding:4px 14px 20px;display:flex;flex-direction:column;gap:6px">';
     files.forEach(function(f,i){
-      var type=getType(f);
-      var size=getSize(f.id,i);
-      var delay=getDelay(f.id,i);
-      var name=f.name||'arquivo';
-      var date=new Date(f.timestamp||Date.now()).toLocaleDateString('pt-BR');
+      const type=getType(f);
+      const name=f.name||'arquivo';
+      const date=new Date(f.timestamp||Date.now()).toLocaleDateString('pt-BR');
+      const icon=type==='image'?imgIcon:fileIcon;
 
-      html+='<div class="archive-star" data-type="'+type+'" data-size="'+size+'" data-file-id="'+this._e(f.id)+'" style="--star-delay:'+delay+'">'+
-        '<span class="archive-star-glow"></span>'+
-        '<span class="archive-star-icon">'+starSvg+'</span>'+
-        '<span class="archive-star-label">'+this._e(name)+'</span>'+
-        '<span class="archive-star-date">'+date+'</span>'+
+      h+='<div class="af-item" data-id="'+this._e(f.id)+'" data-type="'+type+'" '+
+        'style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);'+
+        'background:var(--surface-glass);border:1px solid var(--border);cursor:pointer;transition:background var(--t-fast)">'+
+        '<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;'+
+        'flex-shrink:0;color:'+(type==='image'?'var(--brand-light)':'var(--text-muted)')+'">'+icon+'</span>'+
+        '<div style="flex:1;min-width:0"><div style="font-size:0.85rem;font-weight:500;color:var(--text);'+
+        'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+this._e(name)+'</div>'+
+        '<div style="font-size:0.68rem;color:var(--text-muted)">'+date+'</div></div>'+
+        (type==='image'?'<span style="font-size:0.6rem;color:var(--brand-light);background:rgba(139,92,246,0.1);padding:2px 8px;border-radius:4px">imagem</span>':'')+
         '</div>';
     }.bind(this));
-    html+='</div>';
+    h+='</div>';
   }
 
-  html+='</div></div>';
-  p.innerHTML=html;
+  p.innerHTML=h;
 
   // Event delegation
   if(!p.dataset.delegated){p.dataset.delegated='1';
     p.addEventListener('click',function(e){
-      var star=e.target.closest('.archive-star');
-      if(star){
-        var fileId=star.dataset.fileId;
-        LizData.loadUploadedFiles();
-        var file=LizData.uploadedFiles.find(function(f){return f.id===fileId;});
-        if(file&&file.type&&file.type.startsWith('image/')){
-          App._previewImg(file.dataUrl,file.name);
-        }else if(file){
-          App._toast(file.name);
-        }
+      const item=e.target.closest('.af-item');
+      if(!item)return;
+      const id=item.dataset.id;
+      LizData.loadUploadedFiles();
+      const file=LizData.uploadedFiles.find(function(f){return f.id===id;});
+      if(!file)return;
+      if(file.type&&file.type.startsWith('image/')){
+        App._previewImg(file.dataUrl,file.name);
+      }else{
+        App._toast(file.name);
       }
     });
   }
