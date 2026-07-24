@@ -1,0 +1,264 @@
+/* ============================================================
+ *  Liz — stellar-archive.css
+ *  ✦ Arquivo Estelar: cada memória é uma estrela no céu da Liz
+ * ============================================================ */
+
+/* ---- Página ---- */
+.archive-page {
+  min-height: 100%;
+  padding-bottom: 80px;
+  position: relative;
+}
+
+/* ---- Céu Estrelado ---- */
+.archive-sky {
+  position: relative;
+  min-height: calc(100vh - 160px);
+  padding: 20px 16px 80px;
+  overflow: hidden;
+  background:
+    /* Grade de estrelas distantes */
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.15), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.1), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.12), transparent),
+    radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.08), transparent),
+    radial-gradient(1.5px 1.5px at 15% 80%, rgba(255,255,255,0.15), transparent),
+    radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.1), transparent),
+    radial-gradient(1px 1px at 85% 15%, rgba(255,255,255,0.12), transparent),
+    radial-gradient(1.5px 1.5px at 95% 50%, rgba(255,255,255,0.08), transparent),
+    radial-gradient(1px 1px at 55% 35%, rgba(255,255,255,0.15), transparent),
+    /* Halo central */
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(139,92,246,0.04) 0%, transparent 70%),
+    /* Gradiente base */
+    linear-gradient(175deg, #0a0712 0%, #08050e 40%, #05030a 100%);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ---- Nebulosa pulsante ---- */
+.archive-sky::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 30%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 60%);
+  filter: blur(40px);
+  pointer-events: none;
+  animation: archiveNebula 8s ease-in-out infinite;
+}
+
+@keyframes archiveNebula {
+  0%, 100% { opacity: 0.3; transform: translate(0, 0); }
+  50% { opacity: 0.8; transform: translate(20px, -15px); }
+}
+
+/* ---- Grid de Estrelas ---- */
+.archive-stars {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+/* ---- Cada Estrela ---- */
+.archive-star {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-spring), box-shadow 0.3s var(--ease-spring);
+  animation: starFloat 4s ease-in-out infinite;
+  animation-delay: var(--star-delay, 0s);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.archive-star:active {
+  transform: scale(0.92);
+}
+
+/* Brilho interno da estrela */
+.archive-star-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: starPulse 3s ease-in-out infinite;
+  animation-delay: var(--star-delay, 0s);
+  pointer-events: none;
+}
+
+@keyframes starPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.08); }
+}
+
+/* Cores por tipo */
+.archive-star[data-type="image"] { background: radial-gradient(circle at 35% 30%, #c084fc, #7c3aed); }
+.archive-star[data-type="text"] { background: radial-gradient(circle at 35% 30%, #60a5fa, #3b82f6); }
+.archive-star[data-type="code"] { background: radial-gradient(circle at 35% 30%, #34d399, #059669); }
+.archive-star[data-type="audio"] { background: radial-gradient(circle at 35% 30%, #f472b6, #db2777); }
+.archive-star[data-type="generic"] { background: radial-gradient(circle at 35% 30%, #fbbf24, #d97706); }
+
+.archive-star[data-type="image"] .archive-star-glow { background: rgba(192,132,252,0.3); }
+.archive-star[data-type="text"] .archive-star-glow { background: rgba(96,165,250,0.3); }
+.archive-star[data-type="code"] .archive-star-glow { background: rgba(52,211,153,0.3); }
+.archive-star[data-type="audio"] .archive-star-glow { background: rgba(244,114,182,0.3); }
+.archive-star[data-type="generic"] .archive-star-glow { background: rgba(251,191,36,0.3); }
+
+/* Tamanhos variados (seeded) */
+.archive-star[data-size="sm"] { width: 56px; height: 56px; }
+.archive-star[data-size="md"] { width: 72px; height: 72px; }
+.archive-star[data-size="lg"] { width: 92px; height: 92px; }
+.archive-star[data-size="xl"] { width: 110px; height: 110px; }
+
+.archive-star[data-size="sm"] .archive-star-glow { inset: -2px; }
+.archive-star[data-size="xl"] .archive-star-glow { inset: -6px; }
+
+/* Ícone dentro da estrela */
+.archive-star-icon {
+  width: 24px;
+  height: 24px;
+  color: rgba(255,255,255,0.85);
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+.archive-star-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.archive-star[data-size="sm"] .archive-star-icon { width: 18px; height: 18px; }
+.archive-star[data-size="xl"] .archive-star-icon { width: 30px; height: 30px; }
+
+/* ---- Nome da estrela (tooltip) ---- */
+.archive-star-label {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(10,7,18,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  color: #fff;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s var(--ease-spring);
+  z-index: 10;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.archive-star:hover .archive-star-label,
+.archive-star:active .archive-star-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- Data abaixo da estrela ---- */
+.archive-star-date {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: rgba(255,255,255,0.25);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---- Flutuação suave (cada estrela tem delay diferente) ---- */
+@keyframes starFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ---- Estado vazio ---- */
+.archive-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+}
+
+.archive-empty-crown {
+  width: 48px;
+  height: 48px;
+  opacity: 0.08;
+  margin: 0 auto 16px;
+  animation: archiveFloat 4s ease-in-out infinite;
+}
+.archive-empty-crown svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes archiveFloat {
+  0%, 100% { transform: translateY(0); opacity: 0.08; }
+  50% { transform: translateY(-8px); opacity: 0.15; }
+}
+
+.archive-empty h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 6px;
+}
+
+.archive-empty p {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
+/* ---- Tema claro ---- */
+[data-theme="light"] .archive-sky {
+  background:
+    radial-gradient(1px 1px at 10% 20%, rgba(100,80,60,0.15), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(100,80,60,0.1), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(100,80,60,0.2), transparent),
+    radial-gradient(1px 1px at 70% 40%, rgba(100,80,60,0.12), transparent),
+    radial-gradient(1px 1px at 90% 70%, rgba(100,80,60,0.08), transparent),
+    radial-gradient(1.5px 1.5px at 15% 80%, rgba(100,80,60,0.15), transparent),
+    radial-gradient(1px 1px at 45% 90%, rgba(100,80,60,0.1), transparent),
+    radial-gradient(1px 1px at 85% 15%, rgba(100,80,60,0.12), transparent),
+    radial-gradient(1.5px 1.5px at 95% 50%, rgba(100,80,60,0.08), transparent),
+    radial-gradient(1px 1px at 55% 35%, rgba(100,80,60,0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(139,92,246,0.03) 0%, transparent 70%),
+    linear-gradient(175deg, #f0ebe4 0%, #e8e0d6 40%, #ddd3c7 100%);
+}
+
+[data-theme="light"] .archive-star-label {
+  background: rgba(255,255,255,0.92);
+  color: #2d2416;
+  border-color: rgba(139,92,246,0.15);
+}
+
+[data-theme="light"] .archive-star-date { color: rgba(45,36,22,0.3); }
+[data-theme="light"] .archive-empty h2 { color: rgba(45,36,22,0.6); }
+[data-theme="light"] .archive-empty p { color: rgba(45,36,22,0.35); }
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .archive-star { animation: none; }
+  .archive-star-glow { animation: none; opacity: 0.4; }
+  .archive-sky::before { animation: none; }
+  .archive-empty-crown { animation: none; }
+}

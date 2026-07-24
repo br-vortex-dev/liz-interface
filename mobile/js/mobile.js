@@ -59,10 +59,6 @@ App._tabs=function(){
   // Close/back
   $('#closeBtn')?.addEventListener('click',()=>{$('.tool-pill[data-t="chat"]')?.click();});
   $('#backBtn')?.addEventListener('click',function(){
-    // Se o mural está aberto, fecha ele (o onClose restaura a UI)
-    if(LizUI.polaroidWall.overlay&&LizUI.polaroidWall.overlay.classList.contains('is-open')){
-      LizUI.polaroidWall.close();return;
-    }
     document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
     document.getElementById('pChat')?.classList.add('is-active');
     $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
@@ -87,23 +83,11 @@ App._tabs=function(){
       else{$('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
         $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';}
       if(a==='newchat'){this._newChat();return;}
-      if(a==='mural'){
-        $('.tools-bar').classList.add('is-collapsed');$('.tools-bar').classList.remove('is-expanded');
-        $('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';
-        $('#hSep').style.display='';$('#hSub').textContent='Mural';
-        LizUI.polaroidWall.onClose=function(){
-          document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
-          document.getElementById('pChat')?.classList.add('is-active');
-          $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
-          $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';
-          $('#ht').textContent='Liz';App.tab='chat';
-          $$('.tool-pill').forEach(x=>x.classList.toggle('is-active',x.dataset.t==='chat'));
-        };
-        LizUI.polaroidWall.open();return;
-      }
+      if(a==='archive'){$('#backBtn').style.display='';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='';$('#hSub').textContent='Arquivo';}
       if(a==='chat'){document.getElementById('pChat')?.classList.add('is-active');$('#ht').textContent='Liz';return;}
-      const map={settings:'pSettings',tools:'pTools'};
+      const map={archive:'pArchive',settings:'pSettings',tools:'pTools'};
       const pid=map[a];if(pid){const pg=document.getElementById(pid);if(pg)pg.classList.add('is-active');}
+      if(a==='archive')this._archive();
       if(a==='settings')this._settings();
       if(a==='tools')this._tools();
       $('#ht').textContent='Liz';
@@ -204,6 +188,86 @@ App._handleFiles=function(files){
 
 App._previewImg=function(url,name){
   this._openModal(name||'Imagem','<img src="'+url+'" style="width:100%;border-radius:8px;display:block" />');
+};
+
+/* ---- ✦ Arquivo Estelar ---- */
+App._archive=function(){
+  const p=document.getElementById('pArchive');if(!p)return;
+  LizData.loadUploadedFiles();
+  const files=LizData.uploadedFiles;
+
+  const starSvg='<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
+  // Determinar tipo do arquivo
+  function getType(f){
+    if(f.type&&f.type.startsWith('image/'))return'image';
+    if(f.name.match(/\.(txt|md|doc|docx)$/i))return'text';
+    if(f.name.match(/\.(js|ts|py|html|css|json|java|cpp|c|rb|go|rs)$/i))return'code';
+    if(f.name.match(/\.(mp3|wav|ogg|flac|aac)$/i))return'audio';
+    return'generic';
+  }
+
+  // Tamanho seeded (consistente entre renders)
+  function getSize(id,i){
+    var h=0;var s=String(id||i||'');
+    for(var j=0;j<s.length;j++){h=((h<<5)-h+s.charCodeAt(j))|0;}
+    var v=Math.abs(h)%100/100;
+    if(v<0.25)return'sm';
+    if(v<0.6)return'md';
+    if(v<0.85)return'lg';
+    return'xl';
+  }
+
+  // Delay seeded pra animação
+  function getDelay(id,i){
+    var h=0;var s=String(id||i||'');
+    for(var j=0;j<s.length;j++){h=((h<<5)-h+s.charCodeAt(j))|0;}
+    return(Math.abs(h)%4000)/1000+'s';
+  }
+
+  var html='<div class="archive-page"><div class="archive-sky">';
+
+  if(!files.length){
+    html+='<div class="archive-empty"><div class="archive-empty-crown">'+LizConfig.crown+'</div>'+
+      '<h2>O céu da Liz está vazio</h2><p>Compartilhe arquivos no chat para vê-los brilhar aqui</p></div>';
+  }else{
+    html+='<div class="archive-stars">';
+    files.forEach(function(f,i){
+      var type=getType(f);
+      var size=getSize(f.id,i);
+      var delay=getDelay(f.id,i);
+      var name=f.name||'arquivo';
+      var date=new Date(f.timestamp||Date.now()).toLocaleDateString('pt-BR');
+
+      html+='<div class="archive-star" data-type="'+type+'" data-size="'+size+'" data-file-id="'+this._e(f.id)+'" style="--star-delay:'+delay+'">'+
+        '<span class="archive-star-glow"></span>'+
+        '<span class="archive-star-icon">'+starSvg+'</span>'+
+        '<span class="archive-star-label">'+this._e(name)+'</span>'+
+        '<span class="archive-star-date">'+date+'</span>'+
+        '</div>';
+    }.bind(this));
+    html+='</div>';
+  }
+
+  html+='</div></div>';
+  p.innerHTML=html;
+
+  // Event delegation
+  if(!p.dataset.delegated){p.dataset.delegated='1';
+    p.addEventListener('click',function(e){
+      var star=e.target.closest('.archive-star');
+      if(star){
+        var fileId=star.dataset.fileId;
+        LizData.loadUploadedFiles();
+        var file=LizData.uploadedFiles.find(function(f){return f.id===fileId;});
+        if(file&&file.type&&file.type.startsWith('image/')){
+          App._previewImg(file.dataUrl,file.name);
+        }else if(file){
+          App._toast(file.name);
+        }
+      }
+    });
+  }
 };
 
 App._settings=function(){
