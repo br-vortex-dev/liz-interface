@@ -57,8 +57,18 @@ App._tabs=function(){
   $('#modalOverlay')?.addEventListener('click',(e)=>{if(e.target===e.currentTarget)this._closeModal();});
 
   // Close/back
-  $('#closeBtn')?.addEventListener('click',()=>{$('.tool-pill[data-t="chat"]')?.click();});
+  $('#closeBtn')?.addEventListener('click',()=>{
+    // Se o mural estiver aberto, fecha ele
+    if(LizUI.mural.overlay&&LizUI.mural.overlay.classList.contains('is-open')){
+      LizUI.mural.close();return;
+    }
+    $('.tool-pill[data-t="chat"]')?.click();
+  });
   $('#backBtn')?.addEventListener('click',function(){
+    // Se o mural estiver aberto, fecha ele
+    if(LizUI.mural.overlay&&LizUI.mural.overlay.classList.contains('is-open')){
+      LizUI.mural.close();return;
+    }
     document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
     document.getElementById('pChat')?.classList.add('is-active');
     $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
@@ -83,11 +93,23 @@ App._tabs=function(){
       else{$('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
         $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';}
       if(a==='newchat'){this._newChat();return;}
-      if(a==='archive'){$('#backBtn').style.display='';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='';$('#hSub').textContent='Arquivo';}
+      if(a==='archive'){
+        $('.tools-bar').classList.add('is-collapsed');$('.tools-bar').classList.remove('is-expanded');
+        $('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';
+        $('#hSep').style.display='';$('#hSub').textContent='Mural';
+        LizUI.mural.onClose=function(){
+          document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
+          document.getElementById('pChat')?.classList.add('is-active');
+          $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
+          $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';
+          $('#ht').textContent='Liz';App.tab='chat';
+          $$('.tool-pill').forEach(x=>x.classList.toggle('is-active',x.dataset.t==='chat'));
+        };
+        LizUI.mural.open();return;
+      }
       if(a==='chat'){document.getElementById('pChat')?.classList.add('is-active');$('#ht').textContent='Liz';return;}
-      const map={archive:'pArchive',settings:'pSettings',tools:'pTools'};
+      const map={settings:'pSettings',tools:'pTools'};
       const pid=map[a];if(pid){const pg=document.getElementById(pid);if(pg)pg.classList.add('is-active');}
-      if(a==='archive')this._archive();
       if(a==='settings')this._settings();
       if(a==='tools')this._tools();
       $('#ht').textContent='Liz';
