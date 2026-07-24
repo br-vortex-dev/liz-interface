@@ -32,6 +32,11 @@ LizUI.mural = {
     sort: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5h10M11 12h7M11 19h4"/><path d="M3 5l3-3 3 3M9 19H3M3 12h6"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    zoomIn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    zoomOut: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    fullscreen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>',
+    download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
   },
 
   /* ---- Inicialização ---- */
@@ -132,6 +137,87 @@ LizUI.mural = {
     return sz.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
   },
 
+  /* ---- Visualizador de Imagem ---- */
+  _openViewer: function(file) {
+    if (!file || !file.dataUrl) return;
+    this._closeViewer();
+    this._viewerFile = file;
+    this._viewerZoom = 1;
+
+    const viewer = document.createElement('div');
+    viewer.className = 'mural-viewer';
+    viewer.id = 'mural-viewer';
+    viewer.innerHTML = `
+      <div class="mural-viewer-bg" id="mural-viewer-bg"></div>
+      <img class="mural-viewer-img" id="mural-viewer-img" src="${this._esc(file.dataUrl)}" alt="${this._esc(file.name||'')}" />
+      <div class="mural-viewer-controls">
+        <button class="mural-viewer-btn" id="mv-zoom-in" type="button" aria-label="Aumentar zoom" title="Aumentar zoom">${this._icons.zoomIn}</button>
+        <button class="mural-viewer-btn" id="mv-zoom-out" type="button" aria-label="Diminuir zoom" title="Diminuir zoom">${this._icons.zoomOut}</button>
+        <button class="mural-viewer-btn" id="mv-fullscreen" type="button" aria-label="Tela cheia" title="Tela cheia">${this._icons.fullscreen}</button>
+        <button class="mural-viewer-btn" id="mv-download" type="button" aria-label="Baixar" title="Baixar">${this._icons.download}</button>
+        <button class="mural-viewer-btn" id="mv-share" type="button" aria-label="Compartilhar" title="Compartilhar">${this._icons.share}</button>
+        <button class="mural-viewer-btn mural-viewer-btn-close" id="mv-close" type="button" aria-label="Fechar" title="Fechar">${this._icons.close}</button>
+      </div>
+      <div class="mural-viewer-info" id="mural-viewer-info">${this._esc(file.name||'')}</div>
+    `;
+    document.body.appendChild(viewer);
+    requestAnimationFrame(() => viewer.classList.add('is-open'));
+
+    // Eventos
+    const img = viewer.querySelector('#mural-viewer-img');
+    const bg = viewer.querySelector('#mural-viewer-bg');
+
+    document.getElementById('mv-close').addEventListener('click', () => this._closeViewer());
+    bg.addEventListener('click', () => this._closeViewer());
+
+    document.getElementById('mv-zoom-in').addEventListener('click', () => {
+      this._viewerZoom = Math.min(3, this._viewerZoom + 0.25);
+      img.style.transform = 'scale(' + this._viewerZoom + ')';
+      img.classList.toggle('is-zoomed', this._viewerZoom > 1);
+    });
+    document.getElementById('mv-zoom-out').addEventListener('click', () => {
+      this._viewerZoom = Math.max(0.25, this._viewerZoom - 0.25);
+      img.style.transform = 'scale(' + this._viewerZoom + ')';
+      img.classList.toggle('is-zoomed', this._viewerZoom > 1);
+    });
+
+    document.getElementById('mv-fullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    document.getElementById('mv-download').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = file.dataUrl;
+      a.download = file.name || 'imagem';
+      a.click();
+    });
+
+    document.getElementById('mv-share').addEventListener('click', () => {
+      if (navigator.share) {
+        navigator.share({ title: file.name || 'Imagem', url: file.dataUrl });
+      }
+    });
+
+    // ESC
+    this._viewerEscHandler = (e) => { if (e.key === 'Escape') this._closeViewer(); };
+    document.addEventListener('keydown', this._viewerEscHandler);
+  },
+
+  _closeViewer: function() {
+    const viewer = document.getElementById('mural-viewer');
+    if (!viewer) return;
+    viewer.classList.remove('is-open');
+    if (this._viewerEscHandler) {
+      document.removeEventListener('keydown', this._viewerEscHandler);
+      this._viewerEscHandler = null;
+    }
+    setTimeout(() => { if (viewer.parentNode) viewer.remove(); }, 250);
+  },
+
   /* ---- Renderizar ---- */
   render: function() {
     LizData.loadUploadedFiles();
@@ -228,13 +314,11 @@ LizUI.mural = {
         row.classList.add('is-selected');
         this.selectedId = id;
 
-        // Se for imagem, abrir preview
+        // Se for imagem, abrir visualizador
         LizData.loadUploadedFiles();
         const file = LizData.uploadedFiles.find(f => f.id === id);
-        if (file && file.type && file.type.startsWith('image/') && typeof App !== 'undefined' && App._previewImg) {
-          App._previewImg(file.dataUrl, file.name);
-        } else if (file) {
-          // Não-imagem: só mostra selecionado
+        if (file && file.type && file.type.startsWith('image/')) {
+          this._openViewer(file);
         }
       });
 
@@ -293,8 +377,8 @@ LizUI.mural = {
         } else if (action === 'open' || action === 'preview') {
           LizData.loadUploadedFiles();
           const file = LizData.uploadedFiles.find(f => f.id === id);
-          if (file && file.type && file.type.startsWith('image/') && typeof App !== 'undefined' && App._previewImg) {
-            App._previewImg(file.dataUrl, file.name);
+          if (file && file.type && file.type.startsWith('image/')) {
+            this._openViewer(file);
           }
         }
       });

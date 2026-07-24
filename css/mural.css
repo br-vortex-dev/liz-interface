@@ -901,13 +901,177 @@
 }
 [data-theme="light"] .mural-empty-icon { opacity: 0.1; }
 
-/* ---- Reduced motion ---- */
+/* ============================================================
+ *  VIEWER DE IMAGEM — visualizador premium estilo Liz
+ * ============================================================ */
+
+.mural-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms var(--mural-ease);
+}
+.mural-viewer.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mural-viewer-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.mural-viewer-img {
+  position: relative;
+  z-index: 2;
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: var(--mural-radius);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 220ms var(--mural-ease),
+              transform 220ms var(--mural-ease);
+  will-change: transform, opacity;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.mural-viewer-img.is-zoomed {
+  max-width: none;
+  max-height: none;
+  cursor: grab;
+}
+
+.mural-viewer.is-open .mural-viewer-img {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ---- Controles ---- */
+.mural-viewer-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+}
+
+.mural-viewer-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 180ms var(--mural-ease),
+              color 180ms var(--mural-ease),
+              transform 180ms var(--mural-ease);
+}
+.mural-viewer-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  color: #fff;
+  transform: scale(1.08);
+}
+.mural-viewer-btn:active {
+  transform: scale(0.92);
+}
+.mural-viewer-btn svg {
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.mural-viewer-btn-close {
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.mural-viewer-btn-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* ---- Info da imagem ---- */
+.mural-viewer-info {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: var(--mural-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  max-width: 80vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition: opacity 180ms var(--mural-ease);
+}
+
+/* ---- Responsivo viewer ---- */
+@media (max-width: 700px) {
+  .mural-viewer-img {
+    max-width: 95vw;
+    max-height: 85vh;
+    border-radius: var(--mural-radius-sm);
+  }
+  .mural-viewer-controls {
+    top: 12px;
+    right: 12px;
+    gap: 4px;
+  }
+  .mural-viewer-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .mural-viewer-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .mural-viewer-info {
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    bottom: 12px;
+  }
+}
+
+[data-theme="light"] .mural-viewer-bg {
+  background: rgba(255, 255, 255, 0.08);
+}
+[data-theme="light"] .mural-viewer-btn {
+  background: rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .mural-viewer-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mural-overlay,
-  .mural-row,
-  .mural-context,
-  .mural-upload-card {
-    animation: none !important;
+  .mural-viewer,
+  .mural-viewer-img,
+  .mural-viewer-btn {
     transition-duration: 0.01ms !important;
+  }
+  .mural-viewer-img {
+    transform: none !important;
   }
 }
