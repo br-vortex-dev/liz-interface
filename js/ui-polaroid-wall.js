@@ -1,9 +1,11 @@
 /* ============================================================
  *  Liz — ui-polaroid-wall.js
- *  Mural de Polaroids: scroll inércia, balanço, interações físicas
+ *  Mural de Polaroids: navegação por mês/dia, scroll inércia,
+ *  balanço, interações físicas
  * ============================================================ */
 
 LizUI.polaroidWall = {
+  onClose: null, // callback opcional (UI mobile restaura estado)
   overlay: null,
   container: null,
   tracks: [],
@@ -16,6 +18,17 @@ LizUI.polaroidWall = {
   animationFrame: null,
   longPressTimer: null,
   swipeThreshold: 8,
+
+  // ---- Navegação por Mês/Dia ----
+  currentYear: new Date().getFullYear(),
+  currentMonth: new Date().getMonth(), // 0-11
+  selectedDay: null, // null = visão mês, número = visão dia
+  _pinchStartDist: 0,
+  _pinchActive: false,
+  _wheelAccum: 0,
+  _wheelTimer: null,
+
+  _monthNames: ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
 
   // ---- Inicialização ----
   init: function() {
@@ -42,6 +55,7 @@ LizUI.polaroidWall = {
           </svg>
           <span>Voltar</span>
         </button>
+        <h1 class="polaroid-wall-title">Mural da Liz</h1>
         <div class="polaroid-wall-actions">
           <button class="polaroid-wall-action-btn" type="button" aria-label="Adicionar" title="Adicionar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -83,9 +97,15 @@ LizUI.polaroidWall = {
     this.overlay.classList.remove('is-open');
     document.body.style.overflow = '';
     this.stopMomentum();
+    // Remove listener de resize
+    if (this._resizeHandler) {
+      window.removeEventListener('resize', this._resizeHandler);
+      this._resizeHandler = null;
+    }
+    if (typeof this.onClose === 'function') this.onClose();
   },
 
-  // ---- Renderizar Cards ----
+  // ---- Renderizar (dispatch mês/dia) ----
   render: function() {
     LizData.loadUploadedFiles();
     const files = LizData.uploadedFiles;
@@ -95,28 +115,131 @@ LizUI.polaroidWall = {
       return;
     }
 
-    // Dividir em fios (máx 6 por fio)
+    // Filtra pelo mês atual
+    const monthFiles = files.filter(f => {
+      const d = new Date(f.timestamp || Date.now());
+      return d.getFullYear() === this.currentYear && d.getMonth() === this.currentMonth;
+    });
+
+    this._updateMonthLabel();
+
+    if (this.selectedDay === null) {
+      this.renderMonthView(monthFiles);
+    } else {
+      this.renderDayView(monthFiles);
+    }
+  },
+
+  // ---- Visão Mês: um clip por dia com arquivos ----
+  renderMonthView: function(monthFiles) {
+    const days = {};
+    monthFiles.forEach(f => {
+      const day = new Date(f.timestamp || Date.now()).getDate();
+      if (!days[day]) days[day] = [];
+      days[day].push(f);
+    });
+    const sortedDays = Object.keys(days).map(Number).sort((a, b) => a - b);
+    if (sortedDays.length === 0) { this.renderEmptyMonth(); return; }
+
+    let html = '<div class="polaroid-string-row" data-row="0">';
+    html += '<div class="polaroid-string"></div>';
+    html += '<div class="polaroid-track" data-track="0">';
+    sortedDays.forEach(day => {
+      const count = days[day].length;
+      const dateStr = day + '/' + (this.currentMonth + 1);
+      html += `<article class="polaroid-card polaroid-day-clip" data-day="${day}" tabindex="0" role="button" aria-label="Dia ${dateStr} — ${count} arquivo(s)">
+        <span class="polaroid-clip"><svg viewBox="0 0 24 36" fill="none"><rect x="8" y="0" width="8" height="20" rx="2" fill="#d4a574"/><rect x="6" y="16" width="12" height="18" rx="3" fill="#c4956a"/><rect x="9" y="18" width="6" height="14" rx="2" fill="#b8895e"/><circle cx="12" cy="8" r="2" fill="#a07850"/></svg></span>
+        <span class="polaroid-clip-date">${dateStr}</span>
+        <div class="polaroid-body polaroid-day-body"><div class="polaroid-content polaroid-day-content">
+          <span class="polaroid-day-number">${day}</span>
+          <span class="polaroid-day-count">${count} ${count === 1 ? 'arquivo' : 'arquivos'}</span>
+        </div></div>
+      </article>`;
+    });
+    html += '</div></div>';
+    this.container.innerHTML = html;
+    this.tracks = Array.from(this.container.querySelectorAll('.polaroid-track'));
+    this._bindDayClipEvents();
+    this._invalidateRopeCache();
+    this._alignCardsToRope();
+  },
+
+  // ---- Visão Dia: todos os arquivos do dia selecionado ----
+  renderDayView: function(monthFiles) {
+    const dayFiles = monthFiles.filter(f => new Date(f.timestamp || Date.now()).getDate() === this.selectedDay);
+    if (dayFiles.length === 0) { this.selectedDay = null; this.renderMonthView(monthFiles); return; }
+
+    // Calcula quantos cards cabem por fio (adaptativo à largura)
+    const isMobile = window.innerWidth <= 700;
+    const cardWidth = isMobile ? 160 : 200;
+    const gap = isMobile ? 28 : 36;
+    const padding = isMobile ? 40 : 60;
+    const containerWidth = this.container.clientWidth;
+    const effectiveWidth = containerWidth - padding * 2;
+    const cardsPerRow = Math.max(1, Math.floor(effectiveWidth / (cardWidth + gap)));
+
     const rows = [];
-    for (let i = 0; i < files.length; i += 6) {
-      rows.push(files.slice(i, i + 6));
+    for (let i = 0; i < dayFiles.length; i += cardsPerRow) {
+      rows.push(dayFiles.slice(i, i + cardsPerRow));
     }
 
     let html = '';
     rows.forEach((rowFiles, rowIndex) => {
-      html += `<div class="polaroid-string-row" data-row="${rowIndex}">`;
-      html += `<div class="polaroid-string"></div>`;
-      html += `<div class="polaroid-track" data-track="${rowIndex}">`;
-
-      rowFiles.forEach((file) => {
-        html += this.renderCard(file);
-      });
-
-      html += `</div></div>`;
+      html += `<div class="polaroid-string-row" data-row="${rowIndex}"><div class="polaroid-string"></div><div class="polaroid-track" data-track="${rowIndex}">`;
+      rowFiles.forEach(file => { html += this.renderCard(file); });
+      html += '</div></div>';
     });
 
     this.container.innerHTML = html;
     this.tracks = Array.from(this.container.querySelectorAll('.polaroid-track'));
     this.bindTrackEvents();
+    this._invalidateRopeCache();
+    this._alignCardsToRope();
+  },
+
+  // ---- Mês vazio ----
+  renderEmptyMonth: function() {
+    this.container.innerHTML = `<div class="polaroid-wall-empty">
+      <div class="polaroid-wall-empty-string"><span class="polaroid-wall-empty-clip">
+        <svg viewBox="0 0 24 36" fill="none"><rect x="8" y="0" width="8" height="20" rx="2" fill="#d4a574"/><rect x="6" y="16" width="12" height="18" rx="3" fill="#c4956a"/><rect x="9" y="18" width="6" height="14" rx="2" fill="#b8895e"/><circle cx="12" cy="8" r="2" fill="#a07850"/></svg>
+      </span><div class="polaroid-wall-empty-note">Nenhum arquivo em ${this._monthNames[this.currentMonth]}...</div></div>
+      <p class="polaroid-wall-empty-text">Use a rodinha ou pinça para navegar entre os meses</p>
+    </div>`;
+  },
+
+  // ---- Label do mês no header ----
+  _updateMonthLabel: function() {
+    const el = this.overlay.querySelector('.polaroid-wall-title');
+    if (!el) return;
+    el.textContent = this.selectedDay !== null
+      ? this.selectedDay + ' de ' + this._monthNames[this.currentMonth] + ' de ' + this.currentYear
+      : this._monthNames[this.currentMonth] + ' de ' + this.currentYear;
+  },
+
+  // ---- Navegar mês ----
+  _changeMonth: function(delta) {
+    this.selectedDay = null;
+    this.currentMonth += delta;
+    if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+    if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+    this.render();
+  },
+
+  // ---- Bind dos day clips ----
+  _bindDayClipEvents: function() {
+    this.container.querySelectorAll('.polaroid-day-clip').forEach(clip => {
+      clip.addEventListener('click', () => {
+        this.selectedDay = parseInt(clip.dataset.day, 10);
+        this.render();
+      });
+    });
+  },
+
+  // ---- Distância entre dois toques ----
+  _getTouchDist: function(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
   },
 
   // ---- Renderizar Card Individual ----
@@ -130,7 +253,7 @@ LizUI.polaroidWall = {
     let contentHtml = '';
 
     if (type === 'image') {
-      contentHtml = `<img src="${file.dataUrl}" alt="${name}" loading="lazy" />`;
+      contentHtml = `<img src="${file.dataUrl}" alt="${name}" loading="lazy" decoding="async" />`;
     } else if (type === 'text') {
       const preview = file.textContent || file.name;
       contentHtml = `<div class="polaroid-text">${this._esc(preview.substring(0, 120))}</div>`;
@@ -154,6 +277,7 @@ LizUI.polaroidWall = {
             <circle cx="12" cy="8" r="2" fill="#a07850"/>
           </svg>
         </span>
+        <span class="polaroid-clip-date">${date}</span>
         <span class="polaroid-favorite">
           <svg viewBox="0 0 24 24" fill="#d4af37" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21.4 8 14 2 9.4h7.6z"/>
@@ -175,7 +299,7 @@ LizUI.polaroidWall = {
     return 'generic';
   },
 
-  // ---- Estado Vazio ----
+  // ---- Estado Vazio (nenhum arquivo) ----
   renderEmpty: function() {
     this.container.innerHTML = `
       <div class="polaroid-wall-empty">
@@ -197,13 +321,25 @@ LizUI.polaroidWall = {
 
   // ---- Bind de Eventos ----
   bindEvents: function() {
-    // Botão voltar
-    this.overlay.querySelector('.polaroid-wall-back').addEventListener('click', () => this.close());
+    // Botão voltar (day → mês, mês → fechar)
+    this.overlay.querySelector('.polaroid-wall-back').addEventListener('click', () => {
+      if (this.selectedDay !== null) {
+        this.selectedDay = null;
+        this.render();
+      } else {
+        this.close();
+      }
+    });
 
     // Fechar com ESC
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.overlay.classList.contains('is-open')) {
-        this.close();
+        if (this.selectedDay !== null) {
+          this.selectedDay = null;
+          this.render();
+        } else {
+          this.close();
+        }
       }
     });
 
@@ -224,6 +360,58 @@ LizUI.polaroidWall = {
     this.overlay.querySelectorAll('.polaroid-wall-action-btn')[1].addEventListener('click', () => {
       this.render();
     });
+
+    // ---- Wheel: trocar mês (PC) ----
+    this.overlay.addEventListener('wheel', (e) => {
+      if (this.isDragging) return;
+      e.preventDefault();
+      this._wheelAccum += e.deltaY;
+      clearTimeout(this._wheelTimer);
+      this._wheelTimer = setTimeout(() => { this._wheelAccum = 0; }, 200);
+      if (Math.abs(this._wheelAccum) >= 80) {
+        const dir = this._wheelAccum > 0 ? -1 : 1; // baixo = mês anterior, cima = próximo
+        this._changeMonth(dir);
+        this._wheelAccum = 0;
+      }
+    }, { passive: false });
+
+    // ---- Pinch: trocar mês (mobile) ----
+    this.overlay.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        this._pinchActive = true;
+        this._pinchStartDist = this._getTouchDist(e.touches);
+      }
+    }, { passive: true });
+
+    this.overlay.addEventListener('touchmove', (e) => {
+      if (!this._pinchActive || e.touches.length !== 2) return;
+      e.preventDefault();
+      const dist = this._getTouchDist(e.touches);
+      const delta = dist - this._pinchStartDist;
+      if (Math.abs(delta) > 60) {
+        // Afastar = próximo mês, aproximar = mês anterior
+        this._changeMonth(delta > 0 ? 1 : -1);
+        this._pinchStartDist = dist;
+      }
+    }, { passive: false });
+
+    this.overlay.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) this._pinchActive = false;
+    }, { passive: true });
+
+    // ---- Resize: re-renderizar ao mudar tamanho da janela ----
+    this._resizeHandler = () => {
+      if (!this.overlay.classList.contains('is-open')) return;
+      this._invalidateRopeCache();
+      if (this.selectedDay !== null) {
+        // Re-renderiza a visão dia com novo cálculo adaptativo
+        this.render();
+      } else {
+        // Visão mês: só realinha os cards
+        this._alignCardsToRope();
+      }
+    };
+    window.addEventListener('resize', this._resizeHandler);
   },
 
   // ---- Bind de Eventos dos Tracks ----
@@ -363,6 +551,7 @@ LizUI.polaroidWall = {
     const minScroll = -(track.scrollWidth - track.parentElement.offsetWidth);
     const clampedPos = Math.max(minScroll, Math.min(maxScroll, pos));
     track.style.transform = `translateX(${clampedPos}px)`;
+    this._alignCardsToRope();
   },
 
   // ---- Inércia / Momentum ----
@@ -482,6 +671,44 @@ LizUI.polaroidWall = {
       };
       reader.readAsDataURL(file);
     });
+  },
+
+  // ---- Alinhamento à Catenária (otimizado: zero layout reads no drag) ----
+  _alignCardsToRope: function() {
+    if (!this.tracks) return;
+    this.tracks.forEach(track => {
+      const row = track.parentElement;
+
+      // Cache: dimensões e depth não mudam durante drag
+      if (!track._ropeCache) {
+        const rowWidth = row.offsetWidth;
+        if (rowWidth === 0) return;
+        const depth = parseFloat(getComputedStyle(row).getPropertyValue('--catenary-depth')) || 22;
+        track._ropeCache = {
+          rowWidth: rowWidth,
+          depth: depth,
+          cards: Array.from(track.querySelectorAll('.polaroid-card')).map(card => ({
+            el: card,
+            center: card.offsetLeft + (card.offsetWidth / 2)
+          }))
+        };
+      }
+
+      const { rowWidth, depth, cards } = track._ropeCache;
+      const trackX = this.getTrackPosition(track);
+
+      for (let i = 0; i < cards.length; i++) {
+        const centerX = cards[i].center + trackX;
+        const t = centerX < 0 ? 0 : centerX > rowWidth ? 1 : centerX / rowWidth;
+        const y = 48 + depth * 4 * t * (1 - t);
+        cards[i].el.style.setProperty('--rope-y', y.toFixed(1) + 'px');
+      }
+    });
+  },
+
+  _invalidateRopeCache: function() {
+    if (!this.tracks) return;
+    this.tracks.forEach(t => { delete t._ropeCache; });
   },
 
   // ---- Escape HTML ----

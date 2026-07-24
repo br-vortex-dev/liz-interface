@@ -59,6 +59,10 @@ App._tabs=function(){
   // Close/back
   $('#closeBtn')?.addEventListener('click',()=>{$('.tool-pill[data-t="chat"]')?.click();});
   $('#backBtn')?.addEventListener('click',function(){
+    // Se o mural está aberto, fecha ele (o onClose restaura a UI)
+    if(LizUI.polaroidWall.overlay&&LizUI.polaroidWall.overlay.classList.contains('is-open')){
+      LizUI.polaroidWall.close();return;
+    }
     document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
     document.getElementById('pChat')?.classList.add('is-active');
     $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
@@ -83,7 +87,20 @@ App._tabs=function(){
       else{$('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
         $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';}
       if(a==='newchat'){this._newChat();return;}
-      if(a==='mural'){LizUI.polaroidWall.open();return;}
+      if(a==='mural'){
+        $('.tools-bar').classList.add('is-collapsed');$('.tools-bar').classList.remove('is-expanded');
+        $('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';
+        $('#hSep').style.display='';$('#hSub').textContent='Mural';
+        LizUI.polaroidWall.onClose=function(){
+          document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
+          document.getElementById('pChat')?.classList.add('is-active');
+          $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
+          $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';
+          $('#ht').textContent='Liz';App.tab='chat';
+          $$('.tool-pill').forEach(x=>x.classList.toggle('is-active',x.dataset.t==='chat'));
+        };
+        LizUI.polaroidWall.open();return;
+      }
       if(a==='chat'){document.getElementById('pChat')?.classList.add('is-active');$('#ht').textContent='Liz';return;}
       const map={settings:'pSettings',tools:'pTools'};
       const pid=map[a];if(pid){const pg=document.getElementById(pid);if(pg)pg.classList.add('is-active');}
