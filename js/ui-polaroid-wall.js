@@ -71,7 +71,7 @@ LizUI.polaroidWall = {
         </div>
       </header>
 
-      <img class="polaroid-wall-crown" src="coroa.svg" alt="Coroa da Liz" />
+      <div class="polaroid-wall-crown">${LizConfig.crown}</div>
 
       <div class="polaroid-wall-container" id="polaroid-container"></div>
 
@@ -169,15 +169,16 @@ LizUI.polaroidWall = {
     const dayFiles = monthFiles.filter(f => new Date(f.timestamp || Date.now()).getDate() === this.selectedDay);
     if (dayFiles.length === 0) { this.selectedDay = null; this.renderMonthView(monthFiles); return; }
 
-    // Calcula quantos cards cabem por fio (adaptativo à largura)
-    const isMobile = window.innerWidth <= 700;
+    // Calcula quantos cards cabem por fio (adaptativo à largura da janela)
+    const winW = window.innerWidth;
+    const isMobile = winW <= 700;
     const cardWidth = isMobile ? 160 : 200;
     const gap = isMobile ? 28 : 36;
     const padding = isMobile ? 40 : 60;
-    const containerWidth = this.container.clientWidth;
-    const effectiveWidth = containerWidth - padding * 2;
+    const effectiveWidth = winW - padding * 2;
     const cardsPerRow = Math.max(1, Math.floor(effectiveWidth / (cardWidth + gap)));
 
+    // Divide os arquivos em grupos (cada grupo = um fio)
     const rows = [];
     for (let i = 0; i < dayFiles.length; i += cardsPerRow) {
       rows.push(dayFiles.slice(i, i + cardsPerRow));
