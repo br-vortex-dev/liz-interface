@@ -297,11 +297,32 @@ LizUI.mural = {
       <div class="mural-empty">
         <div class="mural-empty-icon">${this._icons.image}</div>
         <h2>${hasFilters ? 'Nenhum arquivo encontrado' : 'Nenhum arquivo guardado'}</h2>
-        <p>${hasFilters ? 'Tente ajustar os filtros ou a pesquisa.' : 'Envie imagens ou documentos no chat para começar a preencher seu mural.'}</p>
-        ${!hasFilters ? '<button class="mural-empty-btn" id="mural-empty-upload" type="button">' + this._icons.upload + ' Enviar arquivos</button>' : ''}
+        <p>${hasFilters ? 'Tente ajustar os filtros ou a pesquisa.' : 'Envie imagens para começar a preencher seu mural.'}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          ${!hasFilters ? '<button class="mural-empty-btn" id="mural-empty-upload" type="button">' + this._icons.upload + ' Enviar arquivos</button>' : ''}
+          ${!hasFilters ? '<button class="mural-empty-btn" id="mural-empty-example" type="button" style="background:transparent;border-color:rgba(139,92,246,0.15);color:var(--mural-text-sec)">Carregar exemplos</button>' : ''}
+        </div>
       </div>`;
     const btn = document.getElementById('mural-empty-upload');
     if (btn) btn.addEventListener('click', () => this._triggerUpload());
+    const exBtn = document.getElementById('mural-empty-example');
+    if (exBtn) exBtn.addEventListener('click', () => {
+      // Cria 6 arquivos de exemplo (cores sólidas)
+      const colors = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899'];
+      const names = ['Design.webp','Dashboard.webp','Gráfico.webp','Mockup.webp','Logo.webp','App.webp'];
+      colors.forEach((c, i) => {
+        // Cria um SVG colorido como dataUrl
+        const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="'+c+'"/><text x="200" y="160" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="24" font-family="Inter,sans-serif">'+names[i]+'</text></svg>';
+        LizData.saveUploadedFile({
+          name: names[i],
+          size: Math.floor(Math.random()*500000)+50000,
+          type: 'image/webp',
+          dataUrl: 'data:image/svg+xml;base64,'+btoa(svg),
+          convTitle: 'Mural'
+        });
+      });
+      this.render();
+    });
   },
 
   /* ---- Eventos dos botões das linhas ---- */
