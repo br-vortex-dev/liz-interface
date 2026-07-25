@@ -149,7 +149,7 @@ LizUI.mural = {
     viewer.id = 'mural-viewer';
     viewer.innerHTML = `
       <div class="mural-viewer-bg" id="mural-viewer-bg"></div>
-      <img class="mural-viewer-img" id="mural-viewer-img" src="${this._esc(file.dataUrl)}" alt="${this._esc(file.name||'')}" />
+      <img class="mural-viewer-img" id="mural-viewer-img" src="${file.dataUrl}" alt="${this._esc(file.name||'')}" />
       <div class="mural-viewer-controls">
         <button class="mural-viewer-btn" id="mv-zoom-in" type="button" aria-label="Aumentar zoom" title="Aumentar zoom">${this._icons.zoomIn}</button>
         <button class="mural-viewer-btn" id="mv-zoom-out" type="button" aria-label="Diminuir zoom" title="Diminuir zoom">${this._icons.zoomOut}</button>
@@ -273,7 +273,7 @@ LizUI.mural = {
       h += `<tr class="mural-row${selected}" data-id="${this._esc(f.id)}" data-type="${type}" style="animation-delay:${Math.min(i*30,500)}ms">
         <td class="col-name">
           <div class="mural-file-cell">
-            <div class="mural-thumb">${isImg ? '<img src="'+this._esc(f.dataUrl)+'" alt="" loading="lazy" />' : '<span class="mural-thumb-icon">'+icon+'</span>'}</div>
+            <div class="mural-thumb">${isImg ? '<img src="'+f.dataUrl+'" alt="" />' : '<span class="mural-thumb-icon">'+icon+'</span>'}</div>
             <div>
               <div class="mural-file-name">${this._esc(name)}</div>
               <div class="mural-file-info">${date} ${tag}</div>
