@@ -211,11 +211,12 @@ LizUI.mural = {
     const viewer = document.getElementById('mural-viewer');
     if (!viewer) return;
     viewer.classList.remove('is-open');
+    viewer.classList.add('is-closing');
     if (this._viewerEscHandler) {
       document.removeEventListener('keydown', this._viewerEscHandler);
       this._viewerEscHandler = null;
     }
-    setTimeout(() => { if (viewer.parentNode) viewer.remove(); }, 250);
+    setTimeout(() => { if (viewer.parentNode) viewer.remove(); }, 280);
   },
 
   /* ---- Renderizar ---- */

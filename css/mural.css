@@ -914,7 +914,7 @@
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 220ms var(--mural-ease);
+  transition: opacity 180ms var(--mural-ease);
 }
 .mural-viewer.is-open {
   opacity: 1;
@@ -925,6 +925,12 @@
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: backdrop-filter 260ms var(--mural-ease),
+              -webkit-backdrop-filter 260ms var(--mural-ease);
+}
+.mural-viewer.is-open .mural-viewer-bg {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
@@ -937,23 +943,34 @@
   border-radius: var(--mural-radius);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   opacity: 0;
-  transform: scale(0.96);
-  transition: opacity 220ms var(--mural-ease),
-              transform 220ms var(--mural-ease);
+  transform: scale(0.94);
   will-change: transform, opacity;
   user-select: none;
   -webkit-user-drag: none;
+}
+.mural-viewer.is-open .mural-viewer-img {
+  animation: muralViewerImgIn 350ms var(--mural-ease) forwards;
+}
+
+@keyframes muralViewerImgIn {
+  0%   { opacity: 0; transform: scale(0.94); }
+  40%  { opacity: 1; transform: scale(1.015); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.mural-viewer.is-closing .mural-viewer-img {
+  animation: muralViewerImgOut 180ms var(--mural-ease) forwards;
+}
+
+@keyframes muralViewerImgOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.94); }
 }
 
 .mural-viewer-img.is-zoomed {
   max-width: none;
   max-height: none;
   cursor: grab;
-}
-
-.mural-viewer.is-open .mural-viewer-img {
-  opacity: 1;
-  transform: scale(1);
 }
 
 /* ---- Controles ---- */
@@ -1005,12 +1022,44 @@
   color: #ef4444;
 }
 
+/* ---- Stagger dos botões ao abrir ---- */
+.mural-viewer-btn {
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 180ms var(--mural-ease),
+              transform 180ms var(--mural-ease),
+              background 180ms var(--mural-ease),
+              color 180ms var(--mural-ease);
+}
+.mural-viewer.is-open .mural-viewer-btn {
+  animation: muralBtnIn 220ms var(--mural-ease) forwards;
+}
+.mural-viewer.is-open .mural-viewer-btn:nth-child(1) { animation-delay: 60ms; }
+.mural-viewer.is-open .mural-viewer-btn:nth-child(2) { animation-delay: 90ms; }
+.mural-viewer.is-open .mural-viewer-btn:nth-child(3) { animation-delay: 120ms; }
+.mural-viewer.is-open .mural-viewer-btn:nth-child(4) { animation-delay: 150ms; }
+.mural-viewer.is-open .mural-viewer-btn:nth-child(5) { animation-delay: 180ms; }
+.mural-viewer.is-open .mural-viewer-btn:nth-child(6) { animation-delay: 210ms; }
+
+@keyframes muralBtnIn {
+  0%   { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.mural-viewer.is-closing .mural-viewer-btn {
+  animation: muralBtnOut 140ms var(--mural-ease) forwards;
+}
+@keyframes muralBtnOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.7); }
+}
+
 /* ---- Info da imagem ---- */
 .mural-viewer-info {
   position: absolute;
   bottom: 20px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(4px);
   z-index: 3;
   font-size: 0.78rem;
   color: rgba(255, 255, 255, 0.4);
@@ -1025,7 +1074,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
-  transition: opacity 180ms var(--mural-ease);
+  opacity: 0;
+  transition: opacity 220ms var(--mural-ease),
+              transform 220ms var(--mural-ease);
+}
+.mural-viewer.is-open .mural-viewer-info {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition-delay: 180ms;
 }
 
 /* ---- Responsivo viewer ---- */
