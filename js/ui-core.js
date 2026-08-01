@@ -52,7 +52,7 @@ const LizUI = {
    * =========================================================== */
   renderBrand() {
     this.el.emptyCrown.innerHTML = LizConfig.crown;
-    const iconMap = { new: 'newChat', conversations: 'chats', tools: 'tools', 'polaroid-wall': 'gallery', settings: 'settings' };
+    const iconMap = { new: 'newChat', conversations: 'chats', tools: 'tools', 'mural': 'gallery', settings: 'settings' };
     document.querySelectorAll('.float-pill[data-action]').forEach((pill) => {
       const ico = pill.querySelector('.float-pill-ico');
       if (ico) ico.innerHTML = LizConfig.icons[iconMap[pill.dataset.action]];

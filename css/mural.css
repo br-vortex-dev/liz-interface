@@ -31,8 +31,11 @@
   z-index: 200;
   background: var(--mural-bg);
   color: var(--mural-text);
-  display: flex;
+  display: none;
   flex-direction: column;
+}
+.mural-overlay.is-open {
+  display: flex;
   animation: muralFadeIn 0.22s var(--mural-ease) both;
 }
 
@@ -906,8 +909,27 @@
  * ============================================================ */
 
 .mural-viewer {
+  --mural-bg: #08060e;
+  --mural-surface: rgba(255,255,255,0.03);
+  --mural-surface-hover: rgba(255,255,255,0.06);
+  --mural-surface-active: rgba(139,92,246,0.08);
+  --mural-border: rgba(255,255,255,0.06);
+  --mural-border-hover: rgba(255,255,255,0.1);
+  --mural-border-active: rgba(139,92,246,0.2);
+  --mural-text: #fff;
+  --mural-text-sec: rgba(255,255,255,0.5);
+  --mural-text-muted: rgba(255,255,255,0.25);
+  --mural-brand: #8b5cf6;
+  --mural-radius: 12px;
+  --mural-radius-sm: 8px;
+  --mural-radius-pill: 999px;
+  --mural-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mural-fast: 180ms;
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 400;
   display: flex;
   align-items: center;
@@ -923,7 +945,10 @@
 
 .mural-viewer-bg {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
@@ -940,6 +965,9 @@
   z-index: 2;
   max-width: 90vw;
   max-height: 90vh;
+  min-width: 280px;
+  min-height: 280px;
+  object-fit: contain;
   border-radius: var(--mural-radius);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   opacity: 0;
@@ -1089,6 +1117,8 @@
   .mural-viewer-img {
     max-width: 95vw;
     max-height: 85vh;
+    min-width: 200px;
+    min-height: 200px;
     border-radius: var(--mural-radius-sm);
   }
   .mural-viewer-controls {

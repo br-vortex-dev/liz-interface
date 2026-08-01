@@ -305,7 +305,7 @@ const LizChat = {
       '.float-pill[data-action="new"]',
       '.float-pill[data-action="conversations"]',
       '.float-pill[data-action="tools"]',
-      '.float-pill[data-action="polaroid-wall"]',
+      '.float-pill[data-action="mural"]',
       '.float-pill[data-action="settings"]',
       '#attach-btn',
       '#chat-input',
@@ -379,13 +379,16 @@ const LizChat = {
 
   /** Roteia o clique nas pílulas do menu flutuante. */
   _handlePill(action) {
+    // Sempre limpa painel/estado anterior antes de processar nova action
+    LizUI._hideMainFloatPanel();
+
     if (action === 'new') {
       this.newConversation();
       return;
     }
-    // Mural de Polaroids → overlay fullscreen
-    if (action === 'polaroid-wall') {
-      LizUI.polaroidWall.open();
+    // Mural → overlay fullscreen
+    if (action === 'mural') {
+      LizUI.mural.open();
       return;
     }
     // Conversas / Ferramentas → float panel ao lado do menu

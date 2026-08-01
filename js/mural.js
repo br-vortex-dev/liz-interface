@@ -27,8 +27,7 @@ LizUI.mural = {
     upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
     image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
     file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
-    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
-    audio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
     sort: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5h10M11 12h7M11 19h4"/><path d="M3 5l3-3 3 3M9 19H3M3 12h6"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
@@ -71,7 +70,6 @@ LizUI.mural = {
           <button class="mural-filter" data-filter="image">Imagens</button>
           <button class="mural-filter" data-filter="file">Arquivos</button>
           <button class="mural-filter" data-filter="video">Vídeos</button>
-          <button class="mural-filter" data-filter="audio">Áudios</button>
         </div>
         <div class="mural-toolbar">
           <div class="mural-search-wrap">
@@ -101,8 +99,7 @@ LizUI.mural = {
   open: function() {
     if (!this.overlay) this.init();
     this.render();
-    this.overlay.style.display = 'flex';
-    requestAnimationFrame(() => { this.overlay.classList.add('is-open'); });
+    this.overlay.classList.add('is-open');
     document.body.style.overflow = 'hidden';
   },
 
@@ -110,7 +107,6 @@ LizUI.mural = {
   close: function() {
     if (!this.overlay) return;
     this.overlay.classList.remove('is-open');
-    this.overlay.style.display = '';
     document.body.style.overflow = '';
     if (typeof this.onClose === 'function') this.onClose();
   },
@@ -120,7 +116,6 @@ LizUI.mural = {
     if (!f || !f.type) return 'file';
     if (f.type.startsWith('image/')) return 'image';
     if (f.type.startsWith('video/')) return 'video';
-    if (f.type.startsWith('audio/')) return 'audio';
     return 'file';
   },
 

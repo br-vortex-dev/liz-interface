@@ -14,7 +14,7 @@ const LizSettings = {
     const old = document.getElementById('main-float-panel');
     if (old) old.remove();
 
-    LizUI._hideFloatPanel();
+    LizUI._hideMainFloatPanel();
     LizUI.setActivePill(action);
 
     const panel = document.createElement('div');

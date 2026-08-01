@@ -1,5 +1,0 @@
-Como funciona a navegação por meses? Confirma pra eu não implementar errado:
-
-A um mês por tela - scroll/pinça TROCA o mês visível (tipo calendário: março → fevereiro → janeiro)
-
-B Zoom pinça afastando mostra VÁRIOS meses na tela (visão geral), aproximando volta para UM mês (visão detalhada)

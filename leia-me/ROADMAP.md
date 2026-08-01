@@ -42,7 +42,7 @@
 - [x] Empty state com coroa breathing + anéis pulsantes ✅
 - [x] Mensagens "glass river" com bolhas translúcidas ✅
 - [x] Modal glass com spring animation ✅
-- [x] Mural de Polaroids com fio e pregadores ✅
+- [x] Mural com fio e pregadores ✅
 - [x] Tema claro completo ✅
 - [x] prefers-reduced-motion ✅
 - [ ] Animação de introdução da coroa (como no desktop)
