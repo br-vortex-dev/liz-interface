@@ -5,7 +5,7 @@
  * ============================================================ */
 
 /* ---- Variáveis locais ---- */
-.mural {
+.mural-overlay {
   --mural-bg: #08060e;
   --mural-surface: rgba(255,255,255,0.03);
   --mural-surface-hover: rgba(255,255,255,0.06);
