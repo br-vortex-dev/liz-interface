@@ -9,8 +9,13 @@ const LizChat = {
   /** Estado da conversa atual */
   messages: [],
   currentTitle: null,          // título da conversa atual
+  currentConversationId: null, // id da conversa salva (persistência por id, não por título)
+  isGenerating: false,         // lock: uma geração por vez
+  _stopRequested: false,       // usuário pediu para parar a geração
   messageReactions: {},        // { [msgIndex]: { [reactionKey]: count } }
   isFocused: false,
+  backendConversationId: null, // ID da conversa no backend (quando online)
+  selectedModel: localStorage.getItem('liz-model') || 'liz-3', // modelo ativo
 
   MAX_FILE_SIZE: 10 * 1024 * 1024, // 10 MB
 
@@ -49,6 +54,15 @@ const LizChat = {
     // 7. Executa animação de introdução
     this.runIntroAnimation();
 
+    // Verifica disponibilidade do backend (não bloqueia)
+    LizAPI.checkBackend().then((online) => {
+      if (online) {
+        console.log('%cLiz API → backend conectado ✓', 'color:#4ade80;font-weight:600');
+      } else {
+        console.log('%cLiz API → modo local (backend offline)', 'color:#facc15;font-weight:600');
+      }
+    });
+
     console.log('%cLiz Chat pronto ✨', 'color:#a78bfa;font-weight:600');
   },
 
@@ -61,6 +75,8 @@ const LizChat = {
     // Envio do formulário
     el.form.addEventListener('submit', (e) => {
       e.preventDefault();
+      // Durante a geração, o botão de enviar vira "Parar geração"
+      if (this.isGenerating) { this.stopGeneration(); return; }
       this.sendMessage();
     });
 
@@ -74,6 +90,7 @@ const LizChat = {
       if (e.key === 'Enter' && !e.shiftKey) {
         if (enterSends) {
           e.preventDefault();
+          if (this.isGenerating) { this.stopGeneration(); return; }
           this.sendMessage();
         }
         // Se enterSends for false, o Enter padrão adiciona nova linha (comportamento nativo)
@@ -81,6 +98,7 @@ const LizChat = {
       // Ctrl+Enter sempre envia, independente da config
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
+        if (this.isGenerating) { this.stopGeneration(); return; }
         this.sendMessage();
       }
       // Tab no textarea: sempre previne tabulação e pula para o
@@ -98,7 +116,7 @@ const LizChat = {
       }
     });
 
-    // Coroa no header — recolhe/expande as ferramentas do menu lateral
+    // Coroa no header — recolhe/expande o menu lateral
     el.crownToggle.addEventListener('click', () => LizUI.toggleTools());
     el.crownToggle.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -106,6 +124,9 @@ const LizChat = {
         LizUI.toggleTools();
       }
     });
+
+    // Seletor de modelo
+    this._bindModelSelector();
 
     // No mobile, o botão no topo abre o painel de conversas
     el.mobileMenuBtn.addEventListener('click', () => LizUI.openPanel('conversations'));
@@ -246,36 +267,34 @@ const LizChat = {
       LizUI._renderConversations(e.target.value);
     });
 
-    // Abrir conversa a partir do card (painel)
+    // Abrir conversa a partir do card (painel) + ações fixar/renomear/excluir
     el.conversationsContent.addEventListener('click', (e) => {
+      const actBtn = e.target.closest('.conv-act');
       const card = e.target.closest('.conv-card');
       if (!card) return;
-      // Tenta encontrar em conversas salvas primeiro
-      const savedConv = LizData.getConversationById(card.dataset.id);
-      if (savedConv) {
-        LizUI.closePanel();
-        this.openSampleConversation(savedConv.title);
+      const convId = card.dataset.id;
+
+      // Ações nos botões do card
+      if (actBtn) {
+        e.stopPropagation();
+        const act = actBtn.dataset.act;
+        if (act === 'pin') {
+          LizData.togglePinConversation(convId);
+          LizUI._renderConversations(el.conversationsSearch?.value || '');
+        } else if (act === 'rename') {
+          const conv = LizData.getConversationById(convId);
+          this._renameConversationPrompt(conv);
+        } else if (act === 'delete') {
+          this._deleteConversationConfirm(convId);
+        }
         return;
       }
-      // Fallback: dados de exemplo
-      const conv = LizData.conversationGroups
-        .flatMap((g) => g.items)
-        .find((it) => it.id === card.dataset.id);
-      if (conv) {
-        LizUI.closePanel();
-        this.openSampleConversation(conv.title);
-      }
-    });
 
-    // Cards de ferramenta (painel) → preenchem o input e fecham
-    el.toolsContent.addEventListener('click', (e) => {
-      const card = e.target.closest('.tool-card');
-      if (!card) return;
-      const title = card.querySelector('.tool-card-title').textContent;
-      LizUI.closePanel();
-      LizUI.el.input.value = title;
-      LizUI.updateSendState();
-      LizUI.el.input.focus();
+      const savedConv = LizData.getConversationById(convId);
+      if (savedConv) {
+        LizUI.closePanel();
+        this.openConversationById(savedConv.id);
+      }
     });
 
     // Tab Navigation Mode — ciclo fechado de navegação
@@ -299,12 +318,11 @@ const LizChat = {
   _initTabNavigation() {
     // Lista de seletores dos principais elementos focáveis
     // (elementos intermediários como chips de sugestão fluem naturalmente)
-    const selectors = [
+    this._tabSelectors = [
       '#crown-toggle',
       '#theme-toggle',
       '.float-pill[data-action="new"]',
       '.float-pill[data-action="conversations"]',
-      '.float-pill[data-action="tools"]',
       '.float-pill[data-action="mural"]',
       '.float-pill[data-action="settings"]',
       '#attach-btn',
@@ -312,10 +330,8 @@ const LizChat = {
       '#send-btn',
     ];
 
-    // Cache dos elementos visíveis
-    this._tabFocusable = selectors
-      .map((sel) => document.querySelector(sel))
-      .filter((el) => el && el.offsetParent !== null);
+    // Cache inicial (pode ser vazio durante intro — rebuild depois)
+    this._rebuildTabFocusable();
 
     document.addEventListener('keydown', (e) => {
       const indicator = document.getElementById('tab-nav-indicator');
@@ -366,15 +382,14 @@ const LizChat = {
           clearTimeout(this._tabNavTimer);
         }
       }
-
-      // Ctrl+F / Cmd+F → busca na conversa
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        if (this.messages.length > 0) {
-          e.preventDefault();
-          LizUI.showSearchBar();
-        }
-      }
     });
+  },
+
+  /** Reconstrói a lista de elementos focáveis (chamar após intro/visibility changes). */
+  _rebuildTabFocusable() {
+    this._tabFocusable = (this._tabSelectors || [])
+      .map((sel) => document.querySelector(sel))
+      .filter((el) => el && el.offsetParent !== null);
   },
 
   /** Roteia o clique nas pílulas do menu flutuante. */
@@ -391,8 +406,8 @@ const LizChat = {
       LizUI.mural.open();
       return;
     }
-    // Conversas / Ferramentas → float panel ao lado do menu
-    if (action === 'conversations' || action === 'tools') {
+    // Conversas → float panel ao lado do menu
+    if (action === 'conversations') {
       LizUI._showMainFloatPanel(action);
       return;
     }
@@ -406,6 +421,114 @@ const LizChat = {
       LizUI.closePanel();
     } else {
       LizUI.openPanel(action);
+    }
+  },
+
+  /* ===========================================================
+   * SELETOR DE MODELO
+   * =========================================================== */
+  _bindModelSelector() {
+    const btn = document.getElementById('model-selector-btn');
+    const dropdown = document.getElementById('model-selector-dropdown');
+    const label = document.getElementById('model-selector-label');
+    if (!btn || !dropdown || !label) return;
+
+    // Nomes legíveis
+    const modelNames = {
+      'liz-3': 'Liz 3',
+      'liz-3-flash': 'Liz 3 Flash',
+      'nable-35-mini': 'Nable 3.5 Mini',
+      'nable-35': 'Nable 3.5',
+    };
+
+    // Restaura modelo salvo
+    label.textContent = modelNames[this.selectedModel] || 'Liz 3';
+    this._syncModelActive(dropdown);
+
+    // Toggle dropdown
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('is-open');
+      if (isOpen) {
+        this._closeModelDropdown();
+      } else {
+        dropdown.classList.add('is-open');
+        dropdown.setAttribute('aria-hidden', 'false');
+        btn.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    // Seleção de modelo
+    dropdown.querySelectorAll('.model-option').forEach((opt) => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const model = opt.dataset.model;
+        this.selectedModel = model;
+        localStorage.setItem('liz-model', model);
+        label.textContent = modelNames[model] || model;
+        this._syncModelActive(dropdown);
+
+        // Animação de pulso no botão
+        btn.classList.remove('just-changed');
+        void btn.offsetWidth; // force reflow
+        btn.classList.add('just-changed');
+
+        this._closeModelDropdown();
+        this.toast('Modelo: ' + (modelNames[model] || model));
+      });
+    });
+
+    // Fecha ao clicar fora
+    document.addEventListener('click', () => {
+      if (dropdown.classList.contains('is-open')) {
+        this._closeModelDropdown();
+      }
+    });
+
+    // Fecha com Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dropdown.classList.contains('is-open')) {
+        this._closeModelDropdown();
+      }
+    });
+  },
+
+  _closeModelDropdown() {
+    const btn = document.getElementById('model-selector-btn');
+    const dropdown = document.getElementById('model-selector-dropdown');
+    if (!btn || !dropdown) return;
+    dropdown.classList.remove('is-open');
+    dropdown.setAttribute('aria-hidden', 'true');
+    btn.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+  },
+
+  _syncModelActive(dropdown) {
+    dropdown.querySelectorAll('.model-option').forEach((opt) => {
+      opt.classList.toggle('is-active', opt.dataset.model === this.selectedModel);
+    });
+  },
+
+  /* ===========================================================
+   * CONVERSAS — fixar, renomear, excluir (desktop)
+   * =========================================================== */
+  _renameConversationPrompt(conv) {
+    if (!conv) return;
+    const v = prompt('Novo título da conversa:', conv.title);
+    if (v && v.trim() && LizData.renameConversation(conv.id, v)) {
+      LizUI._renderConversations(LizUI.el.conversationsSearch?.value || '');
+      this.toast('Conversa renomeada');
+    }
+  },
+
+  _deleteConversationConfirm(id) {
+    const conv = LizData.getConversationById(id);
+    const title = conv ? conv.title : 'esta conversa';
+    if (confirm('Excluir "' + title + '"? Essa ação não pode ser desfeita.')) {
+      LizData.deleteConversation(id);
+      LizUI._renderConversations(LizUI.el.conversationsSearch?.value || '');
+      this.toast('Conversa excluída');
     }
   },
 
@@ -442,6 +565,12 @@ const LizChat = {
    * =========================================================== */
   sendMessage() {
     const { el } = LizUI;
+    if (this.isGenerating) return; // lock: uma resposta por vez
+    if (Date.now() < this._cooldownUntil) {
+      const rest = Math.ceil((this._cooldownUntil - Date.now()) / 1000);
+      this.toast('Espera ' + rest + 's — o provedor tem limite de requisições');
+      return;
+    }
     const text = el.input.value.trim();
     if (!text) return;
 
@@ -449,14 +578,18 @@ const LizChat = {
     const wasEmpty = !this.messages.length;
     this.messages.push({ role: 'user', content: text, time: this._now() });
     if (wasEmpty) {
+      const autoBase = LizData.autoTitleFromMessages(this.messages) || text.slice(0, 40);
       const title = LizUI.activeMode
-        ? LizConfig.suggestions.find((s) => s.id === LizUI.activeMode)?.status + ' — ' + text.slice(0, 30)
-        : text.slice(0, 40);
+        ? (LizConfig.suggestions.find((s) => s.id === LizUI.activeMode)?.status || 'Conversa') + ' — ' + autoBase
+        : autoBase;
       this.currentTitle = title;
       LizUI.showConversation(title);
       LizUI.clearMode();
       LizUI.renderMessages(this.messages);
       LizUI.addExportButton();
+
+      // Tenta criar a conversa no backend (guarda a promise pra evitar conversa duplicada)
+      this._backendCreatePromise = this._tryCreateBackendConversation(title);
     } else {
       LizUI.appendMessage(this.messages[this.messages.length - 1], this.messages.length - 1);
     }
@@ -473,18 +606,51 @@ const LizChat = {
     this._simulateReply(text);
   },
 
-  async _simulateReply(userText) {
-    LizUI.showTyping();
-    await this._delay(850);
+  /* ===========================================================
+   * LOCK DE GERAÇÃO + PARAR GERAÇÃO
+   * =========================================================== */
+  _beginGeneration() {
+    this.isGenerating = true;
+    this._stopRequested = false;
+    LizUI.setGeneratingState(true);
+  },
+
+  _endGeneration() {
+    this.isGenerating = false;
+    this._stopRequested = false;
+    LizUI.setGeneratingState(false);
+    // Chamada real ao provedor consome cota: cooldown curto antes do próximo
+    // envio evita estourar o rate limit e tomar 429 em sequência.
+    if (this._usedBackend) {
+      this._usedBackend = false;
+      this._startSendCooldown();
+    }
+  },
+
+  /* ===========================================================
+   * COOLDOWN PÓS-ENVIO (respeita o rate limit do provedor)
+   * =========================================================== */
+  SEND_COOLDOWN_MS: 15000,
+
+  _startSendCooldown() {
+    this._cooldownUntil = Date.now() + this.SEND_COOLDOWN_MS;
+    LizUI.setCooldownState(true, this.SEND_COOLDOWN_MS);
+    clearTimeout(this._cooldownTimer);
+    this._cooldownTimer = setTimeout(() => {
+      this._cooldownUntil = 0;
+      LizUI.setCooldownState(false);
+    }, this.SEND_COOLDOWN_MS);
+  },
+
+  /** Usuário clicou em "Parar geração". */
+  stopGeneration() {
+    if (!this.isGenerating) return;
+    this._stopRequested = true;
     LizUI.removeTyping();
+  },
 
-    const reply = this._pickReply(userText);
-    const msg = { role: 'liz', content: reply, time: this._now() };
-    this.messages.push(msg);
-    LizUI.appendMessage(msg, this.messages.length - 1);
-
-    // Salva após resposta
-    this._saveCurrentConversation();
+  async _simulateReply(userText) {
+    await this._streamReply(userText);
   },
 
   _pickReply(userText) {
@@ -503,13 +669,19 @@ const LizChat = {
 
   /** Volta à tela inicial (coroa no centro). */
   newConversation() {
+    // Cancela geração em andamento pra não escrever no array errado
+    if (this.isGenerating) this._stopRequested = true;
+
     // Salva a conversa atual antes de limpar
     if (this.messages.length > 0) {
       this._saveCurrentConversation();
     }
     this.messages = [];
     this.currentTitle = null;
+    this.currentConversationId = null;
     this.messageReactions = {};
+    this.backendConversationId = null;
+    this._backendCreatePromise = null;
     LizUI.showEmptyState();
     LizUI.clearMode();
     LizUI.el.title.textContent = 'Liz';
@@ -521,18 +693,19 @@ const LizChat = {
     LizUI.el.input.focus();
   },
 
-  /** Abre uma conversa a partir do painel. */
-  openSampleConversation(title) {
-    // Tenta encontrar uma conversa salva
-    const savedConv = LizData.savedConversations.find((c) => c.title === title);
-    if (savedConv && savedConv.messages.length > 0) {
-      this.messages = savedConv.messages.map((m) => ({ ...m }));
-      this.currentTitle = savedConv.title;
-    } else {
-      // Fallback para dados de exemplo
-      this.messages = LizData.sampleMessages.map((m) => ({ ...m }));
-      this.currentTitle = title;
+  /** Abre uma conversa salva a partir do painel (por id — título pode colidir). */
+  openConversationById(id) {
+    const savedConv = LizData.getConversationById(id);
+    if (!savedConv) {
+      this.toast('Conversa não encontrada');
+      return;
     }
+    // Cancela geração em andamento pra não contaminar a nova conversa
+    if (this.isGenerating) this._stopRequested = true;
+
+    this.messages = savedConv.messages.map((m) => ({ ...m }));
+    this.currentTitle = savedConv.title;
+    this.currentConversationId = savedConv.id;
     this.messageReactions = {};
     LizUI.showConversation(this.currentTitle);
     LizUI.renderMessages(this.messages);
@@ -605,22 +778,28 @@ const LizChat = {
   },
 
   async _simulateFileReply(file) {
-    LizUI.showTyping();
-    await this._delay(900);
-    LizUI.removeTyping();
+    this._beginGeneration();
+    try {
+      LizUI.showTyping();
+      await this._delay(900);
+      LizUI.removeTyping();
+      if (this._stopRequested) return;
 
-    const isImage = file.type && file.type.startsWith('image/');
-    let reply;
-    if (isImage) {
-      reply = 'Recebi sua imagem! Posso analisá-la, descrevê-la ou ajudar com edições. O que você gostaria de fazer?';
-    } else {
-      reply = 'Arquivo recebido! Posso ler o conteúdo, resumir ou extrair informações. Me diga o que precisa.';
+      const isImage = file.type && file.type.startsWith('image/');
+      let reply;
+      if (isImage) {
+        reply = 'Recebi sua imagem! Posso analisá-la, descrevê-la ou ajudar com edições. O que você gostaria de fazer?';
+      } else {
+        reply = 'Arquivo recebido! Posso ler o conteúdo, resumir ou extrair informações. Me diga o que precisa.';
+      }
+
+      const msg = { role: 'liz', content: reply, time: this._now() };
+      this.messages.push(msg);
+      LizUI.appendMessage(msg, this.messages.length - 1);
+      this._saveCurrentConversation();
+    } finally {
+      this._endGeneration();
     }
-
-    const msg = { role: 'liz', content: reply, time: this._now() };
-    this.messages.push(msg);
-    LizUI.appendMessage(msg, this.messages.length - 1);
-    this._saveCurrentConversation();
   },
 
   /* ===========================================================
@@ -635,6 +814,205 @@ const LizChat = {
     LizUI.replaceMessageAtIndex(index, newHTML);
     this._saveCurrentConversation();
     this.toast('Mensagem editada');
+  },
+
+  /* ===========================================================
+   * REGENERAR RESPOSTA (Refazer)
+   * =========================================================== */
+  async regenerateMessage(index) {
+    if (index < 0 || index >= this.messages.length) return;
+    if (this.messages[index].role !== 'liz') return;
+    if (this.isGenerating) return;
+
+    // Encontra a mensagem do usuário imediatamente anterior
+    let userMsgIndex = index - 1;
+    while (userMsgIndex >= 0 && this.messages[userMsgIndex].role !== 'user') {
+      userMsgIndex--;
+    }
+    if (userMsgIndex < 0) return;
+
+    const userText = this.messages[userMsgIndex].content;
+
+    // Remove a resposta antiga
+    this.messages.splice(index, 1);
+    delete this.messageReactions[index];
+    LizUI.renderMessages(this.messages);
+
+    // Gera nova resposta com streaming
+    this.toast('Gerando nova resposta...');
+    await this._streamReply(userText, index);
+  },
+
+  /* ===========================================================
+   * CONTINUAR RESPOSTA
+   * =========================================================== */
+  async continueMessage(index) {
+    if (index < 0 || index >= this.messages.length) return;
+    if (this.messages[index].role !== 'liz') return;
+    if (this.isGenerating) return;
+
+    this._beginGeneration();
+    try {
+      this.toast('Continuando...');
+
+      // Encontra a mensagem do usuário anterior pra contexto
+      let userMsgIndex = index - 1;
+      while (userMsgIndex >= 0 && this.messages[userMsgIndex].role !== 'user') {
+        userMsgIndex--;
+      }
+      const userText = userMsgIndex >= 0 ? this.messages[userMsgIndex].content : '';
+
+      // Gera continuacao e append na mensagem existente
+      const continuation = this._pickContinuation(userText);
+      await this._streamAppendToMessage(index, continuation);
+    } finally {
+      this._endGeneration();
+    }
+  },
+
+  _pickContinuation(userText) {
+    const continuations = [
+      'Além disso, vale considerar que cada decisão de arquitetura tem um custo de manutenção a longo prazo. O que parece simples hoje pode cobrar juros amanhã.',
+      'Outro ponto importante: teste o caminho infeliz antes do caminho feliz. Se o sistema não sabe lidar com erro, ele não está pronto.',
+      'Pra complementar — se quiser aprofundar, posso detalhar qualquer um desses pontos ou mostrar um exemplo prático. É só pedir.',
+    ];
+    return continuations[Math.floor(Math.random() * continuations.length)];
+  },
+
+  /* ===========================================================
+   * STREAMING SIMULADO
+   * =========================================================== */
+  async _streamReply(userText, insertAtIndex) {
+    this._beginGeneration();
+    this._usedBackend = false;
+    try {
+      LizUI.showTyping();
+
+      // Tenta backend primeiro
+      let backendOnline = false;
+      try {
+        if (this._backendCreatePromise) await this._backendCreatePromise;
+        backendOnline = await LizAPI.checkBackend();
+        if (backendOnline) {
+          // Requisição vai consumir cota do provedor (mesmo se falhar):
+          // marca pra disparar o cooldown pós-envio.
+          this._usedBackend = true;
+          const response = await LizAPI.sendMessage(
+            this.backendConversationId, userText, LizUI.activeMode || null, this.selectedModel
+          );
+          LizUI.removeTyping();
+          if (this._stopRequested) return; // parou durante a espera
+          if (response.conversationId) this.backendConversationId = response.conversationId;
+          const content = response.assistantMessage?.content || response.reply || 'Sem resposta.';
+          const msg = { role: 'liz', content, time: this._now() };
+          if (insertAtIndex !== undefined) {
+            this.messages.splice(insertAtIndex, 0, msg);
+          } else {
+            this.messages.push(msg);
+          }
+          LizUI.renderMessages(this.messages);
+          this._saveCurrentConversation();
+          return;
+        }
+      } catch (e) {
+        if (backendOnline) {
+          // Backend online mas a chamada falhou: mostra o erro real.
+          // Nunca inventa resposta — resposta fake disfarçada era o que
+          // fazia parecer que a IA não funcionava.
+          LizUI.removeTyping();
+          if (this._stopRequested) return;
+          LizAPI.online = false; // força nova checagem na próxima mensagem
+          const errMsg = { role: 'liz', content: 'Não consegui falar com a IA agora (' + (e.message || 'erro de conexão') + '). Me pede de novo?', time: this._now() };
+          if (insertAtIndex !== undefined) this.messages.splice(insertAtIndex, 0, errMsg);
+          else this.messages.push(errMsg);
+          LizUI.renderMessages(this.messages);
+          this._saveCurrentConversation();
+          return;
+        }
+        console.warn('Backend offline — usando modo local:', e.message);
+      }
+
+      if (this._stopRequested) { LizUI.removeTyping(); return; }
+
+      // Fallback: simulação local com efeito de digitação
+      await this._delay(400);
+      LizUI.removeTyping();
+      if (this._stopRequested) return;
+
+      const fullText = this._pickReply(userText);
+      const msg = { role: 'liz', content: '', time: this._now() };
+
+      if (insertAtIndex !== undefined) {
+        this.messages.splice(insertAtIndex, 0, msg);
+      } else {
+        this.messages.push(msg);
+      }
+
+      const msgIndex = insertAtIndex !== undefined ? insertAtIndex : this.messages.length - 1;
+
+      // Se inseriu no meio da lista, re-renderiza tudo pra manter ordem DOM correta.
+      // Se é a última posição, append simples basta.
+      let node;
+      if (insertAtIndex !== undefined && insertAtIndex < this.messages.length - 1) {
+        LizUI.renderMessages(this.messages);
+        node = LizUI.el.messagesList.querySelectorAll('.msg')[msgIndex];
+      } else {
+        node = LizUI.appendMessage(msg, msgIndex);
+      }
+
+      // Streaming: revela palavra por palavra
+      await this._typeWords(node, fullText, msgIndex);
+      this._saveCurrentConversation();
+    } finally {
+      this._endGeneration();
+    }
+  },
+
+  async _streamAppendToMessage(index, continuationText) {
+    const msg = this.messages[index];
+    if (!msg) return;
+
+    const msgs = LizUI.el.messagesList.querySelectorAll('.msg');
+    const node = msgs[index];
+    if (!node) return;
+
+    const textEl = node.querySelector('.msg-text');
+    if (!textEl) return;
+
+    // Adiciona separador e streama a continuação
+    const separator = '\n\n';
+    const words = continuationText.split(' ');
+    let accumulated = msg.content + separator;
+
+    for (let i = 0; i < words.length; i++) {
+      if (this._stopRequested) break;
+      accumulated += (i > 0 ? ' ' : '') + words[i];
+      msg.content = accumulated;
+      textEl.innerHTML = LizUI._markdown(accumulated);
+      await this._delay(25 + Math.random() * 20);
+    }
+
+    this._saveCurrentConversation();
+  },
+
+  async _typeWords(node, fullText, msgIndex) {
+    const textEl = node.querySelector('.msg-text');
+    if (!textEl) {
+      this.messages[msgIndex].content = fullText;
+      return;
+    }
+
+    const words = fullText.split(' ');
+    let accumulated = '';
+
+    for (let i = 0; i < words.length; i++) {
+      if (this._stopRequested) break; // "Parar geração" — conteúdo parcial fica
+      accumulated += (i > 0 ? ' ' : '') + words[i];
+      this.messages[msgIndex].content = accumulated;
+      textEl.innerHTML = LizUI._markdown(accumulated);
+      LizUI._scrollToBottom();
+      await this._delay(18 + Math.random() * 22);
+    }
   },
 
   /* ===========================================================
@@ -728,7 +1106,25 @@ const LizChat = {
     if (!this.currentTitle) {
       this.currentTitle = title;
     }
-    LizData.saveConversation(this.currentTitle, this.messages);
+    this.currentConversationId = LizData.saveConversation(
+      this.currentTitle, this.messages, this.currentConversationId
+    );
+  },
+
+  /** Tenta criar a conversa no backend (não bloqueia a UI) */
+  async _tryCreateBackendConversation(title) {
+    try {
+      const online = await LizAPI.checkBackend();
+      if (online && !this.backendConversationId) {
+        const res = await LizAPI.createConversation(title);
+        if (res && res.id) {
+          this.backendConversationId = res.id;
+          console.log('%cLiz API → conversa criada no backend: ' + res.id, 'color:#4ade80');
+        }
+      }
+    } catch (e) {
+      console.warn('Não foi possível criar conversa no backend:', e.message);
+    }
   },
 
   /* ===========================================================
@@ -761,11 +1157,13 @@ const LizChat = {
     const showAnimations = localStorage.getItem('liz-animations') !== 'false';
     const showGlow = localStorage.getItem('liz-glow') !== 'false';
     const enterSend = localStorage.getItem('liz-enter-send') !== 'false';
+    const showSuggestions = localStorage.getItem('liz-show-suggestions') !== 'false';
 
     // Usa CSS classes para controle em tempo real (funciona pra mensagens novas também)
     document.documentElement.classList.toggle('liz-no-timestamp', !showTimestamp);
     document.documentElement.classList.toggle('liz-no-animations', !showAnimations);
     document.documentElement.classList.toggle('liz-no-glow', !showGlow);
+    document.documentElement.classList.toggle('liz-no-suggestions', !showSuggestions);
 
     // Enter para enviar: atualiza o placeholder
     const input = document.getElementById('chat-input');
@@ -878,7 +1276,7 @@ const LizChat = {
 
     const check = () => {
       checks++;
-      const fontsReady = document.fonts?.status === 'loaded' || document.fonts?.ready;
+      const fontsReady = !document.fonts || document.fonts.status === 'loaded';
       const layoutReady = this._isLayoutReady();
 
       if ((fontsReady && layoutReady) || checks >= maxChecks) {
@@ -1002,6 +1400,9 @@ const LizChat = {
 
     const app = document.querySelector('.chat-app');
     if (app) app.style.pointerEvents = '';
+
+    // Reconstrói navegação Tab agora que os elementos estão visíveis
+    this._rebuildTabFocusable();
   },
 
   _finalizeCrown() {

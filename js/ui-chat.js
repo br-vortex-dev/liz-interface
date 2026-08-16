@@ -38,14 +38,22 @@ LizUI.clearMode = function() {
 LizUI._renderStarters = function(modeId) {
   if (!this.el.starters) return;
   const items = LizConfig.startersByMode[modeId] || [];
-  this.el.starters.innerHTML = items.map((s) =>
-    '<button class="starter" type="button" data-prompt="' + this._esc(s.prompt) + '">' +
-    '<span class="starter-ico">' + (LizConfig.icons[s.icon] || LizConfig.icons.sparkle) + '</span>' +
-    '<span class="starter-label">' + this._esc(s.title) + '</span>' +
-    '<span class="starter-arrow">' + LizConfig.icons.continue + '</span></button>'
-  ).join('');
+  this.el.starters.innerHTML = items.map((s) => {
+    const isLink = !!s.link;
+    const dataAttr = isLink
+      ? 'data-link="' + this._esc(s.link) + '"'
+      : 'data-prompt="' + this._esc(s.prompt) + '"';
+    return '<button class="starter' + (isLink ? ' starter-external' : '') + '" type="button" ' + dataAttr + '>' +
+      '<span class="starter-ico">' + (LizConfig.icons[s.icon] || LizConfig.icons.sparkle) + '</span>' +
+      '<span class="starter-label">' + this._esc(s.title) + '</span>' +
+      '<span class="starter-arrow">' + (isLink ? LizConfig.icons.expand : LizConfig.icons.continue) + '</span></button>';
+  }).join('');
   this.el.starters.querySelectorAll('.starter').forEach((card) => {
     card.addEventListener('click', () => {
+      if (card.dataset.link) {
+        window.open(card.dataset.link, '_blank', 'noopener');
+        return;
+      }
       this.el.input.value = card.dataset.prompt;
       this.updateSendState();
       this.el.input.focus();
@@ -121,8 +129,8 @@ LizUI._reactionsHTML = function(msgIndex) {
   let html = '<div class="reactions-bar" data-msg-index="' + msgIndex + '">';
   LizData.reactionEmojis.forEach((r) => {
     const count = reactions[r.key] || 0;
-    html += '<button class="reaction-btn' + (count > 0 ? ' is-active' : '') + '" data-reaction="' + r.key + '" type="button" aria-label="Reagir com ' + r.emoji + '">' +
-      '<span class="reaction-emoji">' + r.emoji + '</span>' + (count > 0 ? '<span class="reaction-count">' + count + '</span>' : '') + '</button>';
+    html += '<button class="reaction-btn' + (count > 0 ? ' is-active' : '') + '" data-reaction="' + r.key + '" type="button" aria-label="' + this._esc(r.label || r.key) + '">' +
+      '<span class="reaction-emoji">' + (LizConfig.icons[r.icon] || '') + '</span>' + (count > 0 ? '<span class="reaction-count">' + count + '</span>' : '') + '</button>';
   });
   html += '</div>';
   return html;
@@ -132,7 +140,9 @@ LizUI._reactionsHTML = function(msgIndex) {
 LizUI.enterEditMode = function(msgElement, msgIndex) {
   const textEl = msgElement.querySelector('.msg-text');
   if (!textEl) return;
-  const originalText = textEl.innerText;
+  // Conteúdo bruto (markdown) — innerText perderia a formatação original
+  const stored = (typeof LizChat !== 'undefined' && LizChat.messages) ? LizChat.messages[msgIndex] : null;
+  const originalText = (stored && typeof stored.content === 'string') ? stored.content : textEl.innerText;
   const textarea = document.createElement('textarea');
   textarea.className = 'edit-textarea';
   textarea.value = originalText;
@@ -215,8 +225,8 @@ LizUI._messageHTML = function(m, index) {
       '<div class="msg-user-actions"><button class="msg-action js-delete" type="button" title="Apagar">' + LizConfig.icons.trash + '</button>' + timeHtml + '</div></div>';
   }
   if (m.role === 'user') {
-    var editBtn = (typeof LizChat !== 'undefined' && LizChat.messages && LizChat.messages.length > 0 && index === LizChat.messages.length - 1)
-      ? '<button class="msg-action js-edit" type="button" title="Editar">' + LizConfig.icons.edit + '</button>' : '';
+    // Editar disponível em qualquer mensagem do usuário (não apenas na última)
+    var editBtn = '<button class="msg-action js-edit" type="button" title="Editar">' + LizConfig.icons.edit + '</button>';
     return '<div class="msg msg-user"' + dataIdx + '><div class="msg-bubble msg-bubble-user"><div class="msg-text">' + this._markdown(m.content) + '</div></div>' +
       '<div class="msg-user-actions">' + editBtn + '<button class="msg-action js-delete" type="button" title="Apagar">' + LizConfig.icons.trash + '</button>' + timeHtml + '</div></div>';
   }
@@ -243,8 +253,20 @@ LizUI.bindMessageActions = function() {
       navigator.clipboard?.writeText(code).then(() => { if (typeof LizChat !== 'undefined') LizChat.toast('Código copiado'); });
       return;
     }
-    const el = e.target.closest('.js-continue, .js-redo');
-    if (el) { if (typeof LizChat !== 'undefined') LizChat.toast(el.classList.contains('js-continue') ? 'Continuando resposta...' : 'Gerando nova resposta...'); return; }
+    const redoBtn = e.target.closest('.js-redo');
+    if (redoBtn) {
+      const msgEl = redoBtn.closest('.msg-liz');
+      const idx = parseInt(msgEl?.dataset?.msgIndex);
+      if (!isNaN(idx) && typeof LizChat !== 'undefined') LizChat.regenerateMessage(idx);
+      return;
+    }
+    const continueBtn = e.target.closest('.js-continue');
+    if (continueBtn) {
+      const msgEl = continueBtn.closest('.msg-liz');
+      const idx = parseInt(msgEl?.dataset?.msgIndex);
+      if (!isNaN(idx) && typeof LizChat !== 'undefined') LizChat.continueMessage(idx);
+      return;
+    }
     const editBtn = e.target.closest('.js-edit');
     if (editBtn) {
       const msgEl = editBtn.closest('.msg');
@@ -268,6 +290,7 @@ LizUI.bindMessageActions = function() {
 };
 
 LizUI.showTyping = function() {
+  this.removeTyping(); // garante indicador único (sem duplicar nó)
   const node = document.createElement('div');
   node.id = 'typing-indicator';
   node.className = 'msg msg-liz';
@@ -280,6 +303,62 @@ LizUI.showTyping = function() {
 LizUI.removeTyping = function() {
   const node = document.getElementById('typing-indicator');
   if (node) node.remove();
+};
+
+/* ---------- Estado de geração: botão enviar vira "Parar geração" ---------- */
+LizUI.setGeneratingState = function(generating) {
+  this._generating = generating;
+  const btn = this.el.sendBtn;
+  if (!btn) return;
+  const ico = btn.querySelector('span');
+  if (generating) {
+    if (ico && !this._sendIconHtml) this._sendIconHtml = ico.innerHTML;
+    if (ico) ico.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/></svg>';
+    btn.classList.add('is-generating');
+    btn.disabled = false;
+    btn.setAttribute('aria-label', 'Parar geração');
+    btn.setAttribute('title', 'Parar geração');
+  } else {
+    if (ico && this._sendIconHtml) ico.innerHTML = this._sendIconHtml;
+    btn.classList.remove('is-generating');
+    btn.removeAttribute('title');
+    btn.setAttribute('aria-label', 'Enviar mensagem');
+    this.updateSendState();
+  }
+};
+
+/* ---------- Cooldown pós-envio: botão descansa com contagem regressiva ----------
+ * O provedor tem rate limit agressivo. Depois de cada chamada real o botão
+ * fica bloqueado por alguns segundos, com respiração suave e barra drenando —
+ * comunica "aguarda um pouco" sem parecer erro. */
+LizUI.setCooldownState = function(active, totalMs) {
+  const btn = this.el.sendBtn;
+  if (!btn) return;
+  clearInterval(this._cooldownTick);
+
+  if (active) {
+    const endTime = Date.now() + totalMs;
+    const update = () => {
+      const rest = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+      const label = 'Aguardando limite do provedor (' + rest + 's)';
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    };
+    update();
+    btn.classList.add('is-cooldown');
+    btn.disabled = true;
+    btn.style.setProperty('--cooldown-ms', totalMs + 'ms');
+    this._cooldownTick = setInterval(() => {
+      if (Date.now() >= endTime) clearInterval(this._cooldownTick);
+      else update();
+    }, 1000);
+  } else {
+    btn.classList.remove('is-cooldown');
+    btn.removeAttribute('title');
+    btn.setAttribute('aria-label', 'Enviar mensagem');
+    btn.style.removeProperty('--cooldown-ms');
+    this.updateSendState();
+  }
 };
 
 // ===================== BOTÃO EXPORTAR =====================

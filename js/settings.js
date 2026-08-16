@@ -24,12 +24,10 @@ const LizSettings = {
 
     const titles = {
       conversations: 'Conversas recentes',
-      tools: 'Ferramentas da Liz',
       settings: 'Ajustes',
     };
     const icons = {
       conversations: LizConfig.icons.chats || '',
-      tools: LizConfig.icons.tools || '',
       settings: LizConfig.icons.settings || '',
     };
     const title = titles[action] || action;
@@ -162,6 +160,37 @@ const LizSettings = {
     }, 0);
   },
 
+  /* ---------- Identidade do usuário (persistida, sem hardcoded) ---------- */
+  _userName() {
+    return localStorage.getItem('liz-user-name') || 'Você';
+  },
+  _userEmail() {
+    return localStorage.getItem('liz-user-email') || '';
+  },
+  _initial() {
+    const n = this._userName().trim();
+    return n ? n.charAt(0).toUpperCase() : '?';
+  },
+
+  /** Calcula uso real do localStorage e atualiza barra + texto */
+  _renderMemoryUsage(panel) {
+    const bar = panel.querySelector('#float-memory-bar-fill');
+    const text = panel.querySelector('#float-memory-used-text');
+    if (!bar || !text) return;
+    let bytes = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        bytes += (k.length + (localStorage.getItem(k) || '').length) * 2; // UTF-16
+      }
+    } catch (e) { /* storage indisponível */ }
+    const LIMIT = 5 * 1024 * 1024;
+    const pct = bytes === 0 ? 0 : Math.max(1, Math.min(100, Math.round((bytes / LIMIT) * 100)));
+    bar.style.width = pct + '%';
+    const kb = bytes / 1024;
+    text.textContent = (kb < 1024 ? kb.toFixed(1) + ' KB' : (kb / 1024).toFixed(2) + ' MB') + ' usados';
+  },
+
   _getPageHTML(pageId) {
     const pages = {
       appearance: `
@@ -195,7 +224,7 @@ const LizSettings = {
             <p class="settings-label">Personalização</p>
             <label class="settings-row">
               <span>Como a Liz te chama</span>
-              <input type="text" class="settings-input" id="float-user-name-input" value="Victor" />
+              <input type="text" class="settings-input" id="float-user-name-input" value="${LizUI._esc(localStorage.getItem('liz-user-name') || '')}" placeholder="Seu nome" />
             </label>
           </div>
         </div>`,
@@ -326,16 +355,16 @@ const LizSettings = {
           <div class="settings-group">
             <p class="settings-label">Conta</p>
             <div class="account-card">
-              <div class="account-avatar"><span class="account-avatar-letter">V</span></div>
+              <div class="account-avatar"><span class="account-avatar-letter">${this._initial()}</span></div>
               <div class="account-info">
-                <span class="account-name">Victor</span>
-                <span class="account-email">victor@email.com</span>
+                <span class="account-name">${this._userName()}</span>
+                <span class="account-email">${LizUI._esc(this._userEmail() || 'Sem email definido')}</span>
                 <span class="account-plan">Plano Gratuito</span>
               </div>
             </div>
             <label class="settings-row" style="margin-top: 10px;">
               <span>Email</span>
-              <input type="email" class="settings-input" id="float-email-input" value="victor@email.com" />
+              <input type="email" class="settings-input" id="float-email-input" value="${LizUI._esc(this._userEmail())}" placeholder="seu@email.com" />
             </label>
           </div>
         </div>`,
@@ -343,24 +372,36 @@ const LizSettings = {
         <div class="liz-float-settings-page">
           <div class="settings-group">
             <p class="settings-label">Idioma</p>
-            <label class="settings-row">
+            <div class="settings-row">
               <span>Idioma</span>
-              <select class="settings-input" id="float-language" style="width:130px">
-                <option value="pt-BR">Português</option>
-                <option value="en">English</option>
-                <option value="es">Español</option>
-              </select>
-            </label>
+              <div class="settings-dropdown" id="float-language" data-value="${localStorage.getItem('liz-language') || 'pt-BR'}">
+                <button class="settings-dropdown-btn" type="button">
+                  <span class="settings-dropdown-label">${(localStorage.getItem('liz-language') || 'pt-BR') === 'pt-BR' ? 'Português' : (localStorage.getItem('liz-language') === 'en' ? 'English' : 'Español')}</span>
+                  <span class="settings-dropdown-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                </button>
+                <div class="settings-dropdown-menu">
+                  <button class="settings-dropdown-item${(localStorage.getItem('liz-language') || 'pt-BR') === 'pt-BR' ? ' is-active' : ''}" data-val="pt-BR" type="button">Português</button>
+                  <button class="settings-dropdown-item${localStorage.getItem('liz-language') === 'en' ? ' is-active' : ''}" data-val="en" type="button">English</button>
+                  <button class="settings-dropdown-item${localStorage.getItem('liz-language') === 'es' ? ' is-active' : ''}" data-val="es" type="button">Español</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="settings-group">
             <p class="settings-label">Regional</p>
-            <label class="settings-row">
+            <div class="settings-row">
               <span>Formato de data</span>
-              <select class="settings-input" id="float-date-format" style="width:130px">
-                <option value="DMY">Dia/Mês/Ano</option>
-                <option value="MDY">Mês/Dia/Ano</option>
-              </select>
-            </label>
+              <div class="settings-dropdown" id="float-date-format" data-value="${localStorage.getItem('liz-date-format') || 'DMY'}">
+                <button class="settings-dropdown-btn" type="button">
+                  <span class="settings-dropdown-label">${(localStorage.getItem('liz-date-format') || 'DMY') === 'DMY' ? 'Dia/Mês/Ano' : 'Mês/Dia/Ano'}</span>
+                  <span class="settings-dropdown-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                </button>
+                <div class="settings-dropdown-menu">
+                  <button class="settings-dropdown-item${(localStorage.getItem('liz-date-format') || 'DMY') === 'DMY' ? ' is-active' : ''}" data-val="DMY" type="button">Dia/Mês/Ano</button>
+                  <button class="settings-dropdown-item${localStorage.getItem('liz-date-format') === 'MDY' ? ' is-active' : ''}" data-val="MDY" type="button">Mês/Dia/Ano</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>`,
     };
@@ -369,6 +410,14 @@ const LizSettings = {
 
   _bindPageActions(pageId, panel) {
     if (pageId === 'history') {
+      // Contadores reais, calculados na hora (nada de "0" fixo)
+      LizData.loadSavedConversations();
+      LizData.loadUploadedFiles();
+      const histCount = panel.querySelector('#float-history-count');
+      if (histCount) histCount.textContent = LizData.savedConversations.length + ' conversas';
+      const filesCount = panel.querySelector('#float-files-count');
+      if (filesCount) filesCount.textContent = LizData.uploadedFiles.length + ' arquivos';
+
       const exportBtn = panel.querySelector('#float-export-all');
       if (exportBtn) {
         exportBtn.addEventListener('click', () => {
@@ -407,6 +456,7 @@ const LizSettings = {
       }
     }
     if (pageId === 'memory') {
+      this._renderMemoryUsage(panel);
       const cacheBtn = panel.querySelector('#float-clear-cache');
       if (cacheBtn) {
         cacheBtn.addEventListener('click', () => {
@@ -416,10 +466,7 @@ const LizSettings = {
               localStorage.removeItem(LizData.UPLOADS_KEY);
               LizData.savedConversations = [];
               LizData.uploadedFiles = [];
-              const bar = panel.querySelector('#float-memory-bar-fill');
-              const text = panel.querySelector('#float-memory-used-text');
-              if (bar) bar.style.width = '0%';
-              if (text) text.textContent = '0 KB usados';
+              this._renderMemoryUsage(panel);
               if (typeof LizChat !== 'undefined' && LizChat.toast) LizChat.toast('Cache limpo');
             } catch (e) { /* ignore */ }
           }
@@ -427,6 +474,11 @@ const LizSettings = {
       }
     }
     if (pageId === 'appearance') {
+      // Estado inicial: o botão ativo reflete o valor salvo (ou o default do config)
+      const savedTheme = localStorage.getItem(LizConfig.theme.storageKey) || LizConfig.theme.default;
+      document.querySelectorAll('#float-appearance-segmented .seg-btn[data-theme-val]').forEach((b) => {
+        b.classList.toggle('is-active', b.dataset.themeVal === savedTheme);
+      });
       // Theme segmented
       document.querySelectorAll('#float-appearance-segmented .seg-btn[data-theme-val]').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -459,6 +511,29 @@ const LizSettings = {
           localStorage.setItem('liz-accent-name', btn.dataset.accent);
         });
       });
+      // Nome do usuário — persiste e alimenta a página Conta
+      const nameInput = panel.querySelector('#float-user-name-input');
+      if (nameInput) {
+        nameInput.addEventListener('change', () => {
+          const v = nameInput.value.trim().slice(0, 40);
+          if (v) localStorage.setItem('liz-user-name', v);
+          else localStorage.removeItem('liz-user-name');
+          if (typeof LizChat !== 'undefined' && LizChat.toast) LizChat.toast('Nome salvo');
+        });
+      }
+    }
+    if (pageId === 'account') {
+      const emailInput = panel.querySelector('#float-email-input');
+      if (emailInput) {
+        emailInput.addEventListener('change', () => {
+          const v = emailInput.value.trim().slice(0, 80);
+          if (v) localStorage.setItem('liz-user-email', v);
+          else localStorage.removeItem('liz-user-email');
+          const cardEmail = panel.querySelector('.account-email');
+          if (cardEmail) cardEmail.textContent = v || 'Sem email definido';
+          if (typeof LizChat !== 'undefined' && LizChat.toast) LizChat.toast('Email salvo');
+        });
+      }
     }
     if (pageId === 'chat') {
       const chatToggles = [
@@ -496,12 +571,52 @@ const LizSettings = {
       });
     }
     if (pageId === 'language') {
-      const langSelect = panel.querySelector('#float-language');
-      if (langSelect) {
-        langSelect.addEventListener('change', () => {
-          localStorage.setItem('liz-language', langSelect.value);
+      // Dropdowns customizados (sem <select> nativo — popup do Windows não respeita CSS)
+      panel.querySelectorAll('.settings-dropdown').forEach((dd) => {
+        const btn = dd.querySelector('.settings-dropdown-btn');
+        const menu = dd.querySelector('.settings-dropdown-menu');
+        const label = dd.querySelector('.settings-dropdown-label');
+        if (!btn || !menu) return;
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Fecha outros dropdowns abertos
+          panel.querySelectorAll('.settings-dropdown.is-open').forEach((other) => {
+            if (other !== dd) other.classList.remove('is-open');
+          });
+          dd.classList.toggle('is-open');
         });
-      }
+
+        menu.querySelectorAll('.settings-dropdown-item').forEach((item) => {
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const val = item.dataset.val;
+            dd.dataset.value = val;
+            label.textContent = item.textContent;
+            menu.querySelectorAll('.settings-dropdown-item').forEach((i) => i.classList.remove('is-active'));
+            item.classList.add('is-active');
+            dd.classList.remove('is-open');
+            // Persiste
+            if (dd.id === 'float-language') localStorage.setItem('liz-language', val);
+            if (dd.id === 'float-date-format') localStorage.setItem('liz-date-format', val);
+          });
+        });
+      });
+
+      // Fecha dropdown ao clicar fora
+      const outsideHandler = (e) => {
+        if (!e.target.closest('.settings-dropdown')) {
+          panel.querySelectorAll('.settings-dropdown.is-open').forEach((dd) => dd.classList.remove('is-open'));
+        }
+      };
+      document.addEventListener('click', outsideHandler);
+      // Limpa handler quando o painel fecha
+      const origHide = this.hideFloatPanel.bind(this);
+      this.hideFloatPanel = function() {
+        document.removeEventListener('click', outsideHandler);
+        this.hideFloatPanel = origHide;
+        origHide();
+      };
     }
   },
 };

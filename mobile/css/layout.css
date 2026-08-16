@@ -18,7 +18,7 @@
   height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 14px;
+  padding: 0 8px 0 14px;
   padding-top: var(--safe-t);
   gap: 10px;
   background: var(--surface-glass);
@@ -100,25 +100,26 @@
 .header-sub {
   font-size: 0.78rem;
   color: var(--text-muted);
-  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Botões do header */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
-.header-theme,
-.header-close-btn,
+/* ---- Botões do header ---- */
 .header-back {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -127,30 +128,101 @@
   transition: all var(--t-fast);
 }
 
-.header-theme:active,
-.header-close-btn:active,
 .header-back:active {
   background: rgba(139, 92, 246, 0.08);
   color: var(--brand-light);
   transform: scale(0.9);
 }
 
-.header-theme svg,
-.header-close-btn svg,
 .header-back svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
-.header-back {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
+/* Botão de tema — mesmo interruptor do desktop (track + thumb) */
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
-  transition: all var(--t-fast);
+  position: relative;
+  flex-shrink: 0;
+}
+.theme-toggle-track {
+  display: flex;
+  align-items: center;
+  width: 52px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 3px;
+  transition: background 0.45s var(--ease-out-expo), border-color 0.45s var(--ease-out-expo), transform 0.3s var(--ease-spring);
+}
+.theme-toggle:hover .theme-toggle-track {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+.theme-toggle:active .theme-toggle-track { transform: scale(0.94); }
+.theme-toggle:active .theme-toggle-thumb {
+  transform: scale(0.88);
+  transition: transform 0.2s var(--ease-spring);
+}
+.theme-toggle-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #8b5cf6;
+  border-radius: 50%;
+  color: #fff;
+  will-change: transform;
+  transition: transform 0.45s var(--ease-out-expo), background 0.45s var(--ease-out-expo), box-shadow 0.45s var(--ease-out-expo);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.6);
+}
+.theme-toggle:hover .theme-toggle-thumb {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.85);
+}
+.theme-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.35s var(--ease-spring);
+}
+[data-theme="light"] .theme-toggle-track {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+[data-theme="light"] .theme-toggle:hover .theme-toggle-track {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+[data-theme="light"] .theme-toggle-thumb {
+  background: #f59e0b;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.55);
+}
+[data-theme="light"] .theme-toggle:hover .theme-toggle-thumb {
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.8);
+}
+
+/* Acessibilidade — anel de foco igual ao desktop */
+.theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand, #8b5cf6), 0 0 16px rgba(139, 92, 246, 0.25);
+  border-radius: 999px;
+  transition: box-shadow 0.2s ease;
+}
+
+/* Theme morphing — pulso na troca de tema (mesmo do desktop, sem box-shadow/filter) */
+html.theme-morphing .theme-toggle-track {
+  transition: transform 0.2s ease;
+  transform: scale(0.94);
+}
+html.theme-morphing .theme-toggle-thumb {
+  transition: transform 0.2s ease;
 }
 
 /* ---- Dock de Ferramentas (flutuante, vidro) ---- */
@@ -366,8 +438,8 @@
 }
 
 .composer-send svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ---- Chat page layout ---- */

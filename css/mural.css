@@ -9,14 +9,14 @@
   --mural-bg: #08060e;
   --mural-surface: rgba(255,255,255,0.03);
   --mural-surface-hover: rgba(255,255,255,0.06);
-  --mural-surface-active: rgba(139,92,246,0.08);
+  --mural-surface-active: rgba(192,38,211,0.08);
   --mural-border: rgba(255,255,255,0.06);
   --mural-border-hover: rgba(255,255,255,0.1);
-  --mural-border-active: rgba(139,92,246,0.2);
+  --mural-border-active: rgba(192,38,211,0.2);
   --mural-text: #fff;
   --mural-text-sec: rgba(255,255,255,0.5);
   --mural-text-muted: rgba(255,255,255,0.25);
-  --mural-brand: #8b5cf6;
+  --mural-brand: #C026D3;
   --mural-radius: 12px;
   --mural-radius-sm: 8px;
   --mural-radius-pill: 999px;
@@ -29,7 +29,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: var(--mural-bg);
+  background: radial-gradient(ellipse at 50% 0%, rgba(192,38,211,0.04) 0%, transparent 55%), var(--mural-bg);
   color: var(--mural-text);
   display: none;
   flex-direction: column;
@@ -52,6 +52,7 @@
   gap: 12px;
   padding: 16px 24px 12px;
   border-bottom: 1px solid var(--mural-border);
+  box-shadow: 0 1px 0 rgba(192,38,211,0.05);
   background: rgba(8,6,14,0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -173,10 +174,10 @@
   transform: scale(0.95);
 }
 .mural-filter.is-active {
-  background: rgba(255,255,255,0.08);
+  background: rgba(192,38,211,0.1);
   color: var(--mural-text);
-  border-color: var(--mural-border);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  border-color: rgba(192,38,211,0.2);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2), 0 0 8px rgba(192,38,211,0.06);
 }
 
 /* ---- Barra de Pesquisa ---- */
@@ -221,8 +222,8 @@
 }
 .mural-search:focus {
   border-color: var(--mural-border-active);
-  background: rgba(139,92,246,0.03);
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.06);
+  background: rgba(192,38,211,0.03);
+  box-shadow: 0 0 0 3px rgba(192,38,211,0.06);
 }
 .mural-search:focus ~ .mural-search-icon {
   color: var(--mural-brand);
@@ -384,6 +385,7 @@
 
 .mural-row:hover {
   background: var(--mural-surface);
+  box-shadow: inset 2px 0 0 var(--mural-brand);
 }
 .mural-row:hover td {
   border-bottom-color: var(--mural-border);
@@ -420,7 +422,8 @@
   transition: border-color var(--mural-fast) var(--mural-ease);
 }
 .mural-row:hover .mural-thumb {
-  border-color: var(--mural-border-hover);
+  border-color: rgba(192,38,211,0.25);
+  box-shadow: 0 0 12px rgba(192,38,211,0.1);
 }
 
 .mural-thumb img {
@@ -467,8 +470,8 @@
   font-size: 0.6rem;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(139,92,246,0.08);
-  color: rgba(139,92,246,0.5);
+  background: rgba(192,38,211,0.08);
+  color: rgba(192,38,211,0.5);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -726,7 +729,7 @@
 .mural-upload-bar-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--mural-brand), #a78bfa);
+  background: linear-gradient(90deg, var(--mural-brand), #D946EF);
   border-radius: 2px;
   transition: width 0.22s var(--mural-ease);
 }
@@ -767,11 +770,11 @@
   background: transparent;
 }
 .mural-body::-webkit-scrollbar-thumb {
-  background: rgba(139,92,246,0.08);
+  background: rgba(192,38,211,0.08);
   border-radius: 3px;
 }
 .mural-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(139,92,246,0.15);
+  background: rgba(192,38,211,0.15);
 }
 
 /* ---- Visualização em grade ---- */
@@ -794,9 +797,16 @@
   background: var(--mural-surface);
   padding: 12px;
   animation: muralRowIn 0.3s var(--mural-ease) both;
+  transition: background var(--mural-fast) var(--mural-ease),
+              border-color var(--mural-fast) var(--mural-ease),
+              transform var(--mural-fast) var(--mural-ease),
+              box-shadow var(--mural-fast) var(--mural-ease);
 }
 .mural-grid-view .mural-row:hover {
   background: var(--mural-surface-hover);
+  border-color: var(--mural-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 .mural-grid-view .mural-row td {
   display: block;
@@ -882,10 +892,10 @@
   --mural-bg: #f8f4f0;
   --mural-surface: rgba(0,0,0,0.02);
   --mural-surface-hover: rgba(0,0,0,0.04);
-  --mural-surface-active: rgba(139,92,246,0.05);
+  --mural-surface-active: rgba(192,38,211,0.05);
   --mural-border: rgba(0,0,0,0.06);
   --mural-border-hover: rgba(0,0,0,0.1);
-  --mural-border-active: rgba(139,92,246,0.15);
+  --mural-border-active: rgba(192,38,211,0.15);
   --mural-text: #1a1410;
   --mural-text-sec: rgba(26,20,16,0.5);
   --mural-text-muted: rgba(26,20,16,0.25);
@@ -912,14 +922,14 @@
   --mural-bg: #08060e;
   --mural-surface: rgba(255,255,255,0.03);
   --mural-surface-hover: rgba(255,255,255,0.06);
-  --mural-surface-active: rgba(139,92,246,0.08);
+  --mural-surface-active: rgba(192,38,211,0.08);
   --mural-border: rgba(255,255,255,0.06);
   --mural-border-hover: rgba(255,255,255,0.1);
-  --mural-border-active: rgba(139,92,246,0.2);
+  --mural-border-active: rgba(192,38,211,0.2);
   --mural-text: #fff;
   --mural-text-sec: rgba(255,255,255,0.5);
   --mural-text-muted: rgba(255,255,255,0.25);
-  --mural-brand: #8b5cf6;
+  --mural-brand: #C026D3;
   --mural-radius: 12px;
   --mural-radius-sm: 8px;
   --mural-radius-pill: 999px;
@@ -1029,7 +1039,7 @@
               transform 180ms var(--mural-ease);
 }
 .mural-viewer-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(192, 38, 211, 0.2);
   color: #fff;
   transform: scale(1.08);
 }
@@ -1148,7 +1158,7 @@
   background: rgba(0, 0, 0, 0.15);
 }
 [data-theme="light"] .mural-viewer-btn:hover {
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(192, 38, 211, 0.15);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1158,6 +1168,261 @@
     transition-duration: 0.01ms !important;
   }
   .mural-viewer-img {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+ *  LEITOR DE ARQUIVOS — texto, código, PDF e binários
+ *  Mesmo design system do viewer de imagem (vidro + brand)
+ * ============================================================ */
+
+.mural-reader {
+  --mural-bg: #08060e;
+  --mural-surface: rgba(255,255,255,0.03);
+  --mural-surface-hover: rgba(255,255,255,0.06);
+  --mural-border: rgba(255,255,255,0.06);
+  --mural-border-active: rgba(192,38,211,0.2);
+  --mural-text: #fff;
+  --mural-text-sec: rgba(255,255,255,0.5);
+  --mural-text-muted: rgba(255,255,255,0.25);
+  --mural-brand: #C026D3;
+  --mural-radius: 12px;
+  --mural-radius-sm: 8px;
+  --mural-radius-pill: 999px;
+  --mural-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mural-fast: 180ms;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--mural-ease);
+}
+.mural-reader.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mural-reader-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.mural-reader-panel {
+  position: relative;
+  z-index: 2;
+  width: min(860px, calc(100vw - 48px));
+  height: min(78vh, 680px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 10, 18, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--mural-border);
+  border-radius: var(--mural-radius);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.94) translateY(8px);
+}
+.mural-reader.is-open .mural-reader-panel {
+  animation: muralReaderIn 350ms var(--mural-ease) forwards;
+}
+.mural-reader.is-closing .mural-reader-panel {
+  animation: muralReaderOut 180ms var(--mural-ease) forwards;
+}
+
+@keyframes muralReaderIn {
+  0%   { opacity: 0; transform: scale(0.94) translateY(8px); }
+  40%  { opacity: 1; transform: scale(1.01) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes muralReaderOut {
+  0%   { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0.94) translateY(8px); }
+}
+
+/* ---- Cabeçalho ---- */
+.mural-reader-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--mural-border);
+  background: rgba(8, 6, 14, 0.85);
+}
+
+.mural-reader-head-info {
+  min-width: 0;
+}
+
+.mural-reader-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--mural-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mural-reader-meta {
+  font-size: 0.7rem;
+  color: var(--mural-text-sec);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mural-reader-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Botões reutilizam o visual do viewer, mas nascem visíveis aqui */
+.mural-reader .mural-viewer-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.mural-reader.is-open .mural-viewer-btn {
+  animation: muralBtnIn 220ms var(--mural-ease) forwards;
+}
+.mural-reader.is-open .mural-viewer-btn:nth-child(1) { animation-delay: 60ms; }
+.mural-reader.is-open .mural-viewer-btn:nth-child(2) { animation-delay: 90ms; }
+.mural-reader.is-open .mural-viewer-btn:nth-child(3) { animation-delay: 120ms; }
+.mural-reader.is-open .mural-viewer-btn:nth-child(4) { animation-delay: 150ms; }
+
+/* ---- Corpo ---- */
+.mural-reader-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.14);
+  padding: 18px;
+}
+
+.mural-reader-text {
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+  font-size: 0.76rem;
+  line-height: 1.65;
+  color: var(--mural-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+}
+
+.mural-reader-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border: none;
+  border-radius: var(--mural-radius-sm);
+  background: #fff;
+}
+
+/* ---- Tipo não suportado ---- */
+.mural-reader-unsupported {
+  height: 100%;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  color: var(--mural-text-sec);
+  padding: 24px;
+}
+.mural-reader-unsupported-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--mural-text-muted);
+  opacity: 0.5;
+  margin-bottom: 4px;
+}
+.mural-reader-unsupported-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.mural-reader-unsupported h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mural-text);
+}
+.mural-reader-unsupported p {
+  font-size: 0.8rem;
+  color: var(--mural-text-muted);
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+/* ---- Responsivo ---- */
+@media (max-width: 700px) {
+  .mural-reader-panel {
+    width: calc(100vw - 24px);
+    height: 82vh;
+  }
+  .mural-reader-head {
+    padding: 12px 14px;
+  }
+  .mural-reader-body {
+    padding: 14px;
+  }
+  .mural-reader-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* ---- Tema claro ---- */
+[data-theme="light"] .mural-reader {
+  --mural-surface: rgba(0,0,0,0.02);
+  --mural-border: rgba(0,0,0,0.08);
+  --mural-border-active: rgba(192,38,211,0.25);
+  --mural-text: #1a1410;
+  --mural-text-sec: rgba(26,20,16,0.55);
+  --mural-text-muted: rgba(26,20,16,0.3);
+}
+[data-theme="light"] .mural-reader-bg {
+  background: rgba(255, 255, 255, 0.6);
+}
+[data-theme="light"] .mural-reader-panel {
+  background: rgba(255, 255, 255, 0.96);
+}
+[data-theme="light"] .mural-reader-head {
+  background: rgba(248, 244, 240, 0.9);
+}
+[data-theme="light"] .mural-reader-body {
+  background: rgba(0, 0, 0, 0.02);
+}
+[data-theme="light"] .mural-reader-unsupported-icon {
+  opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mural-reader,
+  .mural-reader-panel {
+    transition-duration: 0.01ms !important;
+  }
+  .mural-reader-panel {
     transform: none !important;
   }
 }

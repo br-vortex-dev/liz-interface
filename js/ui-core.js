@@ -32,11 +32,9 @@ const LizUI = {
       overlay: document.getElementById('overlay'),
       panels: {
         conversations: document.getElementById('panel-conversations'),
-        tools: document.getElementById('panel-tools'),
       },
       conversationsContent: document.getElementById('conversations-content'),
       conversationsSearch: document.getElementById('conversations-search'),
-      toolsContent: document.getElementById('tools-content'),
       toast: document.getElementById('liz-toast'),
       fileInput: document.getElementById('file-input'),
       previewOverlay: document.getElementById('preview-overlay'),
@@ -52,7 +50,7 @@ const LizUI = {
    * =========================================================== */
   renderBrand() {
     this.el.emptyCrown.innerHTML = LizConfig.crown;
-    const iconMap = { new: 'newChat', conversations: 'chats', tools: 'tools', 'mural': 'gallery', settings: 'settings' };
+    const iconMap = { new: 'newChat', conversations: 'chats', 'mural': 'gallery', settings: 'settings' };
     document.querySelectorAll('.float-pill[data-action]').forEach((pill) => {
       const ico = pill.querySelector('.float-pill-ico');
       if (ico) ico.innerHTML = LizConfig.icons[iconMap[pill.dataset.action]];
@@ -108,6 +106,8 @@ const LizUI = {
   },
 
   updateSendState() {
+    // Durante a geração o botão vira "Parar" e precisa continuar habilitado
+    if (this._generating) { this.el.sendBtn.disabled = false; return; }
     this.el.sendBtn.disabled = this.el.input.value.trim().length === 0;
   },
 

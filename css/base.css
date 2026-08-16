@@ -4,6 +4,7 @@
  * ============================================================ */
 
 :root {
+  color-scheme: dark;
   --color-brand: #8b5cf6;
   --color-brand-light: #a78bfa;
   --color-brand-dark: #7c3aed;
@@ -71,6 +72,20 @@ body {
 
 button { font-family: inherit; cursor: pointer; }
 img { display: block; max-width: 100%; }
+
+/* Force dark scheme on native select popups (Windows Chromium) */
+select,
+select option {
+  color-scheme: dark;
+  background-color: #1e1830;
+  color: #e8e0f0;
+}
+[data-theme="light"] select,
+[data-theme="light"] select option {
+  color-scheme: light;
+  background-color: #f5f2fa;
+  color: #1a1a2e;
+}
 
 /* Tab navigation indicator */
 .tab-nav-indicator {

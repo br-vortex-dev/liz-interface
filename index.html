@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#050505" />
+  <meta name="color-scheme" content="dark light" />
   <meta name="description" content="Liz — sua assistente com inteligência artificial." />
   <title>Liz · Chat</title>
 
@@ -26,6 +27,7 @@
 
   <!-- Favicon com a coroa oficial -->
   <link rel="icon" type="image/svg+xml" href="coroa.svg" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/accessibility.css" />
   <link rel="stylesheet" href="css/animations.css" />
@@ -68,7 +70,7 @@
       </button>
 
       <div class="header-brand">
-        <img class="header-brand-crown" id="crown-toggle" src="coroa.svg" alt="Liz — mostrar ou ocultar ferramentas" role="button" tabindex="0" aria-expanded="true" />
+        <img class="header-brand-crown" id="crown-toggle" src="coroa.svg" alt="Liz — mostrar ou ocultar menu" role="button" tabindex="0" aria-expanded="true" />
         <div class="header-titles">
           <h1 class="header-title" id="chat-title">Liz</h1>
           <span class="header-status" id="chat-status" aria-hidden="true">
@@ -103,10 +105,6 @@
         <button class="float-pill" data-action="conversations" type="button" aria-label="Conversas">
           <span class="float-pill-ico"></span>
           <span class="float-pill-label">Conversas</span>
-        </button>
-        <button class="float-pill" data-action="tools" type="button" aria-label="Ferramentas">
-          <span class="float-pill-ico"></span>
-          <span class="float-pill-label">Ferramentas</span>
         </button>
         <button class="float-pill" data-action="mural" type="button" aria-label="Mural">
           <span class="float-pill-ico"></span>
@@ -168,6 +166,53 @@
             placeholder="Digite sua mensagem para a Liz..."
             aria-label="Mensagem"></textarea>
 
+          <!-- Seletor de Modelo (na caixa de mensagem) -->
+          <div class="model-selector" id="model-selector">
+            <button class="model-selector-btn" id="model-selector-btn" type="button" aria-label="Escolher modelo" aria-expanded="false">
+              <span class="model-selector-icon">
+                <svg viewBox="0 0 810 580" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="0,520 160,520 60,140 270,310 400,80 530,310 740,140 640,520 800,520" fill="#b040d0" stroke="none" /></svg>
+              </span>
+              <span class="model-selector-label" id="model-selector-label">Liz 3</span>
+              <span class="model-selector-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </button>
+            <div class="model-selector-dropdown" id="model-selector-dropdown" role="listbox" aria-hidden="true">
+              <button class="model-option" type="button" role="option" data-model="nable-35" aria-selected="false">
+                <span class="model-option-icon"><svg viewBox="0 0 810 580" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="0,520 160,520 60,140 270,310 400,80 530,310 740,140 640,520 800,520" fill="#a78bfa" stroke="none" /></svg></span>
+                <span class="model-option-info">
+                  <span class="model-option-name">Nable 3.5</span>
+                  <span class="model-option-desc">A melhor da linha, desempenho máximo</span>
+                </span>
+                <span class="model-option-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button class="model-option" type="button" role="option" data-model="nable-35-mini" aria-selected="false">
+                <span class="model-option-icon"><svg viewBox="0 0 810 580" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="0,520 160,520 60,140 270,310 400,80 530,310 740,140 640,520 800,520" fill="#8b5cf6" stroke="none" /></svg></span>
+                <span class="model-option-info">
+                  <span class="model-option-name">Nable 3.5 Mini</span>
+                  <span class="model-option-desc">Versão menor da Nable 3.5</span>
+                </span>
+                <span class="model-option-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button class="model-option" type="button" role="option" data-model="liz-3-flash" aria-selected="false">
+                <span class="model-option-icon"><svg viewBox="0 0 810 580" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="0,520 160,520 60,140 270,310 400,80 530,310 740,140 640,520 800,520" fill="#c084fc" stroke="none" /></svg></span>
+                <span class="model-option-info">
+                  <span class="model-option-name">Liz 3 Flash</span>
+                  <span class="model-option-desc">A Liz 3, mais rápida</span>
+                </span>
+                <span class="model-option-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button class="model-option is-active" type="button" role="option" data-model="liz-3" aria-selected="true">
+                <span class="model-option-icon"><svg viewBox="0 0 810 580" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon points="0,520 160,520 60,140 270,310 400,80 530,310 740,140 640,520 800,520" fill="#b040d0" stroke="none" /></svg></span>
+                <span class="model-option-info">
+                  <span class="model-option-name">Liz 3</span>
+                  <span class="model-option-desc">O modelo base da Liz</span>
+                </span>
+                <span class="model-option-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+            </div>
+          </div>
+
           <button class="send-btn" id="send-btn" type="submit" aria-label="Enviar mensagem" disabled>
             <span></span>
           </button>
@@ -195,19 +240,6 @@
           <input type="text" id="conversations-search" placeholder="Buscar conversa..." autocomplete="off" />
         </div>
         <div id="conversations-content"></div>
-      </div>
-    </section>
-
-    <!-- Painel: Ferramentas -->
-    <section class="panel" id="panel-tools" role="dialog" aria-modal="true" aria-labelledby="panel-tools-title" aria-hidden="true">
-      <header class="panel-head">
-        <h3 class="panel-title" id="panel-tools-title">Ferramentas da Liz</h3>
-        <button class="panel-close" data-close type="button" aria-label="Fechar">
-          <span></span>
-        </button>
-      </header>
-      <div class="panel-body">
-        <div class="panel-grid" id="tools-content"></div>
       </div>
     </section>
 
@@ -259,6 +291,7 @@
   ==================================================== -->
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/ui-core.js"></script>
   <script src="js/ui-chat.js"></script>
   <script src="js/ui-panels.js"></script>
@@ -266,5 +299,10 @@
   <script src="js/mural.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/chat.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function() {});
+    }
+  </script>
 </body>
 </html>

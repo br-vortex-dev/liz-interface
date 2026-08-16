@@ -126,9 +126,16 @@
 .si svg:last-child {
   margin-left: auto;
   opacity: 0.15;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
+}
+
+/* Traço igual ao mural (vence o atributo stroke-width="1.8" do SVG) */
+.si svg:last-child path,
+.si svg:last-child polyline,
+.si svg:last-child line {
+  stroke-width: 2;
 }
 
 /* ---- Settings Toggle (dentro do modal) ---- */

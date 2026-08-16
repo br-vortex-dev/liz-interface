@@ -74,25 +74,29 @@ const LizData = {
     return 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
   },
 
-  /* ---------- Cria uma nova conversa salva ---------- */
-  saveConversation(title, messages) {
-    // Se já existe uma conversa com o mesmo título (edição), atualiza
-    const existingIdx = this.savedConversations.findIndex(
-      (c) => c.title === title && c.messages.length === 0
-    );
-    if (existingIdx >= 0) {
-      this.savedConversations[existingIdx].messages = messages.map((m) => ({ ...m }));
-      this.savedConversations[existingIdx].updatedAt = Date.now();
-    } else {
-      this.savedConversations.unshift({
-        id: this._genId(),
-        title: title || 'Nova conversa',
-        messages: messages.map((m) => ({ ...m })),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+  /* ----------
+   * Cria/atualiza conversa salva. Identificada por id (título pode
+   * colidir). Retorna o id da conversa — quem chama deve guardá-lo.
+   * ---------- */
+  saveConversation(title, messages, id) {
+    const conv = id ? this.savedConversations.find((c) => c.id === id) : null;
+    if (conv) {
+      conv.title = title || conv.title || 'Nova conversa';
+      conv.messages = messages.map((m) => ({ ...m }));
+      conv.updatedAt = Date.now();
+      this._persist();
+      return conv.id;
     }
+    const newId = this._genId();
+    this.savedConversations.unshift({
+      id: newId,
+      title: title || 'Nova conversa',
+      messages: messages.map((m) => ({ ...m })),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
     this._persist();
+    return newId;
   },
 
   /* ---------- Atualiza mensagens de uma conversa salva ---------- */
@@ -116,6 +120,41 @@ const LizData = {
     this._persist();
   },
 
+  /* ---------- Renomeia uma conversa salva ---------- */
+  renameConversation(id, newTitle) {
+    const conv = this.savedConversations.find((c) => c.id === id);
+    if (conv && newTitle && newTitle.trim()) {
+      conv.title = newTitle.trim();
+      conv.updatedAt = Date.now();
+      this._persist();
+      return true;
+    }
+    return false;
+  },
+
+  /* ---------- Fixa / desfixa uma conversa ---------- */
+  togglePinConversation(id) {
+    const conv = this.savedConversations.find((c) => c.id === id);
+    if (conv) {
+      conv.pinned = !conv.pinned;
+      this._persist();
+      return conv.pinned;
+    }
+    return false;
+  },
+
+  /* ---------- Gera título automático a partir da 1ª mensagem do usuário ---------- */
+  autoTitleFromMessages(messages) {
+    if (!Array.isArray(messages)) return '';
+    const firstUser = messages.find((m) => m.role === 'user' && m.content);
+    if (!firstUser) return '';
+    let t = String(firstUser.content).replace(/\s+/g, ' ').trim();
+    // Remove quebras de código/markdown óbvias e recolapsa os espaços que sobrarem
+    t = t.replace(/```[\s\S]*?```/g, ' ').replace(/`/g, '').replace(/\s+/g, ' ').trim();
+    if (t.length > 48) t = t.slice(0, 48).trim() + '…';
+    return t;
+  },
+
   /* ---------- Converte conversas salvas para grupos (formato do painel) ---------- */
   getConversationGroups() {
     const groups = [];
@@ -137,6 +176,7 @@ const LizData = {
       const item = {
         id: conv.id,
         title: conv.title,
+        pinned: !!conv.pinned,
         preview: conv.preview || (conv.messages.length > 0
           ? 'Última mensagem: ' + conv.messages[conv.messages.length - 1].content.slice(0, 50)
           : 'Conversa vazia'),
@@ -147,15 +187,14 @@ const LizData = {
       else olderItems.push(item);
     });
 
+    // Fixadas sempre primeiro (dentro de cada período)
+    const pinFirst = (arr) => arr.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    pinFirst(todayItems); pinFirst(yesterdayItems); pinFirst(weekItems); pinFirst(olderItems);
+
     if (todayItems.length) groups.push({ period: 'Hoje', items: todayItems });
     if (yesterdayItems.length) groups.push({ period: 'Ontem', items: yesterdayItems });
     if (weekItems.length) groups.push({ period: 'Semana', items: weekItems });
     if (olderItems.length) groups.push({ period: 'Anterior', items: olderItems });
-
-    // Se não tem conversas salvas, retorna os dados de exemplo
-    if (groups.length === 0) {
-      return this.conversationGroups;
-    }
 
     return groups;
   },
@@ -164,18 +203,6 @@ const LizData = {
   getConversationById(id) {
     return this.savedConversations.find((c) => c.id === id);
   },
-
-  /* ----------
-   * Ferramentas da Liz (grid de cards no painel).
-   * ---------- */
-  tools: [
-    { icon: 'code',     title: 'Criar código' },
-    { icon: 'sparkle',  title: 'Melhorar UI' },
-    { icon: 'bug',      title: 'Explicar erro' },
-    { icon: 'prompt',   title: 'Criar prompt' },
-    { icon: 'bulb',     title: 'Gerar ideias' },
-    { icon: 'layers',   title: 'Organizar' },
-  ],
 
   /* ----------
    * Mensagens de exemplo (modo conversa ativa).
@@ -190,10 +217,10 @@ const LizData = {
     {
       role: 'liz',
       content:
-        'Claro! Aqui está um plano em 3 etapas:\\n\\n' +
-        '1. **Fundamentos de UI** — cor, tipografia, espaçamento e grid.\\n' +
-        '2. **Prática com Figma** — recriar interfaces que você admira.\\n' +
-        '3. **Criar um projeto real** — publique algo pequeno do início ao fim.\\n\\n' +
+        'Claro! Aqui está um plano em 3 etapas:\n\n' +
+        '1. **Fundamentos de UI** — cor, tipografia, espaçamento e grid.\n' +
+        '2. **Prática com Figma** — recriar interfaces que você admira.\n' +
+        '3. **Criar um projeto real** — publique algo pequeno do início ao fim.\n\n' +
         'Quer que eu detalhe cada etapa com prazos?',
       time: '09:42',
     },
@@ -204,7 +231,7 @@ const LizData = {
    * ---------- */
   replies: {
     code: [
-      'Claro! Aqui vai um exemplo limpo e comentado:\\n\\n```js\\nfunction saudar(nome) {\\n  return `Olá, ${nome}!`;\\n}\\n\\nconsole.log(saudar("Victor"));\\n```\\n\\nQuer que eu adapte para outra linguagem?',
+      'Claro! Aqui vai um exemplo limpo e comentado:\n\n```js\nfunction saudar(nome) {\n  return `Olá, ${nome}!`;\n}\n\nconsole.log(saudar("Victor"));\n```\n\nQuer que eu adapte para outra linguagem?',
     ],
     design: [
       'Para melhorar o design, sugiro três ajustes rápidos: **1)** aumentar o contraste do texto, **2)** alinhar os elementos a uma grid de 8px, **3)** usar uma única cor de destaque — o roxo já está ótimo!',
@@ -213,22 +240,22 @@ const LizData = {
       'Esse erro costuma indicar que algo não foi encontrado. Verifique: o nome da variável/função, se ela foi declarada antes do uso e se há algum `import` faltando. Cole a mensagem completa se quiser que eu analise melhor.',
     ],
     ideas: [
-      'Vamos de brainstorm:\\n\\n1. Comece pelo problema que você resolve\\n2. Liste 10 variações sem filtrar\\n3. Teste falar em voz alta\\n4. Veja o que te anima mais\\n\\nQuer que eu gere 10 ideias agora?',
+      'Vamos de brainstorm:\n\n1. Comece pelo problema que você resolve\n2. Liste 10 variações sem filtrar\n3. Teste falar em voz alta\n4. Veja o que te anima mais\n\nQuer que eu gere 10 ideias agora?',
     ],
     default: [
-      'Entendi! Deixa comigo — aqui vai uma resposta direta e organizada pra te ajudar com isso.\\n\\nQuer que eu detalhe algum ponto específico?',
+      'Entendi! Deixa comigo — aqui vai uma resposta direta e organizada pra te ajudar com isso.\n\nQuer que eu detalhe algum ponto específico?',
     ],
   },
 
   /* ----------
-   * Emojis disponíveis para reações.
+   * Reações disponíveis — ícones SVG do LizConfig (zero emoji).
    * ---------- */
   reactionEmojis: [
-    { emoji: '👍', key: 'thumbsup' },
-    { emoji: '❤️', key: 'heart' },
-    { emoji: '😄', key: 'smile' },
-    { emoji: '🎉', key: 'party' },
-    { emoji: '🤔', key: 'thinking' },
+    { icon: 'thumbsUp', key: 'thumbsup', label: 'Gostei' },
+    { icon: 'heart',    key: 'heart',    label: 'Amei' },
+    { icon: 'smile',    key: 'smile',    label: 'Divertido' },
+    { icon: 'party',    key: 'party',    label: 'Celebrar' },
+    { icon: 'thinking', key: 'thinking', label: 'Pensativo' },
   ],
 
   /* ----------
@@ -280,6 +307,19 @@ const LizData = {
     try {
       localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles));
     } catch (e) { /* ignore */ }
+  },
+
+  /* ---------- Renomeia um arquivo do mural ---------- */
+  renameUploadedFile(id, newName) {
+    if (typeof newName !== 'string' || !newName.trim()) return false;
+    this.loadUploadedFiles();
+    const file = this.uploadedFiles.find((f) => f.id === id);
+    if (!file) return false;
+    file.name = newName.trim().slice(0, 120);
+    try {
+      localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles));
+    } catch (e) { /* ignore */ }
+    return true;
   },
 };
 

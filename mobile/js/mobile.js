@@ -1,5 +1,5 @@
 (function(){
-const App={msgs:[],tab:'chat',title:null};
+const App={msgs:[],tab:'chat',title:null,convId:null,isGenerating:false,_replyTimer:null};
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 
@@ -20,19 +20,57 @@ App._brand=function(){
 
 App._theme=function(){
   const btn=$('#tb');
-  function setIcon(t){btn.innerHTML=t==='dark'
-    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';}
-  setIcon(localStorage.getItem('liz-chat-theme')||'dark');
+  this._setThemeIcon(localStorage.getItem('liz-chat-theme')||'dark');
   btn.addEventListener('click',()=>{
     const c=document.documentElement.getAttribute('data-theme')||'dark';
     const n=c==='dark'?'light':'dark';
-    document.documentElement.setAttribute('data-theme',n);
-    localStorage.setItem('liz-chat-theme',n);
-    const m=document.querySelector('meta[name="theme-color"]');
-    if(m)m.setAttribute('content',n==='dark'?'#08060e':'#f8f4f0');
-    setIcon(n);
+    this._switchTheme(n);
   });
+};
+
+/* ---- Monta/persiste o interruptor e anima ícone + giro (igual desktop) ---- */
+App._setThemeIcon=function(t){
+  const btn=$('#tb');if(!btn)return;
+  const thumb=btn.querySelector('.theme-toggle-thumb');
+  if(!thumb){
+    // Monta a estrutura UMA vez; a partir daí só trocamos ícone e transform
+    btn.innerHTML='<span class="theme-toggle-track"><span class="theme-toggle-thumb"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></span>';
+  }
+  const thumbEl=btn.querySelector('.theme-toggle-thumb');
+  thumbEl.innerHTML=t==='dark'
+    ?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+    :'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  thumbEl.style.transform='translateX('+(t==='dark'?0:24)+'px) rotate('+(t==='dark'?0:180)+'deg)';
+  thumbEl.style.background=t==='dark'?'#8b5cf6':'#f59e0b';
+  btn.setAttribute('aria-label',t==='dark'?'Ativar tema claro':'Ativar tema escuro');
+};
+
+/* ---- Aplica estado do tema (data-theme + storage + barra + ícone) ---- */
+App._setThemeState=function(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('liz-chat-theme',t);
+  const m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.setAttribute('content',t==='dark'?'#08060e':'#f8f4f0');
+  this._setThemeIcon(t);
+};
+
+/* ---- Troca de tema com transição (igual desktop: view transition ou morphing) ---- */
+App._switchTheme=function(n){
+  if(document.startViewTransition){
+    document.startViewTransition(()=>this._setThemeState(n));
+  }else{
+    this._morphTheme();
+    this._setThemeState(n);
+  }
+};
+
+/* ---- Pulso do interruptor ao trocar tema (igual desktop) ---- */
+App._morphTheme=function(){
+  const root=document.documentElement;
+  root.classList.remove('theme-morphing');
+  void root.offsetWidth;
+  root.classList.add('theme-morphing');
+  setTimeout(()=>root.classList.remove('theme-morphing'),850);
 };
 
 App._toggle=function(){
@@ -44,10 +82,10 @@ App._toggle=function(){
     }else{
       bar.classList.remove('is-collapsed');bar.classList.add('is-expanded');
     }
-    btn.setAttribute('aria-label',willCollapse?'Mostrar ferramentas':'Esconder ferramentas');
+    btn.setAttribute('aria-label',willCollapse?'Mostrar menu':'Esconder menu');
   });
-  // Começa expandido
-  bar.classList.remove('is-collapsed');bar.classList.add('is-expanded');
+  // Começa minimizado
+  bar.classList.remove('is-expanded');bar.classList.add('is-collapsed');
 };
 
 App._tabs=function(){
@@ -56,14 +94,7 @@ App._tabs=function(){
   $('#modalClose')?.addEventListener('click',()=>this._closeModal());
   $('#modalOverlay')?.addEventListener('click',(e)=>{if(e.target===e.currentTarget)this._closeModal();});
 
-  // Close/back
-  $('#closeBtn')?.addEventListener('click',()=>{
-    // Se o mural estiver aberto, fecha ele
-    if(LizUI.mural.overlay&&LizUI.mural.overlay.classList.contains('is-open')){
-      LizUI.mural.close();return;
-    }
-    $('.tool-pill[data-t="chat"]')?.click();
-  });
+  // Back
   $('#backBtn')?.addEventListener('click',function(){
     // Se o mural estiver aberto, fecha ele
     if(LizUI.mural.overlay&&LizUI.mural.overlay.classList.contains('is-open')){
@@ -72,7 +103,7 @@ App._tabs=function(){
     document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
     document.getElementById('pChat')?.classList.add('is-active');
     $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
-    $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';
+    $('#backBtn').style.display='none';$('#crownToggle').style.display='';$('#hSep').style.display='none';$('#hSub').textContent='';
     $('#ht').textContent='Liz';App.tab='chat';
     $$('.tool-pill').forEach(x=>x.classList.toggle('is-active',x.dataset.t==='chat'));
   });
@@ -88,30 +119,29 @@ App._tabs=function(){
       $$('.page').forEach(pg=>pg.classList.remove('is-active'));
       // Minimiza ferramentas ao entrar em outras seções
       if(a!=='chat'){$('.tools-bar').classList.add('is-collapsed');$('.tools-bar').classList.remove('is-expanded');
-        $('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';
-        $('#hSep').style.display='';$('#hSub').textContent={settings:'Ajustes',tools:'Ferramentas'}[a]||'';}
+        $('#backBtn').style.display='';$('#crownToggle').style.display='none';
+        $('#hSep').style.display='';$('#hSub').textContent={settings:'Ajustes'}[a]||'';}
       else{$('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
-        $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';}
+        $('#backBtn').style.display='none';$('#crownToggle').style.display='';$('#hSep').style.display='none';$('#hSub').textContent='';}
       if(a==='newchat'){this._newChat();return;}
       if(a==='archive'){
         $('.tools-bar').classList.add('is-collapsed');$('.tools-bar').classList.remove('is-expanded');
-        $('#backBtn').style.display='';$('#closeBtn').style.visibility='visible';
+        $('#backBtn').style.display='';$('#crownToggle').style.display='none';
         $('#hSep').style.display='';$('#hSub').textContent='Mural';
         LizUI.mural.onClose=function(){
           document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('is-active'));
           document.getElementById('pChat')?.classList.add('is-active');
           $('.tools-bar').classList.remove('is-collapsed');$('.tools-bar').classList.add('is-expanded');
-          $('#backBtn').style.display='none';$('#closeBtn').style.visibility='hidden';$('#hSep').style.display='none';$('#hSub').textContent='';
+          $('#backBtn').style.display='none';$('#crownToggle').style.display='';$('#hSep').style.display='none';$('#hSub').textContent='';
           $('#ht').textContent='Liz';App.tab='chat';
           $$('.tool-pill').forEach(x=>x.classList.toggle('is-active',x.dataset.t==='chat'));
         };
         LizUI.mural.open();return;
       }
       if(a==='chat'){document.getElementById('pChat')?.classList.add('is-active');$('#ht').textContent='Liz';return;}
-      const map={settings:'pSettings',tools:'pTools'};
+      const map={settings:'pSettings'};
       const pid=map[a];if(pid){const pg=document.getElementById(pid);if(pg)pg.classList.add('is-active');}
       if(a==='settings')this._settings();
-      if(a==='tools')this._tools();
       $('#ht').textContent='Liz';
     });
   });
@@ -122,8 +152,15 @@ App._chat=function(){
   const empty=$('#empty');const list=$('#ml');const content=$('#chatContent');
 
   form.addEventListener('submit',e=>{e.preventDefault();this._send();});
-  input.addEventListener('input',()=>{send.disabled=input.value.trim().length===0;});
+  input.addEventListener('input',()=>{this._updateSendBtn();});
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this._send();}});
+
+  // Anexar arquivo — abre o seletor e processa via _attachFiles
+  $('#ab')?.addEventListener('click',()=>$('#fi')?.click());
+  $('#fi')?.addEventListener('change',(e)=>{
+    if(e.target.files&&e.target.files.length)this._attachFiles(e.target.files);
+    e.target.value='';
+  });
 
   $('#ch').querySelectorAll('.chip').forEach(c=>{
     c.addEventListener('click',()=>{
@@ -136,11 +173,12 @@ App._chat=function(){
     const wasEmpty=!this.msgs.length;
     this.msgs.push({role:'user',content:t,time:this._now()});
     if(wasEmpty){
-      this.title=t.slice(0,35);empty.classList.add('is-hidden');list.classList.remove('is-hidden');
+      this.convId=null;
+      this.title=LizData.autoTitleFromMessages(this.msgs)||t.slice(0,35);empty.classList.add('is-hidden');list.classList.remove('is-hidden');
       $('#hSub').textContent=this.title;this._render();
     }else this._append(this.msgs[this.msgs.length-1]);
-    input.value='';send.disabled=true;this._scroll();
-    setTimeout(()=>this._reply(t),600+Math.random()*400);
+    input.value='';this._scroll();
+    this._beginReply(t);
   };
 
   this._reply=function(t){
@@ -165,18 +203,50 @@ App._chat=function(){
   this._e=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
   this._now=function(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
   this._scroll=function(){requestAnimationFrame(()=>{if(content)content.scrollTop=content.scrollHeight;});};
-  this._save=function(){if(!this.msgs.length)return;this.title=this.title||'Nova conversa';LizData.saveConversation(this.title,this.msgs);};
-  this._send=function(){const t=input.value.trim();if(t)this._sendMsg(t);};
+  this._save=function(){if(!this.msgs.length)return;this.title=this.title||'Nova conversa';this.convId=LizData.saveConversation(this.title,this.msgs,this.convId);};
+  this._send=function(){if(this.isGenerating){this._stopReply();return;}const t=input.value.trim();if(t)this._sendMsg(t);};
+
+  /* ---- Lock de geração + parar resposta ---- */
+  this._beginReply=function(t){
+    this.isGenerating=true;this._updateSendBtn();this._showTyping();
+    this._replyTimer=setTimeout(()=>{
+      this._replyTimer=null;this._removeTyping();
+      this._reply(t);
+      this.isGenerating=false;this._updateSendBtn();
+    },600+Math.random()*400);
+  };
+  this._stopReply=function(){
+    if(this._replyTimer){clearTimeout(this._replyTimer);this._replyTimer=null;}
+    this._removeTyping();this.isGenerating=false;this._updateSendBtn();
+  };
+  this._updateSendBtn=function(){
+    if(!send)return;
+    if(this.isGenerating){
+      send.disabled=false;send.classList.add('is-stop');
+      send.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>';
+      send.setAttribute('aria-label','Parar geração');
+    }else{
+      send.classList.remove('is-stop');
+      send.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+      send.setAttribute('aria-label','Enviar');
+      send.disabled=input.value.trim().length===0;
+    }
+  };
+  this._showTyping=function(){
+    this._removeTyping();
+    const d=document.createElement('div');
+    d.className='msg msg-liz';d.id='typingMsg';
+    d.innerHTML='<div class="msg-avatar">'+LizConfig.crown+'</div><div><div class="msg-bubble msg-bubble-liz typing-bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>';
+    list.appendChild(d);this._scroll();
+  };
+  this._removeTyping=function(){const t=document.getElementById('typingMsg');if(t)t.remove();};
 };
 
 /* ---- Feedback tátil ---- */
 App._buzz=function(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}};
 
-/* ---- Tema (exposto para settings) ---- */
-App._setThemeIcon=function(t){const btn=$('#tb');if(!btn)return;btn.innerHTML=t==='dark'
-  ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-  :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';};
-App._toggleTheme=function(){const c=document.documentElement.getAttribute('data-theme')||'dark';const n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('liz-chat-theme',n);const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',n==='dark'?'#08060e':'#f8f4f0');this._setThemeIcon(n);};
+/* ---- Tema (exposição para settings) ---- */
+App._toggleTheme=function(){const c=document.documentElement.getAttribute('data-theme')||'dark';const n=c==='dark'?'light':'dark';this._switchTheme(n);};
 
 /* ---- Modais da Liz (substituem prompt/confirm nativos) ---- */
 App._inputModal=function(title,placeholder,okLabel,cb){
@@ -208,11 +278,47 @@ App._handleFiles=function(files){
   });
 };
 
+/* ---- Anexos no chat (mobile) ---- */
+App._attachFiles=function(files){
+  [...files].forEach((file)=>{
+    if(file.size>10*1024*1024){this._toast('Arquivo muito grande (máx. 10 MB)');return;}
+    const r=new FileReader();
+    r.onload=(e)=>{
+      const dataUrl=e.target.result;
+      const wasEmpty=!this.msgs.length;
+      const msg={role:'user',content:'',file:{name:file.name,size:file.size,type:file.type,dataUrl},time:this._now()};
+      this.msgs.push(msg);
+      if(wasEmpty){
+        this.title='Arquivo: '+file.name.slice(0,30);
+        $('#empty')?.classList.add('is-hidden');
+        $('#ml')?.classList.remove('is-hidden');
+        const hSub=$('#hSub');if(hSub)hSub.textContent=this.title;
+        this._render();
+      }else{
+        this._append(msg);
+      }
+      LizData.saveUploadedFile({name:file.name,size:file.size,type:file.type,dataUrl,convTitle:this.title||'Arquivos'});
+      this._save();
+      // Resposta da Liz sobre o arquivo recebido
+      setTimeout(()=>{
+        const isImage=file.type&&file.type.startsWith('image/');
+        const reply={role:'liz',content:isImage
+          ?'Recebi sua imagem! Posso analisá-la ou ajudar com edições. O que você quer fazer?'
+          :'Arquivo recebido! Posso ler o conteúdo, resumir ou extrair informações. Me diga o que precisa.',time:this._now()};
+        this.msgs.push(reply);
+        this._append(reply);
+        this._save();
+      },600+Math.random()*400);
+    };
+    r.readAsDataURL(file);
+  });
+};
+
 App._previewImg=function(url,name){
   this._openModal(name||'Imagem','<img src="'+url+'" style="width:100%;border-radius:8px;display:block" />');
 };
 
-/* ---- 📁 Lista de Arquivos ---- */
+/* ---- Lista de Arquivos ---- */
 App._archive=function(){
   const p=document.getElementById('pArchive');if(!p)return;
   LizData.loadUploadedFiles();
@@ -294,7 +400,7 @@ App._settings=function(){
       else if(s==='history')this._set('Histórico','<div style="font-size:0.85rem;color:var(--text-sec)">'+LizData.savedConversations.length+' conversas salvas</div><div style="font-size:0.85rem;color:var(--text-sec);margin-top:6px">Arquivos: '+LizData.uploadedFiles.length+'</div>');
       else if(s==='shortcuts')this._set('Atalhos','<div style="font-size:0.85rem;color:var(--text-sec)"><kbd style="background:rgba(139,92,246,0.1);padding:2px 6px;border-radius:4px;font-size:0.8rem">Enter</kbd> Enviar<br><kbd style="background:rgba(139,92,246,0.1);padding:2px 6px;border-radius:4px;font-size:0.8rem">Shift+Enter</kbd> Nova linha<br><kbd style="background:rgba(139,92,246,0.1);padding:2px 6px;border-radius:4px;font-size:0.8rem">Esc</kbd> Fechar<br></div>');
       else if(s==='memory')this._set('Memória','<div style="font-size:0.85rem;color:var(--text-sec)">Cache do navegador</div>');
-      else this._toast('Liz Mobile — Liz Ai Studios 💜');
+      else this._toast('Liz Mobile — Liz Ai Studios');
     });
   });
 };
@@ -312,22 +418,51 @@ App._showConvs=function(){
     groups.forEach(g=>{
       html+='<div style="font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin:8px 0 4px">'+this._e(g.period)+'</div>';
       g.items.forEach(it=>{
-        html+='<button class="conv-card" data-id="'+this._e(it.id)+'" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);text-align:left;margin-bottom:4px;font-size:0.85rem">'+
+        html+='<div class="conv-card" data-id="'+this._e(it.id)+'" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);text-align:left;margin-bottom:4px;font-size:0.85rem;cursor:pointer">'+
           '<span style="width:16px;height:16px;opacity:0.25;flex-shrink:0">'+LizConfig.icons.chats+'</span>'+
-          '<div style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+this._e(it.title)+'</div>'+
-          '<div style="font-size:0.7rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(it.preview?this._e(it.preview):'')+'</div></div></button>';
+          '<div data-open style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px">'+(it.pinned?'<span style="color:var(--brand-light);display:inline-flex;flex-shrink:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg></span>':'')+this._e(it.title)+'</div>'+
+          '<div style="font-size:0.7rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(it.preview?this._e(it.preview):'')+'</div></div>'+
+          '<div style="display:flex;gap:2px;flex-shrink:0">'+
+            '<button class="cv-act" data-act="pin" data-id="'+this._e(it.id)+'" aria-label="'+(it.pinned?'Desfixar':'Fixar')+'" title="'+(it.pinned?'Desfixar':'Fixar')+'" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:'+(it.pinned?'var(--brand-light)':'var(--text-muted)')+';opacity:'+(it.pinned?'1':'0.6')+'">'+(it.pinned?'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg>':'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg>')+'</button>'+
+            '<button class="cv-act" data-act="rename" data-id="'+this._e(it.id)+'" aria-label="Renomear" title="Renomear" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);opacity:0.6"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'+
+            '<button class="cv-act" data-act="delete" data-id="'+this._e(it.id)+'" aria-label="Excluir" title="Excluir" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);opacity:0.6"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'+
+          '</div></div>';
       });
     });
   }
   this._openModal('Histórico',html);
+  const modal=$('#modal');
   setTimeout(()=>{
-    document.querySelectorAll('#modal .conv-card').forEach(c=>{
-      c.addEventListener('click',()=>{
-        const id=c.dataset.id;
+    if(!modal)return;
+    // Delegação: abrir, fixar, renomear, excluir
+    modal.querySelectorAll('.conv-card').forEach(card=>{
+      card.addEventListener('click',(e)=>{
+        const actBtn=e.target.closest('.cv-act');
+        const id=card.dataset.id;
+        if(actBtn){
+          e.stopPropagation();
+          const act=actBtn.dataset.act;
+          if(act==='pin'){LizData.togglePinConversation(id);this._showConvs();}
+          else if(act==='rename'){
+            const conv=LizData.getConversationById(id);
+            this._inputModal('Renomear conversa','Novo título','Salvar',(v)=>{
+              if(LizData.renameConversation(id,v)){this._toast('Conversa renomeada');this._showConvs();}
+            });
+            const inp=$('#lizModalInput');if(inp&&conv)inp.value=conv.title;
+          }
+          else if(act==='delete'){
+            this._confirmModal('Excluir conversa','Tem certeza que deseja excluir esta conversa? Essa ação não pode ser desfeita.','Excluir',true,()=>{
+              LizData.deleteConversation(id);this._toast('Conversa excluída');this._showConvs();
+            });
+          }
+          return;
+        }
+        // Clique normal → abre conversa
         const s=LizData.getConversationById(id);
         if(s&&s.messages.length){
           this.msgs=s.messages.map(m=>({...m}));
           this.title=s.title;
+          this.convId=s.id;
           this._closeModal();
           $('#pChat .empty').classList.add('is-hidden');
           $('#pChat .msg-list').classList.remove('is-hidden');
@@ -344,7 +479,7 @@ App._goChat=function(){
   document.getElementById('pChat')?.classList.add('is-active');
   const bar=$('.tools-bar');if(bar){bar.classList.remove('is-collapsed');bar.classList.add('is-expanded');}
   const bb=document.getElementById('backBtn');if(bb)bb.style.display='none';
-  const cb=document.getElementById('closeBtn');if(cb)cb.style.visibility='hidden';
+  const ct=document.getElementById('crownToggle');if(ct)ct.style.display='';
   const hs=document.getElementById('hSep');if(hs)hs.style.display='none';
   const hu=document.getElementById('hSub');if(hu)hu.textContent='';
   const ht=document.getElementById('ht');if(ht)ht.textContent='Liz';
@@ -353,27 +488,14 @@ App._goChat=function(){
 };
 
 App._newChat=function(){
+  if(this.isGenerating)this._stopReply();
   if(this.msgs.length>0)this._save();
-  this.msgs=[];this.title=null;
+  this.msgs=[];this.title=null;this.convId=null;
   $('#ci').value='';$('#sb').disabled=true;
   $('#pChat .empty').classList.remove('is-hidden');$('#pChat .msg-list').classList.add('is-hidden');$('#pChat .msg-list').innerHTML='';
   $('#hSub').textContent='';
   // Volta pro chat
   const first=$('.tool-pill[data-t="chat"]');if(first)first.click();
-};
-
-App._tools=function(){
-  const p=document.getElementById('pTools');if(!p)return;
-  const tools=[
-    {icon:LizConfig.icons.code,name:'Criar código',desc:'Gere código em qualquer linguagem'},
-    {icon:LizConfig.icons.sparkle,name:'Melhorar UI',desc:'Sugestões de design e interface'},
-    {icon:LizConfig.icons.bug,name:'Explicar erro',desc:'Analise mensagens de erro'},
-    {icon:LizConfig.icons.bulb,name:'Gerar ideias',desc:'Brainstorm criativo'},
-    {icon:LizConfig.icons.prompt,name:'Criar prompt',desc:'Monte prompts eficientes'},
-  ];
-  let h='<div class="ph"><h2>Ferramentas</h2></div><div class="pl">';
-  tools.forEach(t=>{h+='<div class="pc"><div class="pca" style="background:#8b5cf6"></div><div class="pci"><div class="pcn">'+t.name+'</div><div class="pcd">'+t.desc+'</div></div></div>';});
-  h+='</div>';p.innerHTML=h;
 };
 
 App._toast=function(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(this._tt);this._tt=setTimeout(()=>t.classList.remove('show'),2000);};

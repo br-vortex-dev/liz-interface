@@ -15,7 +15,7 @@ LizUI.mural = {
   viewMode: 'list', // 'list' | 'grid'
   selectedId: null,
   contextFileId: null,
-  _esc: function(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
+  _esc: function(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); },
 
   /* ---- Ícones SVG ---- */
   _icons: {
@@ -214,6 +214,175 @@ LizUI.mural = {
     setTimeout(() => { if (viewer.parentNode) viewer.remove(); }, 280);
   },
 
+  /* ============================================================
+   * LEITOR DE ARQUIVOS — texto, código, PDF e binários
+   * ============================================================ */
+
+  /* ---- Auxiliar: converte dataUrl em bytes ---- */
+  _dataUrlToBytes: function(dataUrl) {
+    try {
+      const b64 = String(dataUrl).split(',')[1] || '';
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    } catch (e) {
+      return new Uint8Array(0);
+    }
+  },
+
+  /* ---- Descobre se o arquivo é texto legível ---- */
+  _isTextFile: function(file) {
+    if (!file || !file.name && !file.type) return false;
+    const type = String(file.type || '').toLowerCase();
+    const name = String(file.name || '').toLowerCase();
+    if (type.startsWith('text/')) return true;
+    if (type === 'application/json' || type === 'application/xml' ||
+        type === 'application/javascript' || type === 'application/x-javascript' ||
+        type === 'application/x-httpd-php' || type === 'application/x-sh') return true;
+    return /\.(txt|log|md|csv|json|js|mjs|cjs|ts|tsx|jsx|py|html|htm|css|scss|xml|yml|yaml|sh|bat|cmd|sql|ini|conf|cfg|env|gitignore|dockerfile|vue|svelte|php|rb|go|rs|java|c|h|cpp|hpp|lua|r|ps1)$/.test(name);
+  },
+
+  /* ---- Abre um arquivo no leitor ---- */
+  _openFileReader: function(file) {
+    if (!file || !file.dataUrl) return;
+    this._closeFileReader();
+    this._readerFile = file;
+    this._readerObjectUrl = null;
+
+    const isPdf = String(file.type || '').toLowerCase() === 'application/pdf' ||
+                  /\.pdf$/i.test(String(file.name || ''));
+    const isText = this._isTextFile(file);
+
+    // Monta URL de objeto (para PDF / abrir em nova aba)
+    const bytes = this._dataUrlToBytes(file.dataUrl);
+    if (bytes.length) {
+      const mime = file.type || 'application/octet-stream';
+      const blob = new Blob([bytes], { type: mime });
+      this._readerObjectUrl = URL.createObjectURL(blob);
+    }
+
+    const reader = document.createElement('div');
+    reader.className = 'mural-reader';
+    reader.id = 'mural-reader';
+    const name = this._esc(file.name || 'arquivo');
+    const meta = `${this._esc(file.type || 'arquivo')} · ${this._formatSize(file.size)}`;
+
+    reader.innerHTML = `
+      <div class="mural-reader-bg" id="mural-reader-bg"></div>
+      <div class="mural-reader-panel">
+        <header class="mural-reader-head">
+          <div class="mural-reader-head-info">
+            <div class="mural-reader-name" id="mural-reader-name">${name}</div>
+            <div class="mural-reader-meta" id="mural-reader-meta">${meta}</div>
+          </div>
+          <div class="mural-reader-actions">
+            <button class="mural-viewer-btn" id="mr-copy" type="button" aria-label="Copiar" title="Copiar">${this._icons.file}</button>
+            <button class="mural-viewer-btn" id="mr-open" type="button" aria-label="Abrir em nova aba" title="Abrir em nova aba">${this._icons.fullscreen}</button>
+            <button class="mural-viewer-btn" id="mr-download" type="button" aria-label="Baixar" title="Baixar">${this._icons.download}</button>
+            <button class="mural-viewer-btn mural-viewer-btn-close" id="mr-close" type="button" aria-label="Fechar" title="Fechar">${this._icons.close}</button>
+          </div>
+        </header>
+        <div class="mural-reader-body" id="mural-reader-body"></div>
+      </div>
+    `;
+    document.body.appendChild(reader);
+    requestAnimationFrame(() => reader.classList.add('is-open'));
+
+    // Eventos
+    const bg = reader.querySelector('#mural-reader-bg');
+    document.getElementById('mr-close').addEventListener('click', () => this._closeFileReader());
+    bg.addEventListener('click', () => this._closeFileReader());
+
+    document.getElementById('mr-open').addEventListener('click', () => {
+      if (this._readerObjectUrl) window.open(this._readerObjectUrl, '_blank');
+      else window.open(file.dataUrl, '_blank');
+    });
+
+    document.getElementById('mr-download').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = this._readerObjectUrl || file.dataUrl;
+      a.download = file.name || 'arquivo';
+      a.click();
+    });
+
+    document.getElementById('mr-copy').addEventListener('click', () => {
+      const el = document.getElementById('mural-reader-text');
+      if (!el) return;
+      const text = el.innerText;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+    });
+
+    // ESC
+    this._readerEscHandler = (e) => { if (e.key === 'Escape') this._closeFileReader(); };
+    document.addEventListener('keydown', this._readerEscHandler);
+
+    // Conteúdo conforme o tipo
+    const body = reader.querySelector('#mural-reader-body');
+
+    if (isPdf && this._readerObjectUrl) {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'mural-reader-frame';
+      iframe.src = this._readerObjectUrl;
+      iframe.setAttribute('title', file.name || 'arquivo');
+      body.appendChild(iframe);
+      document.getElementById('mr-copy').style.display = 'none';
+      return;
+    }
+
+    if (isText) {
+      const bytes2 = this._dataUrlToBytes(file.dataUrl);
+      let text = '';
+      try {
+        text = new TextDecoder('utf-8').decode(bytes2);
+      } catch (e) {
+        text = '';
+      }
+      const pre = document.createElement('pre');
+      pre.className = 'mural-reader-text';
+      pre.id = 'mural-reader-text';
+      pre.textContent = text;
+      body.appendChild(pre);
+      return;
+    }
+
+    // Tipo não suportado para leitura direta
+    document.getElementById('mr-copy').style.display = 'none';
+    const uns = document.createElement('div');
+    uns.className = 'mural-reader-unsupported';
+    uns.innerHTML = `
+      <div class="mural-reader-unsupported-icon">${this._icons.file}</div>
+      <h3>Este tipo de arquivo não pode ser visualizado aqui</h3>
+      <p>Você pode baixá-lo ou abri-lo em nova aba.</p>
+    `;
+    body.appendChild(uns);
+  },
+
+  _closeFileReader: function() {
+    const reader = document.getElementById('mural-reader');
+    if (!reader) return;
+    reader.classList.remove('is-open');
+    reader.classList.add('is-closing');
+    if (this._readerEscHandler) {
+      document.removeEventListener('keydown', this._readerEscHandler);
+      this._readerEscHandler = null;
+    }
+    if (this._readerObjectUrl) {
+      URL.revokeObjectURL(this._readerObjectUrl);
+      this._readerObjectUrl = null;
+    }
+    setTimeout(() => { if (reader.parentNode) reader.remove(); }, 280);
+  },
+
   /* ---- Renderizar ---- */
   render: function() {
     LizData.loadUploadedFiles();
@@ -331,11 +500,13 @@ LizUI.mural = {
         row.classList.add('is-selected');
         this.selectedId = id;
 
-        // Se for imagem, abrir visualizador
+        // Se for imagem, abrir visualizador; senão, abrir leitor de arquivos
         LizData.loadUploadedFiles();
         const file = LizData.uploadedFiles.find(f => f.id === id);
         if (file && file.type && file.type.startsWith('image/')) {
           this._openViewer(file);
+        } else if (file) {
+          this._openFileReader(file);
         }
       });
 
@@ -387,16 +558,49 @@ LizUI.mural = {
         const id = this.contextFileId;
         this._closeContextMenu();
         if (action === 'delete') {
-          LizData.loadUploadedFiles();
-          LizData.uploadedFiles = LizData.uploadedFiles.filter(f => f.id !== id);
-          LizData._persistUploadedFiles && LizData._persistUploadedFiles();
+          LizData.deleteUploadedFile(id);
           this.render();
         } else if (action === 'open' || action === 'preview') {
           LizData.loadUploadedFiles();
           const file = LizData.uploadedFiles.find(f => f.id === id);
           if (file && file.type && file.type.startsWith('image/')) {
             this._openViewer(file);
+          } else if (file) {
+            this._openFileReader(file);
           }
+        } else if (action === 'rename') {
+          LizData.loadUploadedFiles();
+          const file = LizData.uploadedFiles.find(f => f.id === id);
+          if (!file) return;
+          const newName = prompt('Novo nome do arquivo:', file.name);
+          if (newName && LizData.renameUploadedFile(id, newName)) {
+            this.render();
+            if (typeof LizChat !== 'undefined' && LizChat.toast) LizChat.toast('Arquivo renomeado');
+          }
+        } else if (action === 'download') {
+          LizData.loadUploadedFiles();
+          const file = LizData.uploadedFiles.find(f => f.id === id);
+          if (!file || !file.dataUrl) return;
+          const a = document.createElement('a');
+          a.href = file.dataUrl;
+          a.download = file.name || 'arquivo';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } else if (action === 'share') {
+          LizData.loadUploadedFiles();
+          const file = LizData.uploadedFiles.find(f => f.id === id);
+          if (!file) return;
+          if (navigator.share) {
+            navigator.share({ title: file.name || 'Arquivo', url: file.dataUrl }).catch(() => {});
+          } else if (typeof LizChat !== 'undefined' && LizChat.toast) {
+            LizChat.toast('Compartilhamento não suportado neste navegador');
+          }
+        } else if (action === 'copy') {
+          LizData.loadUploadedFiles();
+          const file = LizData.uploadedFiles.find(f => f.id === id);
+          if (!file) return;
+          this._copyFile(file);
         }
       });
     });
@@ -410,6 +614,44 @@ LizUI.mural = {
     const menu = document.getElementById('mural-context');
     if (menu) { menu.classList.remove('is-open'); setTimeout(() => menu.remove(), 200); }
     if (this._contextCloseHandler) { document.removeEventListener('click', this._contextCloseHandler); this._contextCloseHandler = null; }
+  },
+
+  /* ---- Copiar arquivo ----
+   * Imagens vão pro clipboard como PNG (ClipboardItem);
+   * demais tipos copiam o nome. Degrada com toast em cada falha. */
+  _copyFile: function(file) {
+    const toast = (typeof LizChat !== 'undefined' && LizChat.toast)
+      ? (m) => LizChat.toast(m)
+      : () => {};
+
+    if (file.type && file.type.startsWith('image/') && navigator.clipboard && window.ClipboardItem) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 1;
+        canvas.height = img.naturalHeight || 1;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob(async (blob) => {
+          if (!blob) { toast('Não foi possível copiar'); return; }
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            toast('Imagem copiada');
+          } catch (e) {
+            toast('Não foi possível copiar');
+          }
+        }, 'image/png');
+      };
+      img.onerror = () => toast('Não foi possível copiar');
+      img.src = file.dataUrl;
+      return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(file.name || '')
+        .then(() => toast('Nome do arquivo copiado'), () => toast('Não foi possível copiar'));
+    } else {
+      toast('Cópia não suportada neste navegador');
+    }
   },
 
   /* ---- Upload ---- */
@@ -460,6 +702,19 @@ LizUI.mural = {
       card.appendChild(item);
 
       const reader = new FileReader();
+      // Cancelar upload: aborta a leitura e remove o item da lista
+      const cancelBtn = item.querySelector('.mural-upload-cancel');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+          try { reader.abort(); } catch (e) { /* já finalizado */ }
+          item.remove();
+          completed++;
+          if (completed === total) {
+            this._uploadOverlay.classList.remove('is-open');
+            this.render();
+          }
+        });
+      }
       reader.onprogress = (e) => {
         if (e.lengthComputable) {
           const pct = Math.round((e.loaded / e.total) * 100);

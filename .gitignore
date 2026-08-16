@@ -1,0 +1,18 @@
+# Segredos e ambiente
+.env
+backend/.env
+
+# Dependencias
+node_modules/
+backend/node_modules/
+
+# Dados locais
+*.sqlite
+backend/liz.sqlite
+
+# Logs
+backend-log.txt
+backend-err.txt
+
+# Temporarios
+_tmp_*

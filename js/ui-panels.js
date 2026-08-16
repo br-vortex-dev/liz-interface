@@ -63,7 +63,7 @@ LizUI.closePanel = function() {
     panel.classList.remove('is-open');
     panel.setAttribute('aria-hidden', 'true');
     this.el.overlay.classList.remove('is-visible');
-    if (panel.classList.contains('panel-fullscreen')) { } else {
+    if (!panel.classList.contains('panel-fullscreen')) {
       panel.classList.add('is-closing');
       this.el.overlay.classList.add('is-closing');
     }
@@ -90,22 +90,28 @@ LizUI._showMainFloatPanel = function(action) {
   panel.id = 'main-float-panel';
   panel.className = 'liz-main-float-panel';
   panel.dataset.action = action;
-  const titles = { conversations: 'Conversas recentes', tools: 'Ferramentas da Liz', settings: 'Ajustes' };
-  const icons = { conversations: LizConfig.icons.chats || '', tools: LizConfig.icons.tools || '', settings: LizConfig.icons.settings || '' };
+  const titles = { conversations: 'Conversas recentes', settings: 'Ajustes' };
+  const icons = { conversations: LizConfig.icons.chats || '', settings: LizConfig.icons.settings || '' };
   const title = titles[action] || action;
   let bodyHtml = '';
-  if (action === 'tools') {
-    bodyHtml = '<div class="liz-float-tools">' + LizData.tools.map((t) =>
-      '<button class="liz-float-tool" type="button"><span class="liz-float-tool-ico">' + (LizConfig.icons[t.icon] || LizConfig.icons.sparkle) + '</span><span>' + t.title + '</span></button>'
-    ).join('') + '</div>';
-  } else if (action === 'conversations') {
+  if (action === 'conversations') {
     const groups = typeof LizData.getConversationGroups === 'function' ? LizData.getConversationGroups() : [];
     if (!groups.length || !groups[0].items.length) {
       bodyHtml = '<div class="liz-float-empty">Nenhuma conversa ainda</div>';
     } else {
       bodyHtml = '<div class="liz-float-convs">';
       groups.forEach((g) => g.items.forEach((item) => {
-        bodyHtml += '<button class="liz-float-conv" type="button"><span class="liz-float-conv-ico">' + (LizConfig.icons.chats || '') + '</span><span class="liz-float-conv-title">' + item.title + '</span></button>';
+        const pinned = !!item.pinned;
+        bodyHtml += '<div class="liz-float-conv" data-id="' + this._esc(item.id) + '" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border-radius:6px;transition:background 0.15s">' +
+          '<span class="liz-float-conv-ico">' + (LizConfig.icons.chats || '') + '</span>' +
+          '<span class="liz-float-conv-title" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px">' +
+            (pinned ? '<span style="color:#a78bfa;font-size:0.7rem;display:flex"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg></span>' : '') +
+            this._esc(item.title) +
+          '</span>' +
+          '<button class="float-conv-act" data-act="pin" data-id="' + item.id + '" aria-label="' + (pinned ? 'Desfixar' : 'Fixar') + '" title="' + (pinned ? 'Desfixar' : 'Fixar') + '" style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:var(--color-text-muted);opacity:0.6;cursor:pointer">' + (pinned ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none" style="color:#a78bfa"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg>' : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg>') + '</button>' +
+          '<button class="float-conv-act" data-act="rename" data-id="' + item.id + '" aria-label="Renomear" title="Renomear" style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:var(--color-text-muted);opacity:0.6;cursor:pointer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+          '<button class="float-conv-act" data-act="delete" data-id="' + item.id + '" aria-label="Excluir" title="Excluir" style="width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:var(--color-text-muted);opacity:0.6;cursor:pointer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+        '</div>';
       }));
       bodyHtml += '</div>';
     }
@@ -126,6 +132,50 @@ LizUI._showMainFloatPanel = function(action) {
   const escHandler = (e) => { if (e.key === 'Escape') { this._hideMainFloatPanel(); document.removeEventListener('keydown', escHandler); } };
   document.addEventListener('keydown', escHandler);
   panel._escHandler = escHandler;
+
+  // Event delegation para conversas no float panel
+  if (action === 'conversations') {
+    panel.addEventListener('click', (e) => {
+      const actBtn = e.target.closest('.float-conv-act');
+      const conv = e.target.closest('.liz-float-conv');
+      if (!conv) return;
+      const convId = conv.dataset.id;
+
+      if (actBtn) {
+        e.stopPropagation();
+        const act = actBtn.dataset.act;
+        if (act === 'pin') {
+          LizData.togglePinConversation(convId);
+          this._hideMainFloatPanel();
+          setTimeout(() => this._showMainFloatPanel('conversations'), 300);
+        } else if (act === 'rename') {
+          const c = LizData.getConversationById(convId);
+          if (c) {
+            const v = prompt('Novo título da conversa:', c.title);
+            if (v && v.trim() && LizData.renameConversation(convId, v)) {
+              this._hideMainFloatPanel();
+              setTimeout(() => this._showMainFloatPanel('conversations'), 300);
+            }
+          }
+        } else if (act === 'delete') {
+          const c = LizData.getConversationById(convId);
+          if (c && confirm('Excluir "' + c.title + '"? Essa ação não pode ser desfeita.')) {
+            LizData.deleteConversation(convId);
+            this._hideMainFloatPanel();
+            setTimeout(() => this._showMainFloatPanel('conversations'), 300);
+          }
+        }
+        return;
+      }
+
+      // Abrir conversa
+      const savedConv = LizData.getConversationById(convId);
+      if (savedConv) {
+        this._hideMainFloatPanel();
+        if (typeof LizChat !== 'undefined') LizChat.openConversationById(savedConv.id);
+      }
+    });
+  }
 };
 
 LizUI._hideMainFloatPanel = function() {
@@ -141,9 +191,6 @@ LizUI._hideMainFloatPanel = function() {
 // ===================== RENDER PANELS =====================
 LizUI.renderPanels = function() {
   this._renderConversations('');
-  this.el.toolsContent.innerHTML = LizData.tools.map((t) =>
-    '<button class="tool-card" type="button"><span class="tool-card-ico">' + (LizConfig.icons[t.icon] || LizConfig.icons.sparkle) + '</span><span class="tool-card-title">' + this._esc(t.title) + '</span></button>'
-  ).join('');
   this._syncThemeSegmented();
   this._initSettingsEvents();
 };
@@ -155,8 +202,17 @@ LizUI._renderConversations = function(filter) {
   groups.forEach((group) => {
     const items = group.items.filter((it) => it.title.toLowerCase().includes(f) || it.preview.toLowerCase().includes(f));
     if (!items.length) return;
-    html += '<p class="panel-group-title">' + this._esc(group.period) + '</p>' +
-      items.map((it) => '<button class="conv-card" type="button" data-id="' + this._esc(it.id) + '"><div class="conv-card-title">' + this._esc(it.title) + '</div><div class="conv-card-preview">' + this._esc(it.preview) + '</div></button>').join('');
+    html += '<p class="panel-group-title">' + this._esc(group.period) + '</p>';
+    items.forEach((it) => {
+      const pinned = !!it.pinned;
+      html += '<div class="conv-card" data-id="' + this._esc(it.id) + '">' +
+        '<div style="flex:1;min-width:0"><div class="conv-card-title" style="display:flex;align-items:center;gap:5px">' + (pinned ? '<span style="color:var(--color-brand-light);display:flex"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg></span>' : '') + this._esc(it.title) + '</div><div class="conv-card-preview">' + this._esc(it.preview) + '</div></div>' +
+        '<div style="display:flex;gap:2px;flex-shrink:0">' +
+          '<button class="conv-act" data-act="pin" data-id="' + this._esc(it.id) + '" aria-label="' + (pinned ? 'Desfixar' : 'Fixar') + '" title="' + (pinned ? 'Desfixar' : 'Fixar') + '">' + (pinned ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" style="color:var(--color-brand-light)"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg>' : '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5M9 3h6l1 7 2 2H6l2-2 1-7z"/></svg>') + '</button>' +
+          '<button class="conv-act" data-act="rename" data-id="' + this._esc(it.id) + '" aria-label="Renomear" title="Renomear"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+          '<button class="conv-act" data-act="delete" data-id="' + this._esc(it.id) + '" aria-label="Excluir" title="Excluir"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+        '</div></div>';
+    });
   });
   if (!html) html = '<p class="panel-group-title">Nenhuma conversa encontrada.</p>';
   this.el.conversationsContent.innerHTML = html;
@@ -164,7 +220,7 @@ LizUI._renderConversations = function(filter) {
 
 // ===================== TEMA =====================
 LizUI.initTheme = function() {
-  const stored = localStorage.getItem(LizConfig.theme.storageKey) || 'auto';
+  const stored = localStorage.getItem(LizConfig.theme.storageKey) || LizConfig.theme.default;
   const effective = stored === 'auto' ? this._systemTheme() : stored;
   this.setTheme(effective, false);
   localStorage.setItem(LizConfig.theme.storageKey, stored);
@@ -227,7 +283,7 @@ LizUI._unwatchSystemTheme = function() {
 };
 
 LizUI._syncThemeSegmented = function() {
-  const stored = localStorage.getItem(LizConfig.theme.storageKey) || 'auto';
+  const stored = localStorage.getItem(LizConfig.theme.storageKey) || LizConfig.theme.default;
   document.querySelectorAll('.seg-btn[data-theme-val]').forEach((btn) => {
     btn.classList.toggle('is-active', btn.dataset.themeVal === stored);
   });
@@ -235,84 +291,18 @@ LizUI._syncThemeSegmented = function() {
 
 // ===================== SETTINGS EVENTS =====================
 LizUI._initSettingsEvents = function() {
-  this._loadUserData();
-  this._updateMemoryInfo();
   this._restoreNewSettings();
 };
 
 LizUI._restoreNewSettings = function() {
   const savedFontSize = localStorage.getItem('liz-font-size');
-  if (savedFontSize) { document.documentElement.setAttribute('data-font-size', savedFontSize);
-    document.querySelectorAll('#font-size-segmented .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.fontSize === savedFontSize));
-  } else { document.querySelector('#font-size-segmented .seg-btn[data-font-size="medium"]')?.classList.add('is-active'); }
+  if (savedFontSize) document.documentElement.setAttribute('data-font-size', savedFontSize);
   const savedDensity = localStorage.getItem('liz-density');
-  if (savedDensity) { document.documentElement.setAttribute('data-density', savedDensity);
-    document.querySelectorAll('#density-segmented .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.density === savedDensity));
-  } else { document.querySelector('#density-segmented .seg-btn[data-density="comfortable"]')?.classList.add('is-active'); }
+  if (savedDensity) document.documentElement.setAttribute('data-density', savedDensity);
   const savedAccent = localStorage.getItem('liz-accent-color');
-  if (savedAccent) {
-    document.documentElement.style.setProperty('--color-brand', savedAccent);
-    const savedName = localStorage.getItem('liz-accent-name') || 'purple';
-    document.querySelectorAll('#accent-color-grid .accent-color-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.accent === savedName));
-  }
+  if (savedAccent) document.documentElement.style.setProperty('--color-brand', savedAccent);
   const savedCodeFont = localStorage.getItem('liz-code-font');
-  if (savedCodeFont) { document.documentElement.setAttribute('data-code-font', savedCodeFont);
-    const cf = document.getElementById('settings-code-font'); if (cf) cf.value = savedCodeFont; }
-  const savedRetention = localStorage.getItem('liz-retention');
-  if (savedRetention) { document.querySelectorAll('#retention-segmented .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.retention === savedRetention)); }
-  const enterSend = document.getElementById('settings-enter-send');
-  if (enterSend) { const saved = localStorage.getItem('liz-enter-send'); if (saved !== null) enterSend.checked = saved === 'true'; }
-  const savedLang = localStorage.getItem('liz-language');
-  if (savedLang) { const ls = document.getElementById('settings-language'); if (ls) ls.value = savedLang; }
+  if (savedCodeFont) document.documentElement.setAttribute('data-code-font', savedCodeFont);
 };
 
-LizUI._updateSettingsCounts = function() {
-  const countEl = document.getElementById('settings-history-count');
-  const filesEl = document.getElementById('settings-files-count');
-  if (countEl) { const c = LizData.savedConversations.length; countEl.textContent = c + ' conversa' + (c !== 1 ? 's' : '') + ' salva' + (c !== 1 ? 's' : ''); }
-  if (filesEl) { LizData.loadUploadedFiles(); const c = LizData.uploadedFiles.length; filesEl.textContent = c + ' arquivo' + (c !== 1 ? 's' : ''); }
-};
 
-LizUI._updateMemoryInfo = function() {
-  const bar = document.getElementById('memory-bar-fill');
-  const text = document.getElementById('memory-used-text');
-  if (!bar || !text) return;
-  try {
-    let totalBytes = 0;
-    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); const v = localStorage.getItem(k); if (k && v) totalBytes += k.length + v.length; }
-    totalBytes = totalBytes * 2;
-    const LIMIT = 5 * 1024 * 1024;
-    const percentage = Math.min((totalBytes / LIMIT) * 100, 100);
-    bar.style.width = percentage.toFixed(1) + '%';
-    text.textContent = (totalBytes / 1024).toFixed(1) + ' KB usados';
-    if (percentage > 80) bar.style.background = 'linear-gradient(90deg, #f59e0b, #ef4444)';
-    else if (percentage > 60) bar.style.background = 'linear-gradient(90deg, var(--color-brand), #f59e0b)';
-    else bar.style.background = 'linear-gradient(90deg, var(--color-brand), var(--color-brand-light))';
-    const convCount = document.getElementById('settings-cache-conversations');
-    const imgCount = document.getElementById('settings-cache-images');
-    const fileCount = document.getElementById('settings-cache-files');
-    if (convCount) { const n = LizData.savedConversations.length; convCount.textContent = n + ' conversa' + (n !== 1 ? 's' : ''); }
-    if (imgCount || fileCount) {
-      LizData.loadUploadedFiles();
-      const imgs = LizData.uploadedFiles.filter((f) => f.type && f.type.startsWith('image/'));
-      const docs = LizData.uploadedFiles.filter((f) => !f.type || !f.type.startsWith('image/'));
-      if (imgCount) imgCount.textContent = imgs.length + ' imagem' + (imgs.length !== 1 ? 'ns' : '');
-      if (fileCount) fileCount.textContent = docs.length + ' arquivo' + (docs.length !== 1 ? 's' : '');
-    }
-  } catch (e) { text.textContent = 'Indisponível'; }
-};
-
-LizUI._loadUserData = function() {
-  try {
-    const savedName = localStorage.getItem('liz-user-name');
-    const savedEmail = localStorage.getItem('liz-user-email');
-    const nameInput = document.getElementById('user-name-input');
-    const emailInput = document.getElementById('settings-email-input');
-    const nameDisplay = document.getElementById('account-name-display');
-    const avatarLetter = document.querySelector('.account-avatar-letter');
-    if (savedName && nameInput) nameInput.value = savedName;
-    if (savedName && nameDisplay) nameDisplay.textContent = savedName;
-    if (savedName && avatarLetter) avatarLetter.textContent = savedName[0].toUpperCase();
-    if (savedEmail && emailInput) emailInput.value = savedEmail;
-  } catch (e) { /* ignore */ }
-};
