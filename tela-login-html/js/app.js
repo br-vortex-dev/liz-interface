@@ -756,6 +756,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderSuccessOverlay(type, userName) {
+    // Nome vem do perfil Google/e-mail — escapa pra não virar HTML (XSS)
+    const safeName = String(userName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
     const crown = `
       <div class="success-crown-slot" aria-hidden="true">
         <span class="success-mote mote-1"></span>
@@ -776,7 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="success-scene">
             ${crown}
             <p class="success-eyebrow">Bem-vindo de volta</p>
-            <h2 class="success-name">${userName}</h2>
+            <h2 class="success-name">${safeName}</h2>
             ${ornament}
             <p class="success-line"><span class="success-dot" aria-hidden="true"></span><span class="success-phrase" data-phrases='["A corte estava à sua espera","O salão se ilumina com a sua chegada","O reino sentiu a sua falta","Suas conversas esperam por você"]'>A corte estava à sua espera</span></p>
             <button class="btn-continue" id="btn-continue-login">Continuar ${arrow}</button>
@@ -789,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="success-scene">
           ${crown}
           <p class="success-eyebrow">Conta criada</p>
-          <h2 class="success-name">${userName}</h2>
+          <h2 class="success-name">${safeName}</h2>
           ${ornament}
           <p class="success-line"><span class="success-dot" aria-hidden="true"></span><span class="success-phrase" data-phrases='["Sua coroa está reservada — entre para assumi-la","A corte aguarda a sua apresentação","Um lugar à mesa já foi preparado"]'>Sua coroa está reservada — entre para assumi-la</span></p>
           <button class="btn-continue" id="btn-continue-register">Ir para o login ${arrow}</button>
