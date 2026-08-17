@@ -1,7 +1,15 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark" class="liz-booting">
+<html lang="pt-BR" data-theme="dark" class="liz-booting liz-auth-gate">
 <head>
   <script>if(/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)&&window.innerWidth<700){window.location.replace("mobile/index.html");}</script>
+
+  <!-- Auth guard: valida a sessão Firebase antes de liberar o chat.
+       Quem abre a URL sem login é redirecionado para a tela de login. -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-guard.js"></script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#050505" />
@@ -17,6 +25,39 @@
     html.liz-intro-complete .chat-app {
       opacity: 1;
       pointer-events: auto;
+    }
+    /* Gate de autenticação: esconde o app até a sessão Firebase
+       ser confirmada (auth-guard.js remove a classe do <html>). */
+    .liz-auth-gate-msg {
+      display: none;
+    }
+    html.liz-auth-gate .chat-app {
+      display: none;
+    }
+    html.liz-auth-gate .liz-auth-gate-msg {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #050505;
+      color: rgba(255, 255, 255, 0.72);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+    .liz-auth-gate-spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(139, 92, 246, 0.25);
+      border-top-color: #8b5cf6;
+      animation: liz-auth-gate-spin 0.8s linear infinite;
+    }
+    @keyframes liz-auth-gate-spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 
@@ -45,6 +86,12 @@
   <link rel="stylesheet" href="css/responsive.css" />
 </head>
 <body>
+  <!-- Aviso enquanto o auth-guard.js valida a sessão (some sozinho) -->
+  <div class="liz-auth-gate-msg" aria-live="polite">
+    <span class="liz-auth-gate-spinner" aria-hidden="true"></span>
+    <span>Verificando sua sessão...</span>
+  </div>
+
   <div class="chat-app">
 
     <!-- ===================================================

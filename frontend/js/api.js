@@ -125,6 +125,7 @@ const LizAPI = {
       const res = await fetch(`${this.BASE_URL}/chat/upload`, {
         method: 'POST',
         body: formData,
+        headers: await this._authHeaders(),
         signal: controller.signal,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -169,6 +170,23 @@ const LizAPI = {
     };
   },
 
+  /* ---------- Auth: ID token do Firebase ----------
+   * Toda chamada de dados anexa "Authorization: Bearer <token>".
+   * O backend valida o token e devolve 401 sem sessão válida. */
+  async _authHeaders() {
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        const auth = firebase.auth();
+        const user = auth && auth.currentUser;
+        if (user) {
+          const token = await user.getIdToken();
+          if (token) return { Authorization: `Bearer ${token}` };
+        }
+      }
+    } catch (e) { /* sem sessão — segue sem header; o backend decide */ }
+    return {};
+  },
+
   /* ---------- Interno: fetch com timeout ---------- */
   async _fetch(endpoint, options = {}) {
     const { timeout = 8000, ...fetchOpts } = options;
@@ -180,6 +198,7 @@ const LizAPI = {
         ...fetchOpts,
         headers: {
           'Content-Type': 'application/json',
+          ...(await this._authHeaders()),
           ...(fetchOpts.headers || {}),
         },
         signal: controller.signal,
