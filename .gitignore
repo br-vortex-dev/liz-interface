@@ -20,6 +20,9 @@ _tmp_*
 # Build do frontend (gerado por scripts/build-frontend.js)
 public/
 
+# Cache do wrangler (Cloudflare)
+.wrangler/
+
 # Screenshots de trabalho (não fazem parte do app)
 *.png
 !mobile/**/*.png
