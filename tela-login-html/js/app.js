@@ -435,9 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? new firebase.auth.GithubAuthProvider()
       : new firebase.auth.GoogleAuthProvider()
     const isBrave = !!(navigator.brave && await navigator.brave.isBrave().catch(() => false))
-    // No Brave o popup do Google morre por bloqueio de cookies de terceiros —
-    // vai direto pro fluxo direto, sem fazer o usuário escolher a conta 2 vezes.
-    if (providerName === 'google' && isBrave) {
+    // Google sempre usa o fluxo direto (sem popup, sem handler do firebaseapp):
+    // funciona igual no desktop, no Brave e no celular.
+    if (providerName === 'google') {
       startManualGoogleFlow(alertId)
       return
     }
