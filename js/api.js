@@ -9,13 +9,14 @@ const LizAPI = {
   /* ---------- Configuração ---------- */
   // Base da API — resolvida automaticamente:
   //   1. window.LIZ_API_BASE (se definida antes deste arquivo) manda em tudo
-  //   2. Na nuvem (Render): o backend é o serviço "liz-api" (liz-api.onrender.com)
+  //   2. Fora do localhost (nuvem: pages.dev, onrender.com, domínio próprio):
+  //      usa o backend publicado em liz-api.onrender.com
   //   3. Local: backend de API na porta 3001
   BASE_URL: (function resolveApiBase() {
     if (window.LIZ_API_BASE) return window.LIZ_API_BASE;
-    if (window.location.hostname.endsWith('.onrender.com')) {
-      return 'https://liz-api.onrender.com/api';
-    }
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal) return 'https://liz-api.onrender.com/api';
     return 'http://localhost:3001/api';
   })(),
   // A Liz 3 é um modelo de raciocínio: pensa antes de responder.

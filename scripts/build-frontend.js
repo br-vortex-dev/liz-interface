@@ -1,7 +1,9 @@
 /* ============================================================
- *  Liz — build do frontend para o Render (Static Site)
- *  Copia SOMENTE os arquivos públicos para ./public, deixando
- *  de fora backend, testes e afins (nada sensível vai pro ar).
+ *  Liz — build do frontend para a nuvem (Render Static Site)
+ *  Layout publicado:
+ *    /        → tela de login (conteúdo de tela-login-html)
+ *    /app/    → app principal do chat
+ *  Deixa de fora backend, testes e afins (nada sensível vai pro ar).
  *  Uso: node scripts/build-frontend.js
  * ============================================================ */
 
@@ -11,22 +13,23 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'public');
 
-// Arquivos e pastas públicas (na raiz do projeto)
-const FILES = ['index.html', 'manifest.json', 'sw.js', 'coroa.svg'];
-const DIRS = ['css', 'js', 'mobile', 'tela-login-html'];
-
 // Garante saída limpa
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 
-for (const f of FILES) {
-  fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
-  console.log('[build] arquivo:', f);
-}
+// 1) Login na raiz (tudo que está em tela-login-html)
+fs.cpSync(path.join(ROOT, 'tela-login-html'), OUT, { recursive: true });
+console.log('[build] raiz: tela de login (/)');
 
-for (const d of DIRS) {
-  fs.cpSync(path.join(ROOT, d), path.join(OUT, d), { recursive: true });
-  console.log('[build] pasta:', d + '/');
+// 2) App principal em /app
+const APP = path.join(OUT, 'app');
+fs.mkdirSync(APP, { recursive: true });
+for (const f of ['index.html', 'manifest.json', 'sw.js', 'coroa.svg']) {
+  fs.copyFileSync(path.join(ROOT, f), path.join(APP, f));
 }
+for (const d of ['css', 'js', 'mobile']) {
+  fs.cpSync(path.join(ROOT, d), path.join(APP, d), { recursive: true });
+}
+console.log('[build] /app: chat principal');
 
 console.log('[build] pronto ->', OUT);

@@ -355,6 +355,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return window.firebaseReady
   }
 
+  // URL do app principal: localmente o login vive em /tela-login-html/ e o app
+  // na raiz; na nuvem o login fica na raiz e o app em /app/.
+  function appUrl() {
+    return location.pathname.includes('tela-login-html') ? '../index.html' : 'app/'
+  }
+
   // Overlay de sucesso de login → "Continuar" leva ao app principal
   function presentLoginSuccess(displayName) {
     const root = document.getElementById('root')
@@ -364,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startPhraseCycle(root)
 
     document.getElementById('btn-continue-login')?.addEventListener('click', () => {
-      window.location.href = '../index.html'
+      window.location.href = appUrl()
     })
   }
 
@@ -497,8 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const params = new URLSearchParams({
       client_id: clientId,
-      // URI cadastrada no cliente OAuth — normaliza 127.0.0.1 → localhost
-      redirect_uri: location.protocol + '//' + (location.host === '127.0.0.1:3001' ? 'localhost:3001' : location.host) + '/tela-login-html/',
+      // A própria URL da página de login (raiz na nuvem, /tela-login-html/ local);
+      // normaliza 127.0.0.1 → localhost pra bater com as URIs cadastradas no cliente
+      redirect_uri: location.protocol + '//' + location.host.replace('127.0.0.1', 'localhost') + (location.pathname.endsWith('/') ? location.pathname : location.pathname + '/'),
       response_type: 'id_token',
       scope: 'openid email profile',
       state: 'liz-google',
@@ -1195,7 +1202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnContinueLogin) {
       btnContinueLogin.addEventListener('click', () => {
         // Logado → vai pro app principal da Liz
-        window.location.href = '../index.html'
+        window.location.href = appUrl()
       })
     }
 

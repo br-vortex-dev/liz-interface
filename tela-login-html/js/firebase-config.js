@@ -17,13 +17,13 @@
 
 // Mesma regra do app principal (js/api.js → LizAPI.BASE_URL):
 //   1. window.LIZ_API_BASE manda em tudo (se definida antes deste arquivo)
-//   2. Na nuvem (Render): backend é o serviço "liz-api"
+//   2. Fora do localhost (nuvem: pages.dev, onrender.com...): backend liz-api
 //   3. Local: backend de API na porta 3001 (o frontend roda separado na 8321)
 const FIREBASE_CONFIG_URL = (function () {
   if (window.LIZ_API_BASE) return window.LIZ_API_BASE.replace(/\/+$/, '') + '/firebase-config'
-  if (window.location.hostname.endsWith('.onrender.com')) {
-    return 'https://liz-api.onrender.com/api/firebase-config'
-  }
+  const host = window.location.hostname
+  const isLocal = host === 'localhost' || host === '127.0.0.1'
+  if (!isLocal) return 'https://liz-api.onrender.com/api/firebase-config'
   return 'http://localhost:3001/api/firebase-config'
 })()
 
