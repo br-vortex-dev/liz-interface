@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hideFormAlert(alertId)
     // Popup do Google exige origem http(s) — file:// nunca funciona
     if (location.protocol === 'file:') {
-      showFormAlert(alertId, 'O login com ' + (providerName === 'github' ? 'GitHub' : 'Google') + ' não funciona abrindo o arquivo direto. Acesse pelo servidor: http://localhost:8321/tela-login-html/ (ou o endereço na nuvem).')
+      showFormAlert(alertId, 'O login com ' + (providerName === 'github' ? 'GitHub' : 'Google') + ' não funciona abrindo o arquivo direto. Acesse pelo endereço normal do site (na nuvem ou pelo servidor local).')
       return
     }
     if (!(await ensureFirebaseReady())) {

@@ -11,8 +11,7 @@
    3. Copie os valores do firebaseConfig para o backend/.env
    4. Em Authentication → Sign-in method, ative:
       E-mail/senha, Google e GitHub (opcional)
-   5. Suba o backend e abra a tela de login pelo backend:
-      http://localhost:3001/tela-login-html/
+   5. Suba o backend e abra a tela de login pelo servidor local de desenvolvimento
    ============================================================ */
 
 // Mesma regra do app principal (js/api.js → LizAPI.BASE_URL):
