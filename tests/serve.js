@@ -28,6 +28,7 @@ const MIME = {
 http.createServer((req, res) => {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
+  if (urlPath.endsWith('/')) urlPath += 'index.html';
   const filePath = path.normalize(path.join(ROOT, urlPath));
 
   // Segurança: nunca servir arquivos fora da raiz do projeto

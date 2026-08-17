@@ -1,175 +1,207 @@
 /* ============================================================
  *  Liz Chat — data.js
- *  Dados SIMULADOS, apenas para visualizar a tela funcionando.
- *  Sem backend por enquanto.
+ *  Camada de estado e persistência.
+ *  Fonte primária: Backend (LizAPI via Supabase).
+ *  Fallback: localStorage (modo offline ou cache imediato).
  * ============================================================ */
 
 const LizData = {
-  /* ----------
-   * Storage key para salvar conversas no localStorage.
-   * ---------- */
   STORAGE_KEY: 'liz-chat-conversations',
+  UPLOADS_KEY: 'liz-chat-uploads',
 
-  /* ----------
-   * Conversas recentes — agrupadas por período, exatamente
-   * como aparece no painel "Conversas recentes".
-   * Carrega do localStorage + dados de exemplo como fallback.
-   * ---------- */
-  conversationGroups: [
-    {
-      period: 'Hoje',
-      items: [
-        { id: 'c1', title: 'Plano de estudos',        preview: 'Última mensagem: aprender design em 6 semanas' },
-        { id: 'c2', title: 'Tela de chat da Liz',     preview: 'Última mensagem: layout premium com coroa' },
-      ],
-    },
-    {
-      period: 'Ontem',
-      items: [
-        { id: 'c3', title: 'Prompt para Codex',       preview: 'Última mensagem: criar tela de IA' },
-      ],
-    },
-    {
-      period: 'Semana',
-      items: [
-        { id: 'c4', title: 'Email pro cliente',       preview: 'Última mensagem: follow-up profissional' },
-        { id: 'c5', title: 'Ideias de campanha',      preview: 'Última mensagem: brainstorm criativo' },
-        { id: 'c6', title: 'Revisão de contrato',     preview: 'Última mensagem: cláusulas importantes' },
-      ],
-    },
-  ],
-
-  /* ----------
-   * Conversas salvas pelo usuário (persistidas em localStorage).
-   * Estrutura: { id, title, messages: [{ role, content, time }], createdAt }
-   * ---------- */
   savedConversations: [],
+  uploadedFiles: [],
+  
+  // Estado de conexão com o backend
+  isBackendOnline: false,
 
-  /* ---------- Carrega conversas do localStorage ---------- */
-  loadSavedConversations() {
+  /* ---------- Inicialização ---------- */
+  
+  // Carrega o cache local imediatamente para a UI não renderizar vazia.
+  _loadFromLocalStorage() {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);
-      if (raw) {
-        this.savedConversations = JSON.parse(raw);
-      } else {
-        this.savedConversations = [];
-      }
+      this.savedConversations = raw ? JSON.parse(raw) : [];
     } catch (e) {
-      console.warn('Erro ao carregar conversas salvas:', e);
+      console.warn('[LizData] Erro ao ler cache local:', e);
       this.savedConversations = [];
     }
   },
 
-  /* ---------- Salva conversas no localStorage ---------- */
-  _persist() {
+  _persistToLocalStorage() {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.savedConversations));
     } catch (e) {
-      console.warn('Erro ao salvar conversas:', e);
+      console.warn('[LizData] Erro ao salvar no cache local:', e);
     }
   },
 
-  /* ---------- Gera um ID único ---------- */
-  _genId() {
-    return 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  /**
+   * Sincroniza o estado local com o backend.
+   * Deve ser chamado pelo ui-core/chat.js após o carregamento inicial.
+   */
+  async syncWithBackend() {
+    if (typeof LizAPI === 'undefined') return;
+
+    const online = await LizAPI.checkBackend();
+    this.isBackendOnline = online;
+
+    if (!online) {
+      console.log('[LizData] Backend offline. Operando apenas com cache local.');
+      return;
+    }
+
+    try {
+      // Busca as conversas do banco de dados
+      const response = await LizAPI.getConversations(1, 100);
+      const conversations = Array.isArray(response) ? response : (response.data || []);
+      
+      // Substitui o estado local pelo estado real do banco
+      this.savedConversations = conversations.map(conv => LizAPI.mapConversationToFrontend(conv));
+      
+      // Atualiza o cache local com os dados frescos
+      this._persistToLocalStorage();
+      console.log(`[LizData] Sincronizado com sucesso: ${this.savedConversations.length} conversas.`);
+    } catch (e) {
+      console.warn('[LizData] Falha ao buscar do backend, mantendo cache local:', e.message);
+    }
   },
 
-  /* ----------
-   * Cria/atualiza conversa salva. Identificada por id (título pode
-   * colidir). Retorna o id da conversa — quem chama deve guardá-lo.
-   * ---------- */
-  saveConversation(title, messages, id) {
+  /* ---------- Gerenciamento de Conversas ---------- */
+  
+  _genLocalId() {
+    return 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  },
+
+  async saveConversation(title, messages, id) {
+    const finalTitle = title || this.autoTitleFromMessages(messages) || 'Nova conversa';
+    
+    // Tenta sincronizar com o backend
+    if (this.isBackendOnline && typeof LizAPI !== 'undefined') {
+      try {
+        if (id && !String(id).startsWith('local_')) {
+          // Atualiza conversa existente
+          await LizAPI.renameConversation(id, finalTitle);
+          
+          const convIndex = this.savedConversations.findIndex(c => c.id === id);
+          if (convIndex > -1) {
+            this.savedConversations[convIndex].title = finalTitle;
+            this.savedConversations[convIndex].messages = messages;
+            this.savedConversations[convIndex].updatedAt = Date.now();
+          }
+          this._persistToLocalStorage();
+          return id;
+        } else {
+          // Cria nova conversa no banco
+          const newConv = await LizAPI.createConversation(finalTitle);
+          const mapped = LizAPI.mapConversationToFrontend(newConv);
+          mapped.messages = messages; 
+          
+          this.savedConversations.unshift(mapped);
+          this._persistToLocalStorage();
+          return mapped.id;
+        }
+      } catch (e) {
+        console.error('[LizData] Erro ao salvar no backend, caindo para local:', e);
+      }
+    }
+
+    // Salvamento local (Offline ou falha no backend)
     const conv = id ? this.savedConversations.find((c) => c.id === id) : null;
     if (conv) {
-      conv.title = title || conv.title || 'Nova conversa';
+      conv.title = finalTitle;
       conv.messages = messages.map((m) => ({ ...m }));
       conv.updatedAt = Date.now();
-      this._persist();
+      this._persistToLocalStorage();
       return conv.id;
+    } else {
+      const newId = this._genLocalId();
+      this.savedConversations.unshift({
+        id: newId,
+        title: finalTitle,
+        messages: messages.map((m) => ({ ...m })),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        pinned: false,
+      });
+      this._persistToLocalStorage();
+      return newId;
     }
-    const newId = this._genId();
-    this.savedConversations.unshift({
-      id: newId,
-      title: title || 'Nova conversa',
-      messages: messages.map((m) => ({ ...m })),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    this._persist();
-    return newId;
   },
 
-  /* ---------- Atualiza mensagens de uma conversa salva ---------- */
-  updateConversationMessages(title, messages) {
-    const conv = this.savedConversations.find((c) => c.title === title);
-    if (conv) {
-      conv.messages = messages.map((m) => ({ ...m }));
-      conv.updatedAt = Date.now();
-      // Atualiza preview
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg) {
-        conv.preview = 'Última mensagem: ' + lastMsg.content.slice(0, 50);
+  async deleteConversation(id) {
+    if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
+      try {
+        await LizAPI.deleteConversation(id);
+      } catch (e) {
+        console.error('[LizData] Erro ao deletar no backend:', e);
       }
-      this._persist();
     }
-  },
-
-  /* ---------- Deleta uma conversa salva ---------- */
-  deleteConversation(id) {
+    
     this.savedConversations = this.savedConversations.filter((c) => c.id !== id);
-    this._persist();
+    this._persistToLocalStorage();
   },
 
-  /* ---------- Renomeia uma conversa salva ---------- */
-  renameConversation(id, newTitle) {
+  async renameConversation(id, newTitle) {
+    if (!newTitle || !newTitle.trim()) return false;
+    const finalTitle = newTitle.trim();
+
+    if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
+      try {
+        await LizAPI.renameConversation(id, finalTitle);
+      } catch (e) {
+        console.error('[LizData] Erro ao renomear no backend:', e);
+      }
+    }
+
     const conv = this.savedConversations.find((c) => c.id === id);
-    if (conv && newTitle && newTitle.trim()) {
-      conv.title = newTitle.trim();
+    if (conv) {
+      conv.title = finalTitle;
       conv.updatedAt = Date.now();
-      this._persist();
+      this._persistToLocalStorage();
       return true;
     }
     return false;
   },
 
-  /* ---------- Fixa / desfixa uma conversa ---------- */
-  togglePinConversation(id) {
+  async togglePinConversation(id) {
     const conv = this.savedConversations.find((c) => c.id === id);
-    if (conv) {
-      conv.pinned = !conv.pinned;
-      this._persist();
-      return conv.pinned;
+    if (!conv) return false;
+
+    const newPinned = !conv.pinned;
+
+    if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
+      try {
+        await LizAPI.togglePinConversation(id, newPinned);
+      } catch (e) {
+        console.error('[LizData] Erro ao fixar no backend:', e);
+      }
     }
-    return false;
+
+    conv.pinned = newPinned;
+    this._persistToLocalStorage();
+    return newPinned;
   },
 
-  /* ---------- Gera título automático a partir da 1ª mensagem do usuário ---------- */
+  /* ---------- Utilitários ---------- */
+  
   autoTitleFromMessages(messages) {
     if (!Array.isArray(messages)) return '';
     const firstUser = messages.find((m) => m.role === 'user' && m.content);
     if (!firstUser) return '';
     let t = String(firstUser.content).replace(/\s+/g, ' ').trim();
-    // Remove quebras de código/markdown óbvias e recolapsa os espaços que sobrarem
     t = t.replace(/```[\s\S]*?```/g, ' ').replace(/`/g, '').replace(/\s+/g, ' ').trim();
     if (t.length > 48) t = t.slice(0, 48).trim() + '…';
     return t;
   },
 
-  /* ---------- Converte conversas salvas para grupos (formato do painel) ---------- */
   getConversationGroups() {
     const groups = [];
-    const now = Date.now();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const lastWeek = new Date(today);
-    lastWeek.setDate(lastWeek.getDate() - 7);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(today); lastWeek.setDate(lastWeek.getDate() - 7);
 
-    const todayItems = [];
-    const yesterdayItems = [];
-    const weekItems = [];
-    const olderItems = [];
+    const todayItems = [], yesterdayItems = [], weekItems = [], olderItems = [];
 
     this.savedConversations.forEach((conv) => {
       const date = new Date(conv.updatedAt || conv.createdAt);
@@ -177,9 +209,9 @@ const LizData = {
         id: conv.id,
         title: conv.title,
         pinned: !!conv.pinned,
-        preview: conv.preview || (conv.messages.length > 0
+        preview: conv.messages && conv.messages.length > 0
           ? 'Última mensagem: ' + conv.messages[conv.messages.length - 1].content.slice(0, 50)
-          : 'Conversa vazia'),
+          : 'Conversa vazia',
       };
       if (date >= today) todayItems.push(item);
       else if (date >= yesterday) yesterdayItems.push(item);
@@ -187,7 +219,6 @@ const LizData = {
       else olderItems.push(item);
     });
 
-    // Fixadas sempre primeiro (dentro de cada período)
     const pinFirst = (arr) => arr.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
     pinFirst(todayItems); pinFirst(yesterdayItems); pinFirst(weekItems); pinFirst(olderItems);
 
@@ -199,57 +230,16 @@ const LizData = {
     return groups;
   },
 
-  /* ---------- Busca uma conversa salva pelo ID ---------- */
   getConversationById(id) {
     return this.savedConversations.find((c) => c.id === id);
   },
 
-  /* ----------
-   * Mensagens de exemplo (modo conversa ativa).
-   * role: 'user' -> bolha à direita | 'liz' -> bolha à esquerda com coroa
-   * ---------- */
+  /* ---------- Mensagens de Exemplo (Apenas para tela inicial vazia) ---------- */
   sampleMessages: [
-    {
-      role: 'user',
-      content: 'Crie um plano de estudos para aprender design',
-      time: '09:41',
-    },
-    {
-      role: 'liz',
-      content:
-        'Claro! Aqui está um plano em 3 etapas:\n\n' +
-        '1. **Fundamentos de UI** — cor, tipografia, espaçamento e grid.\n' +
-        '2. **Prática com Figma** — recriar interfaces que você admira.\n' +
-        '3. **Criar um projeto real** — publique algo pequeno do início ao fim.\n\n' +
-        'Quer que eu detalhe cada etapa com prazos?',
-      time: '09:42',
-    },
+    { role: 'user', content: 'Como funciona o seu modo de raciocínio?', time: 'Agora' },
+    { role: 'liz', content: 'Eu penso antes de responder. Analiso o contexto, quebro o problema em partes e só então formulo a resposta final. Isso me permite lidar com códigos complexos e decisões de arquitetura com mais precisão.', time: 'Agora' }
   ],
 
-  /* ----------
-   * Respostas simuladas da Liz (escolhidas por palavra-chave).
-   * ---------- */
-  replies: {
-    code: [
-      'Claro! Aqui vai um exemplo limpo e comentado:\n\n```js\nfunction saudar(nome) {\n  return `Olá, ${nome}!`;\n}\n\nconsole.log(saudar("Victor"));\n```\n\nQuer que eu adapte para outra linguagem?',
-    ],
-    design: [
-      'Para melhorar o design, sugiro três ajustes rápidos: **1)** aumentar o contraste do texto, **2)** alinhar os elementos a uma grid de 8px, **3)** usar uma única cor de destaque — o roxo já está ótimo!',
-    ],
-    error: [
-      'Esse erro costuma indicar que algo não foi encontrado. Verifique: o nome da variável/função, se ela foi declarada antes do uso e se há algum `import` faltando. Cole a mensagem completa se quiser que eu analise melhor.',
-    ],
-    ideas: [
-      'Vamos de brainstorm:\n\n1. Comece pelo problema que você resolve\n2. Liste 10 variações sem filtrar\n3. Teste falar em voz alta\n4. Veja o que te anima mais\n\nQuer que eu gere 10 ideias agora?',
-    ],
-    default: [
-      'Entendi! Deixa comigo — aqui vai uma resposta direta e organizada pra te ajudar com isso.\n\nQuer que eu detalhe algum ponto específico?',
-    ],
-  },
-
-  /* ----------
-   * Reações disponíveis — ícones SVG do LizConfig (zero emoji).
-   * ---------- */
   reactionEmojis: [
     { icon: 'thumbsUp', key: 'thumbsup', label: 'Gostei' },
     { icon: 'heart',    key: 'heart',    label: 'Amei' },
@@ -258,72 +248,73 @@ const LizData = {
     { icon: 'thinking', key: 'thinking', label: 'Pensativo' },
   ],
 
-  /* ----------
-   * Histórico de uploads — persistido em storage separado.
-   * ---------- */
-  UPLOADS_KEY: 'liz-chat-uploads',
-  uploadedFiles: [],
+  /* ---------- Respostas Mockadas (fallback quando backend offline) ---------- */
+  replies: {
+    code: [
+      'Quando penso em código, não vejo só sintaxe — vejo intenção. Toda função conta uma história sobre o problema que resolve. Se a história é confusa, o código provavelmente também é. Vamos destrinchar isso juntos?',
+      'Código bom se lê como prosa clara: cada linha tem propósito, cada nome carrega significado. Se você precisa de comentário pra explicar o que a função faz, o nome da função está errado.'
+    ],
+    design: [
+      'Design não é enfeite — é comunicação. Cada cor, espaçamento e animação transmite algo. Se a interface parece "certa" mas o usuário hesita, algo na comunicação falhou.',
+      'O melhor design é invisível. O usuário não percebe o botão, ele só clica. Não nota a transição, só flui. Quando param pra elogiar a interface, é sinal de que ela chamou atenção demais.'
+    ],
+    error: [
+      'Erros não são fracassos — são informação. Um stack trace é um mapa dizendo exatamente onde o sistema quebrou. A gente só precisa ler com calma.',
+      'Todo bug é uma conversa que o código está tentando ter com você. Se você não está ouvindo, ele vai falar mais alto na próxima vez — geralmente em produção.'
+    ],
+    ideas: [
+      'Boas ideias raramente vêm prontas — elas começam como desconforto. Aquela sensação de "algo aqui está errado" é o ponto de partida. Vamos explorar isso?',
+      'Brainstorm não é quantidade, é coragem de dizer o óbvio em voz alta. As melhores soluções costumam ser simples demais pra parecerem inteligentes.'
+    ],
+    default: [
+      'Entendi. Me conta mais sobre o contexto — o que motivou essa pergunta? Às vezes a resposta certa depende de entender o problema real, não só o que foi perguntado.',
+      'Vamos por partes. Me ajuda a entender o que você está tentando construir ou resolver, e a gente chega numa resposta que faz sentido pro seu caso específico.'
+    ],
+  },
 
+  /** Wrapper público chamado pelo chat.js no init() */
+  loadSavedConversations() {
+    this._loadFromLocalStorage();
+  },
+
+  /* ---------- Uploads (Mantido local temporariamente) ---------- */
   loadUploadedFiles() {
     try {
       const raw = localStorage.getItem(this.UPLOADS_KEY);
       this.uploadedFiles = raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      this.uploadedFiles = [];
-    }
+    } catch (e) { this.uploadedFiles = []; }
   },
-
+  
   saveUploadedFile(file) {
     this.loadUploadedFiles();
     this.uploadedFiles.unshift({
       id: 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      dataUrl: file.dataUrl,
-      convTitle: file.convTitle || '',
-      timestamp: Date.now(),
+      name: file.name, size: file.size, type: file.type, dataUrl: file.dataUrl,
+      convTitle: file.convTitle || '', timestamp: Date.now(),
     });
-    // Mantém apenas os últimos 50 arquivos
-    if (this.uploadedFiles.length > 50) {
-      this.uploadedFiles = this.uploadedFiles.slice(0, 50);
-    }
-    try {
-      localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles));
-    } catch (e) {
-      // Se o localStorage estiver cheio, remove o item mais antigo
-      if (e.name === 'QuotaExceededError') {
-        this.uploadedFiles.pop();
-        try {
-          localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles));
-        } catch (e2) { /* ignore */ }
-      }
-    }
+    if (this.uploadedFiles.length > 50) this.uploadedFiles = this.uploadedFiles.slice(0, 50);
+    try { localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles)); } catch (e) { /* ignore */ }
   },
-
+  
   deleteUploadedFile(id) {
     this.loadUploadedFiles();
     this.uploadedFiles = this.uploadedFiles.filter((f) => f.id !== id);
-    try {
-      localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles));
-    } catch (e) { /* ignore */ }
+    try { localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles)); } catch (e) { /* ignore */ }
   },
-
-  /* ---------- Renomeia um arquivo do mural ---------- */
+  
   renameUploadedFile(id, newName) {
     if (typeof newName !== 'string' || !newName.trim()) return false;
     this.loadUploadedFiles();
     const file = this.uploadedFiles.find((f) => f.id === id);
     if (!file) return false;
     file.name = newName.trim().slice(0, 120);
-    try {
-      localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles));
-    } catch (e) { /* ignore */ }
+    try { localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles)); } catch (e) { /* ignore */ }
     return true;
-  },
+  }
 };
 
-// Carrega conversas ao iniciar
-LizData.loadSavedConversations();
+// Carrega o cache local imediatamente na inicialização do script
+LizData._loadFromLocalStorage();
+LizData.loadUploadedFiles();
 
 window.LizData = LizData;

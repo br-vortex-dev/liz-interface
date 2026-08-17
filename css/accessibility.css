@@ -10,4 +10,11 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* Exceção intencional: a flutuação da coroa é lenta, suave e sem
+     movimento brusco — segura mesmo para quem prefere menos movimento. */
+  .empty-crown {
+    animation-duration: 3.5s, 4s !important;
+    animation-iteration-count: infinite !important;
+  }
 }

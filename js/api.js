@@ -7,7 +7,17 @@
 
 const LizAPI = {
   /* ---------- Configuração ---------- */
-  BASE_URL: 'http://localhost:3000/api',
+  // Base da API — resolvida automaticamente:
+  //   1. window.LIZ_API_BASE (se definida antes deste arquivo) manda em tudo
+  //   2. Na nuvem (Render): o backend é o serviço "liz-api" (liz-api.onrender.com)
+  //   3. Local: backend de API na porta 3001
+  BASE_URL: (function resolveApiBase() {
+    if (window.LIZ_API_BASE) return window.LIZ_API_BASE;
+    if (window.location.hostname.endsWith('.onrender.com')) {
+      return 'https://liz-api.onrender.com/api';
+    }
+    return 'http://localhost:3001/api';
+  })(),
   // A Liz 3 é um modelo de raciocínio: pensa antes de responder.
   // O backend tenta até 3 vezes com backoff em caso de rate limit (429),
   // então o timeout precisa cobrir o pior caso (~2min) sem desistir cedo demais.
