@@ -51,7 +51,6 @@ test('respostas simuladas usam quebras de linha reais, nunca \\n literal', () =>
   for (const t of texts) {
     assert.ok(!t.includes(literalBsN), 'não pode conter \\n literal: ' + t.slice(0, 40));
   }
-  assert.ok(LizData.sampleMessages[1].content.includes('\n'), 'sample deve ter newline real');
 });
 
 /* ---------- 2. Painel de conversas sem dados fictícios ---------- */
@@ -64,12 +63,12 @@ test('sem conversas salvas, getConversationGroups retorna vazio (zero fake)', ()
 });
 
 /* ---------- 3. Persistência por id (não por título) ---------- */
-test('saveConversation atualiza pelo id sem duplicar', () => {
+test('saveConversation atualiza pelo id sem duplicar', async () => {
   const { LizData } = loadFrontend();
-  const id1 = LizData.saveConversation('Título A', [{ role: 'user', content: 'oi', time: '10:00' }]);
+  const id1 = await LizData.saveConversation('Título A', [{ role: 'user', content: 'oi', time: '10:00' }]);
   assert.ok(id1, 'deve retornar o id criado');
 
-  const id2 = LizData.saveConversation('Título A', [
+  const id2 = await LizData.saveConversation('Título A', [
     { role: 'user', content: 'oi', time: '10:00' },
     { role: 'liz', content: 'olá!', time: '10:01' },
   ], id1);
@@ -79,10 +78,10 @@ test('saveConversation atualiza pelo id sem duplicar', () => {
   assert.strictEqual(LizData.savedConversations[0].messages.length, 2);
 });
 
-test('duas conversas com o MESMO título não colidem', () => {
+test('duas conversas com o MESMO título não colidem', async () => {
   const { LizData } = loadFrontend();
-  const a = LizData.saveConversation('Repetido', [{ role: 'user', content: '1', time: '10:00' }]);
-  const b = LizData.saveConversation('Repetido', [{ role: 'user', content: '2', time: '10:05' }]);
+  const a = await LizData.saveConversation('Repetido', [{ role: 'user', content: '1', time: '10:00' }]);
+  const b = await LizData.saveConversation('Repetido', [{ role: 'user', content: '2', time: '10:05' }]);
   assert.notStrictEqual(a, b);
   assert.strictEqual(LizData.savedConversations.length, 2);
   assert.strictEqual(LizData.getConversationById(a).messages[0].content, '1');

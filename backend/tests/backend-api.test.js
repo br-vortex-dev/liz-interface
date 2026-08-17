@@ -1,9 +1,10 @@
 /* ============================================================
- *  Liz — tests/backend-api.test.js
+ *  Liz — backend/tests/backend-api.test.js
  *  Teste de integração REAL: sobe o backend/server.js num processo
  *  filho (SQLite em memória, porta isolada) e exercita os
  *  endpoints via HTTP — caminho feliz, bordas e erros.
- *  Rodar com: node tests/backend-api.test.js
+ *  Rodar com: node backend/tests/backend-api.test.js
+ *  (ou, dentro de backend/: npm test)
  * ============================================================ */
 
 const { test, before, after } = require('node:test');
@@ -42,7 +43,7 @@ async function api(method, url, body) {
 }
 
 before(async () => {
-  child = spawn(process.execPath, [path.join(__dirname, '..', 'backend', 'server.js')], {
+  child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
     env: {
       ...process.env,
       PORT: String(PORT),

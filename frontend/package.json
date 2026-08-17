@@ -1,0 +1,10 @@
+{
+  "name": "liz-frontend",
+  "version": "1.0.0",
+  "description": "Frontend da Liz — site estático (login + chat). Sem dependências: HTML/CSS/JS puro.",
+  "scripts": {
+    "dev": "node scripts/serve.js",
+    "build": "node scripts/build-frontend.js",
+    "test": "node --test test/frontend.test.js && node tests/p0.test.js"
+  }
+}

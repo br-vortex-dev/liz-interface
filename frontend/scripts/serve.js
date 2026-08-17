@@ -1,6 +1,6 @@
 /* ============================================================
  * Servidor estático mínimo para desenvolvimento.
- * Uso: node tests/serve.js   (porta padrão 8321, env PORT)
+ * Uso: node frontend/scripts/serve.js   (porta padrão 8321, env PORT)
  * ============================================================ */
 const http = require('http');
 const fs = require('fs');

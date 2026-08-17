@@ -17,13 +17,13 @@ backend-err.txt
 # Temporarios
 _tmp_*
 
-# Build do frontend (gerado por scripts/build-frontend.js)
-public/
+# Build do frontend (gerado por frontend/scripts/build-frontend.js)
+frontend/public/
 
 # Cache do wrangler (Cloudflare)
 .wrangler/
 
 # Screenshots de trabalho (não fazem parte do app)
 *.png
-!mobile/**/*.png
-!tela-login-html/**/*.png
+!frontend/mobile/**/*.png
+!frontend/tela-login-html/**/*.png

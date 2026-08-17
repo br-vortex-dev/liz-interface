@@ -1,6 +1,6 @@
 /* ============================================================
  *  Testes do backend — roda contra o servidor na porta 3000.
- *  Uso: node tests/backend.test.js
+ *  Uso: node backend/tests/backend.test.js
  *  (o servidor precisa estar rodando: node backend/server.js)
  * ============================================================ */
 const BASE = 'http://localhost:3000/api';

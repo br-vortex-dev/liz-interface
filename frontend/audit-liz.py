@@ -132,7 +132,7 @@ for f in all_files:
 
 # ---------- 5. Docs present? ----------
 print("\n=== 5. DOCS ===")
-for d in ['leia-me/AGENTS.md', 'leia-me/LIZ.md', 'leia-me/ROADMAP.md', 'leia-me/CODE_STYLE.md',
-          'leia-me/UI_GUIDELINES.md', 'leia-me/BACKUP.md', 'AGENTS.md', 'CLAUDE.md']:
+for d in ['../leia-me/AGENTS.md', '../leia-me/LIZ.md', '../leia-me/ROADMAP.md', '../leia-me/CODE_STYLE.md',
+          '../leia-me/UI_GUIDELINES.md', '../leia-me/BACKUP.md', '../AGENTS.md', '../CLAUDE.md']:
     print("  [%s] %s" % ("OK " if os.path.exists(os.path.join(ROOT, d.replace('/', os.sep))) else "MISSING", d))
 print("\nDONE")

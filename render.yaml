@@ -58,5 +58,5 @@ services:
   # ---------- Frontend (site estático) ----------
   - type: static
     name: liz
-    buildCommand: node scripts/build-frontend.js
-    publishDir: public
+    buildCommand: node frontend/scripts/build-frontend.js
+    publishDir: frontend/public
