@@ -356,9 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // URL do app principal: localmente o login vive em /tela-login-html/ e o app
-  // na raiz; na nuvem o login fica na raiz e o app em /app/.
+  // na raiz; na nuvem o login fica na raiz e o app em /chat/.
   function appUrl() {
-    return location.pathname.includes('tela-login-html') ? '../index.html' : 'app/'
+    return location.pathname.includes('tela-login-html') ? '../index.html' : 'chat/'
   }
 
   // Overlay de sucesso de login → "Continuar" leva ao app principal
