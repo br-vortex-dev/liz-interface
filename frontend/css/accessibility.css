@@ -17,4 +17,15 @@
     animation-duration: 3.5s, 4s !important;
     animation-iteration-count: infinite !important;
   }
+
+  /* Coroa da intro (entrada + flutuação) também sempre anima —
+     identidade da marca, mesma decisão da tela de login. */
+  .intro-crown-enter .intro-crown-img {
+    animation-duration: 700ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .intro-crown-float .intro-crown-img {
+    animation-duration: 2.2s !important;
+    animation-iteration-count: infinite !important;
+  }
 }

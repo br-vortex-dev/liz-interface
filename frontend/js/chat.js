@@ -1224,10 +1224,8 @@ const LizChat = {
   _minTimeElapsed: false,
 
   runIntroAnimation() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      this._showInterfaceImmediately();
-      return;
-    }
+    // Nota: a intro é identidade da marca (como na tela de login) —
+    // roda mesmo com "reduzir movimento" do sistema (decisão do projeto).
     if (this._introStage) return;
 
     this._introStage = 'loading';

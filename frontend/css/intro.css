@@ -121,13 +121,6 @@ html.liz-intro-complete .chat-app {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .intro-crown-wrap { display: none !important; }
-  html.liz-booting .chat-app {
-    opacity: 1 !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-  }
-  .intro-crown-float .intro-crown-img,
-  .hero-crown-img { animation: none; }
-}
+/* A intro NÃO é pulada por prefers-reduced-motion: é identidade da
+   marca (mesma decisão já aplicada na tela de login e na flutuação
+   da coroa em accessibility.css). */
