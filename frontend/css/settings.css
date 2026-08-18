@@ -605,3 +605,30 @@
 [data-theme="light"] .settings-dropdown-item.is-active {
   color: #7c3aed;
 }
+
+/* ---------- Página Memória: ficha do usuário ---------- */
+.liz-memory-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+}
+.liz-memory-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  margin-bottom: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+.liz-memory-textarea:focus {
+  outline: none;
+  border-color: var(--color-brand);
+}

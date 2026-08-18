@@ -118,6 +118,21 @@ const LizAPI = {
     return this._fetch(`/conversations/${conversationId}/messages?page=${page}&limit=${limit}`);
   },
 
+  /* ---------- Memória do usuário ---------- */
+
+  /** Busca a ficha de memória do usuário logado */
+  async getMemory() {
+    return this._fetch('/memory');
+  },
+
+  /** Salva/edita a ficha de memória do usuário logado */
+  async saveMemory(content) {
+    return this._fetch('/memory', {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    });
+  },
+
   /* ---------- Upload ---------- */
 
   /** Envia um arquivo para o backend (storage privado: B2/local) */

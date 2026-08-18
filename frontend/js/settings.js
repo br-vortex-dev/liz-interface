@@ -331,6 +331,15 @@ const LizSettings = {
       memory: `
         <div class="liz-float-settings-page">
           <div class="settings-group">
+            <p class="settings-label">O que a Liz lembra de você</p>
+            <p class="liz-memory-hint">Fatos duradouros (nome, projetos, gostos, preferências) que a Liz usa em toda conversa. Ela atualiza sozinha com o tempo — e você pode editar ou apagar aqui.</p>
+            <textarea class="liz-memory-textarea" id="float-user-memory" rows="6" maxlength="4000" placeholder="Ex.: Me chamo Ana, sou designer, prefiro respostas curtas e diretas..."></textarea>
+            <button class="settings-action-btn" id="float-save-memory" type="button">
+              <span class="settings-action-btn-ico">${LizConfig.icons.sparkle || ''}</span>
+              Salvar memória
+            </button>
+          </div>
+          <div class="settings-group">
             <p class="settings-label">Armazenamento</p>
             <div class="memory-info">
               <div class="memory-bar-track">
@@ -457,6 +466,11 @@ const LizSettings = {
     }
     if (pageId === 'memory') {
       this._renderMemoryUsage(panel);
+      this._loadUserMemory(panel);
+      const saveMemBtn = panel.querySelector('#float-save-memory');
+      if (saveMemBtn) {
+        saveMemBtn.addEventListener('click', () => this._saveUserMemory(panel));
+      }
       const cacheBtn = panel.querySelector('#float-clear-cache');
       if (cacheBtn) {
         cacheBtn.addEventListener('click', () => {
@@ -617,6 +631,37 @@ const LizSettings = {
         this.hideFloatPanel = origHide;
         origHide();
       };
+    }
+  },
+
+  /** Carrega a ficha de memória do usuário (nuvem). Sem backend, fica quieto. */
+  async _loadUserMemory(panel) {
+    const textarea = panel.querySelector('#float-user-memory');
+    if (!textarea) return;
+    try {
+      const online = await LizAPI.checkBackend();
+      if (!online) return;
+      const data = await LizAPI.getMemory();
+      if (data && typeof data.content === 'string') textarea.value = data.content;
+    } catch (e) {
+      // memória é opcional — se não carregar, campo fica vazio
+    }
+  },
+
+  /** Salva a ficha de memória na nuvem e avisa via toast */
+  async _saveUserMemory(panel) {
+    const textarea = panel.querySelector('#float-user-memory');
+    const btn = panel.querySelector('#float-save-memory');
+    if (!textarea) return;
+    const content = textarea.value.trim().slice(0, 4000);
+    if (btn) btn.disabled = true;
+    try {
+      await LizAPI.saveMemory(content);
+      if (typeof LizChat !== 'undefined' && LizChat.toast) LizChat.toast('Memória salva');
+    } catch (e) {
+      if (typeof LizChat !== 'undefined' && LizChat.toast) LizChat.toast('Não consegui salvar a memória');
+    } finally {
+      if (btn) btn.disabled = false;
     }
   },
 };
