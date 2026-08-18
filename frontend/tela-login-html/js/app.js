@@ -1644,14 +1644,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Só age no primeiro estado de auth do carregamento da página;
   // se a página está no meio de um fluxo de login (volta do Google
   // ou do redirect), deixa o fluxo terminar e mostrar o overlay.
+  // Enquanto decide, a classe "liz-auth-check" esconde o formulário
+  // (evita o flash da tela de login); um timeout garante que a tela
+  // não fique em branco se a verificação demorar.
   ;(async () => {
-    if (!(await ensureFirebaseReady())) return
+    const stopChecking = () => document.documentElement.classList.remove('liz-auth-check')
+    setTimeout(stopChecking, 2500)
+    if (!(await ensureFirebaseReady())) { stopChecking(); return }
     const midFlow = location.hash.includes('id_token=') ||
       Object.keys(sessionStorage).some((k) => k.startsWith('firebase:redirect'))
-    if (midFlow) return
+    if (midFlow) { stopChecking(); return }
     const off = firebase.auth().onAuthStateChanged((user) => {
       off()
-      if (user) location.replace(appUrl())
+      if (user) { location.replace(appUrl()); return }
+      stopChecking()
     })
   })()
 
