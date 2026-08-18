@@ -1640,6 +1640,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Conclui login que voltou do fluxo direto do Google (#id_token=...)
   handleManualGoogleReturn()
 
+  // Já estava logado (sessão persistente) → vai direto pro chat.
+  // Só age no primeiro estado de auth do carregamento da página;
+  // se a página está no meio de um fluxo de login (volta do Google
+  // ou do redirect), deixa o fluxo terminar e mostrar o overlay.
+  ;(async () => {
+    if (!(await ensureFirebaseReady())) return
+    const midFlow = location.hash.includes('id_token=') ||
+      Object.keys(sessionStorage).some((k) => k.startsWith('firebase:redirect'))
+    if (midFlow) return
+    const off = firebase.auth().onAuthStateChanged((user) => {
+      off()
+      if (user) location.replace(appUrl())
+    })
+  })()
+
   // Set initial thumb position
   setTimeout(() => {
     applyThumbPos(state.theme === 'light' ? 1 : 0)
