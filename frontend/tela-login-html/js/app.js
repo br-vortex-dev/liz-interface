@@ -352,6 +352,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.firebaseConfigPromise) {
       await window.firebaseConfigPromise
     }
+    if (window.firebaseReady && !ensureFirebaseReady._persistenceSet) {
+      ensureFirebaseReady._persistenceSet = true
+      // Padrão: sessão persiste mesmo fechando o navegador (LOCAL).
+      // Vale para todos os fluxos (Google, GitHub, cadastro);
+      // o checkbox "Lembrar de mim" desmarcado rebaixa pra SESSION.
+      try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      } catch (e) { /* se falhar, segue com o padrão do SDK */ }
+    }
     return window.firebaseReady
   }
 
@@ -603,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div class="row-between">
                   <label class="checkbox-label">
-                    <input type="checkbox" id="remember-me" />
+                    <input type="checkbox" id="remember-me" checked />
                     <span class="checkmark"></span>
                     Lembrar de mim
                   </label>
