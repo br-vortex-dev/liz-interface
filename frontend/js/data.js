@@ -30,7 +30,20 @@ const LizData = {
 
   _persistToLocalStorage() {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.savedConversations));
+      // Arquivo que já foi pro storage do backend (uploadId) não duplica
+      // o base64 no localStorage — o conteúdo mora no B2/local, e a
+      // tela reidrata sob demanda via LizAPI.getUploadDataUrl.
+      const slim = this.savedConversations.map((c) => ({
+        ...c,
+        messages: Array.isArray(c.messages) ? c.messages.map((m) => {
+          if (m && m.file && m.file.uploadId) {
+            const { dataUrl, ...fileRest } = m.file;
+            return { ...m, file: fileRest };
+          }
+          return m;
+        }) : c.messages,
+      }));
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(slim));
     } catch (e) {
       console.warn('[LizData] Erro ao salvar no cache local:', e);
     }
@@ -287,17 +300,28 @@ const LizData = {
   
   saveUploadedFile(file) {
     this.loadUploadedFiles();
-    this.uploadedFiles.unshift({
-      id: 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-      name: file.name, size: file.size, type: file.type, dataUrl: file.dataUrl,
+    // Com uploadId o conteúdo está no storage do backend —
+    // não guarda o base64 no navegador.
+    const entry = {
+      id: file.uploadId || ('file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+      name: file.name, size: file.size, type: file.type,
+      uploadId: file.uploadId || undefined,
+      url: file.url || undefined,
       convTitle: file.convTitle || '', timestamp: Date.now(),
-    });
+    };
+    if (!file.uploadId) entry.dataUrl = file.dataUrl;
+    this.uploadedFiles.unshift(entry);
     if (this.uploadedFiles.length > 50) this.uploadedFiles = this.uploadedFiles.slice(0, 50);
     try { localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles)); } catch (e) { /* ignore */ }
   },
   
   deleteUploadedFile(id) {
     this.loadUploadedFiles();
+    const target = this.uploadedFiles.find((f) => f.id === id);
+    // Arquivo que foi pro storage do backend: remove também de lá
+    if (target && target.uploadId && typeof LizAPI !== 'undefined') {
+      LizAPI.deleteUpload(target.uploadId).catch(() => {});
+    }
     this.uploadedFiles = this.uploadedFiles.filter((f) => f.id !== id);
     try { localStorage.setItem(this.UPLOADS_KEY, JSON.stringify(this.uploadedFiles)); } catch (e) { /* ignore */ }
   },

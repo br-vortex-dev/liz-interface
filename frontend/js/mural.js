@@ -132,9 +132,25 @@ LizUI.mural = {
     return sz.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
   },
 
+  /* ---- Garante o conteúdo do arquivo ----
+   * Arquivo enviado pro storage do backend (uploadId) pode não ter
+   * dataUrl local — baixa sob demanda antes de abrir/baixar/copiar. */
+  _ensureDataUrl: async function(file) {
+    if (!file) return false;
+    if (file.dataUrl) return true;
+    if (!file.uploadId || typeof LizAPI === 'undefined') return false;
+    try {
+      file.dataUrl = await LizAPI.getUploadDataUrl(file.uploadId);
+      return Boolean(file.dataUrl);
+    } catch (e) {
+      return false;
+    }
+  },
+
   /* ---- Visualizador de Imagem ---- */
-  _openViewer: function(file) {
-    if (!file || !file.dataUrl) return;
+  _openViewer: async function(file) {
+    if (!file) return;
+    if (!(await this._ensureDataUrl(file))) return;
     this._closeViewer();
     this._viewerFile = file;
     this._viewerZoom = 1;
@@ -244,8 +260,9 @@ LizUI.mural = {
   },
 
   /* ---- Abre um arquivo no leitor ---- */
-  _openFileReader: function(file) {
-    if (!file || !file.dataUrl) return;
+  _openFileReader: async function(file) {
+    if (!file) return;
+    if (!(await this._ensureDataUrl(file))) return;
     this._closeFileReader();
     this._readerFile = file;
     this._readerObjectUrl = null;
@@ -437,7 +454,7 @@ LizUI.mural = {
       h += `<tr class="mural-row${selected}" data-id="${this._esc(f.id)}" data-type="${type}" style="animation-delay:${Math.min(i*30,500)}ms">
         <td class="col-name">
           <div class="mural-file-cell">
-            <div class="mural-thumb">${isImg ? '<img src="'+f.dataUrl+'" alt="" />' : '<span class="mural-thumb-icon">'+icon+'</span>'}</div>
+            <div class="mural-thumb">${isImg ? '<img src="'+(f.dataUrl||'')+'" alt=""'+((!f.dataUrl && f.uploadId) ? ' data-upload-id="'+this._esc(f.uploadId)+'"' : '')+' />' : '<span class="mural-thumb-icon">'+icon+'</span>'}</div>
             <div>
               <div class="mural-file-name">${this._esc(name)}</div>
               <div class="mural-file-info">${date} ${tag}</div>
@@ -451,6 +468,7 @@ LizUI.mural = {
 
     h += '</tbody></table>';
     this.body.innerHTML = h;
+    if (typeof LizUI !== 'undefined' && LizUI.hydrateUploads) LizUI.hydrateUploads(this.body);
     this._bindRowEvents();
   },
 
@@ -580,13 +598,16 @@ LizUI.mural = {
         } else if (action === 'download') {
           LizData.loadUploadedFiles();
           const file = LizData.uploadedFiles.find(f => f.id === id);
-          if (!file || !file.dataUrl) return;
-          const a = document.createElement('a');
-          a.href = file.dataUrl;
-          a.download = file.name || 'arquivo';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+          if (!file) return;
+          this._ensureDataUrl(file).then((ok) => {
+            if (!ok || !file.dataUrl) return;
+            const a = document.createElement('a');
+            a.href = file.dataUrl;
+            a.download = file.name || 'arquivo';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          });
         } else if (action === 'share') {
           LizData.loadUploadedFiles();
           const file = LizData.uploadedFiles.find(f => f.id === id);
@@ -642,7 +663,11 @@ LizUI.mural = {
         }, 'image/png');
       };
       img.onerror = () => toast('Não foi possível copiar');
-      img.src = file.dataUrl;
+      // Sem dataUrl local? Baixa do storage antes de copiar
+      this._ensureDataUrl(file).then((ok) => {
+        if (!ok || !file.dataUrl) { toast('Não foi possível copiar'); return; }
+        img.src = file.dataUrl;
+      });
       return;
     }
 

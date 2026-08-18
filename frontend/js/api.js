@@ -9,9 +9,8 @@ const LizAPI = {
   /* ---------- Configuração ---------- */
   // Base da API — resolvida automaticamente:
   //   1. window.LIZ_API_BASE (se definida antes deste arquivo) manda em tudo
-  //   2. Fora do localhost (nuvem: pages.dev, onrender.com, domínio próprio):
-  //      usa o backend publicado em liz-api.onrender.com
-  //   3. Local: backend de API na porta 3001
+  //   2. Na nuvem (domínio próprio, Pages, onrender...): backend publicado
+  //   3. Em desenvolvimento local: backend de API na porta padrão de dev
   BASE_URL: (function resolveApiBase() {
     if (window.LIZ_API_BASE) return window.LIZ_API_BASE;
     const host = window.location.hostname;
@@ -112,7 +111,7 @@ const LizAPI = {
 
   /* ---------- Upload ---------- */
 
-  /** Envia um arquivo para o backend */
+  /** Envia um arquivo para o backend (storage privado: B2/local) */
   async uploadFile(file, conversationId) {
     const formData = new FormData();
     formData.append('file', file);
@@ -128,8 +127,48 @@ const LizAPI = {
         headers: await this._authHeaders(),
         signal: controller.signal,
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || `HTTP ${res.status}`);
+      }
       return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  },
+
+  /** Lista os arquivos do usuário no storage */
+  async getUploads() {
+    return this._fetch('/uploads', { timeout: 15000 });
+  },
+
+  /** Remove um arquivo do storage */
+  async deleteUpload(id) {
+    return this._fetch(`/uploads/${id}`, { method: 'DELETE' });
+  },
+
+  /** Baixa um arquivo do storage com auth e devolve como dataUrl.
+   *  Cache em memória: cada id é baixado uma vez por sessão. */
+  _uploadCache: {},
+  async getUploadDataUrl(id) {
+    if (this._uploadCache[id]) return this._uploadCache[id];
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.TIMEOUT);
+    try {
+      const res = await fetch(`${this.BASE_URL}/uploads/${id}`, {
+        headers: await this._authHeaders(),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('falha ao ler arquivo'));
+        reader.readAsDataURL(blob);
+      });
+      this._uploadCache[id] = dataUrl;
+      return dataUrl;
     } finally {
       clearTimeout(timer);
     }

@@ -25,6 +25,14 @@ const MIME = {
   '.md': 'text/plain; charset=utf-8',
 };
 
+// Cabeçalhos de segurança (paridade com a produção; em dev ficam mais
+// brandos — sem CSP rígida — pra não bloquear o backend local).
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
 http.createServer((req, res) => {
   let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
@@ -49,7 +57,7 @@ http.createServer((req, res) => {
       return;
     }
     const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': MIME[ext] || 'application/octet-stream' });
     res.end(data);
   });
 }).listen(PORT, () => {

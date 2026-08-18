@@ -730,51 +730,74 @@ const LizChat = {
     if (validFiles.length === 0) return;
 
     validFiles.forEach((file, i) => {
+      this._attachFile(file, i === validFiles.length - 1);
+    });
+  },
+
+  /** Anexa um arquivo: envia pro storage do backend (B2) quando online;
+   *  se falhar, degrada para base64 local (mesma convenção do chat). */
+  async _attachFile(file, isLast) {
+    const dataUrl = await new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const wasEmpty = !this.messages.length;
-        const msg = {
-          role: 'user',
-          content: '',
-          file: {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            dataUrl: e.target.result,
-          },
-          time: this._now(),
-        };
-        this.messages.push(msg);
-
-        if (wasEmpty) {
-          const title = 'Arquivo: ' + file.name.slice(0, 30);
-          this.currentTitle = title;
-          LizUI.showConversation(title);
-          LizUI.clearMode();
-          LizUI.renderMessages(this.messages);
-          LizUI.addExportButton();
-        } else {
-          LizUI.appendMessage(this.messages[this.messages.length - 1], this.messages.length - 1);
-        }
-
-        // Salva no histórico de uploads
-        LizData.saveUploadedFile({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          dataUrl: e.target.result,
-          convTitle: this.currentTitle || 'Nova conversa',
-        });
-
-        this._saveCurrentConversation();
-
-        // Se for o último arquivo, simula resposta
-        if (i === validFiles.length - 1) {
-          this._simulateFileReply(file);
-        }
-      };
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve('');
       reader.readAsDataURL(file);
     });
+
+    // Tenta mandar pro backend primeiro (o conteúdo fica no storage privado)
+    let upload = null;
+    try {
+      if (await LizAPI.checkBackend()) {
+        upload = await LizAPI.uploadFile(file, this.backendConversationId);
+      }
+    } catch (e) {
+      console.warn('[LizChat] Upload pro backend falhou, usando modo local:', e.message);
+    }
+
+    const wasEmpty = !this.messages.length;
+    const msg = {
+      role: 'user',
+      content: '',
+      file: {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        dataUrl,
+        uploadId: upload ? upload.id : undefined,
+        url: upload ? upload.url : undefined,
+      },
+      time: this._now(),
+    };
+    this.messages.push(msg);
+
+    if (wasEmpty) {
+      const title = 'Arquivo: ' + file.name.slice(0, 30);
+      this.currentTitle = title;
+      LizUI.showConversation(title);
+      LizUI.clearMode();
+      LizUI.renderMessages(this.messages);
+      LizUI.addExportButton();
+    } else {
+      LizUI.appendMessage(this.messages[this.messages.length - 1], this.messages.length - 1);
+    }
+
+    // Salva no histórico de uploads (com uploadId o base64 não é persistido)
+    LizData.saveUploadedFile({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      dataUrl: upload ? undefined : dataUrl,
+      uploadId: upload ? upload.id : undefined,
+      url: upload ? upload.url : undefined,
+      convTitle: this.currentTitle || 'Nova conversa',
+    });
+
+    this._saveCurrentConversation();
+
+    // Se for o último arquivo, simula resposta
+    if (isLast) {
+      this._simulateFileReply(file);
+    }
   },
 
   async _simulateFileReply(file) {

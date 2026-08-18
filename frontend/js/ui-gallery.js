@@ -9,13 +9,46 @@ LizUI.renderFileMessage = function(file, index) {
   const size = this._formatFileSize(file.size);
   const name = this._esc(file.name);
   const dataUrl = file.dataUrl || '';
+  // Sem dataUrl mas com uploadId: o conteúdo mora no storage do backend
+  // e é baixado sob demanda pelo hydrateUploads.
+  const uploadAttr = (!dataUrl && file.uploadId) ? ' data-upload-id="' + this._esc(file.uploadId) + '"' : '';
   if (isImage) {
-    return '<div class="file-msg file-msg-image"><div class="file-image-preview" style="background-image: url(' + dataUrl + ')" role="button" tabindex="0" data-file-url="' + dataUrl + '" data-file-name="' + name + '">' +
+    return '<div class="file-msg file-msg-image"><div class="file-image-preview"' + uploadAttr + ' style="background-image: url(' + dataUrl + ')" role="button" tabindex="0" data-file-url="' + dataUrl + '" data-file-name="' + name + '">' +
       '<img src="' + dataUrl + '" alt="' + name + '" loading="lazy" /><span class="file-image-expand">' + LizConfig.icons.expand + '</span></div>' +
       '<div class="file-info"><span class="file-name">' + name + '</span><span class="file-size">' + size + '</span></div></div>';
   }
   return '<div class="file-msg file-msg-doc"><span class="file-doc-icon">' + LizConfig.icons.file + '</span>' +
     '<div class="file-info"><span class="file-name">' + name + '</span><span class="file-size">' + size + '</span></div></div>';
+};
+
+// ===================== HIDRATAÇÃO DE UPLOADS =====================
+/** Baixa sob demanda o conteúdo de arquivos que estão no storage do
+ *  backend (uploadId) e não têm dataUrl local. Cada id é baixado uma
+ *  vez por sessão (cache em LizAPI.getUploadDataUrl). */
+LizUI.hydrateUploads = function(root) {
+  const scope = root || document;
+  scope.querySelectorAll('[data-upload-id]').forEach((el) => {
+    if (el.dataset.hydrated) return;
+    const id = el.getAttribute('data-upload-id');
+    if (!id) return;
+    el.dataset.hydrated = '1';
+    LizAPI.getUploadDataUrl(id).then((url) => {
+      if (!url) return;
+      const img = el.matches('img') ? el : el.querySelector('img');
+      // getAttribute: img.src vazio resolve pra URL da página, então
+      // checamos o atributo cru pra saber se já tem conteúdo.
+      if (img && !img.getAttribute('src')) img.src = url;
+      if (el.style && el.style.backgroundImage !== undefined &&
+          (el.classList.contains('file-image-preview') ||
+           el.classList.contains('upload-panel-thumb') ||
+           el.classList.contains('mural-thumb'))) {
+        el.style.backgroundImage = 'url(' + url + ')';
+      }
+      // Alimenta os handlers de preview/download que leem dataset
+      if (el.hasAttribute('data-file-url')) el.dataset.fileUrl = url;
+      if (el.hasAttribute('data-url')) el.dataset.url = url;
+    }).catch(() => { el.dataset.hydrated = ''; });
+  });
 };
 
 // ===================== PREVIEW =====================
@@ -67,7 +100,10 @@ LizUI.openUploadPanel = function() {
   } else {
     if (images.length > 0) {
       html += '<p class="upload-panel-section-title">Imagens (' + images.length + ')</p><div class="upload-panel-grid">';
-      images.forEach((f) => { html += '<div class="upload-panel-thumb" data-url="' + f.dataUrl + '" data-name="' + this._esc(f.name) + '"><img src="' + f.dataUrl + '" alt="' + this._esc(f.name) + '" loading="lazy" /></div>'; });
+      images.forEach((f) => {
+        const upAttr = (!f.dataUrl && f.uploadId) ? ' data-upload-id="' + this._esc(f.uploadId) + '"' : '';
+        html += '<div class="upload-panel-thumb"' + upAttr + ' data-url="' + (f.dataUrl || '') + '" data-name="' + this._esc(f.name) + '"><img src="' + (f.dataUrl || '') + '" alt="' + this._esc(f.name) + '" loading="lazy" /></div>';
+      });
       html += '</div>';
     }
     if (docs.length > 0) {
@@ -77,6 +113,7 @@ LizUI.openUploadPanel = function() {
   }
   html += '</div>';
   panel.innerHTML = html;
+  this.hydrateUploads(panel);
   overlay.classList.add('is-visible');
   panel.classList.add('is-open');
   document.body.style.overflow = 'hidden';

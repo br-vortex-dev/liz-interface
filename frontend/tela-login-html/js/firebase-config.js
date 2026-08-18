@@ -16,15 +16,18 @@
 
 // Mesma regra do app principal (js/api.js → LizAPI.BASE_URL):
 //   1. window.LIZ_API_BASE manda em tudo (se definida antes deste arquivo)
-//   2. Fora do localhost (nuvem: pages.dev, onrender.com...): backend liz-api
-//   3. Local: backend de API na porta 3001 (o frontend roda separado na 8321)
-const FIREBASE_CONFIG_URL = (function () {
-  if (window.LIZ_API_BASE) return window.LIZ_API_BASE.replace(/\/+$/, '') + '/firebase-config'
+//   2. Na nuvem (domínio próprio, Pages, onrender...): backend publicado
+//   3. Em desenvolvimento local: backend de API na porta padrão de dev
+const LIZ_API_BASE = (function () {
+  if (window.LIZ_API_BASE) return window.LIZ_API_BASE.replace(/\/+$/, '')
   const host = window.location.hostname
   const isLocal = host === 'localhost' || host === '127.0.0.1'
-  if (!isLocal) return 'https://liz-api.onrender.com/api/firebase-config'
-  return 'http://localhost:3001/api/firebase-config'
+  if (!isLocal) return 'https://liz-api.onrender.com/api'
+  return 'http://localhost:3001/api'
 })()
+// Outras telas (ex.: cadastro no app.js) reaproveitam a mesma base
+window.LIZ_API_BASE_URL = LIZ_API_BASE
+const FIREBASE_CONFIG_URL = LIZ_API_BASE + '/firebase-config'
 
 // Indica se o Firebase está pronto para uso (config carregado com sucesso)
 window.firebaseReady = false
@@ -44,6 +47,15 @@ window.firebaseConfigPromise = (async () => {
     window.firebaseConfig = cfg
     firebase.initializeApp(cfg)
     firebase.auth().languageCode = 'pt_BR' // e-mails de recuperação em português
+    // App Check: só ativa quando o backend fornece a chave do reCAPTCHA v3.
+    // Com ele, scripts fora do site oficial não conseguem usar as APIs
+    // do Firebase (proteção recomendada pra config pública).
+    if (cfg.recaptchaSiteKey && typeof firebase.appCheck === 'function') {
+      firebase.appCheck().activate({
+        siteKey: cfg.recaptchaSiteKey,
+        isTokenAutoRefreshEnabled: true,
+      })
+    }
     window.firebaseReady = true
   } catch (err) {
     console.warn('[Liz] Firebase indisponível:', err.message)

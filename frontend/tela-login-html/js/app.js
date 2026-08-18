@@ -503,8 +503,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const params = new URLSearchParams({
       client_id: clientId,
-      // A própria URL da página de login (raiz na nuvem, /tela-login-html/ local);
-      // normaliza 127.0.0.1 → localhost pra bater com as URIs cadastradas no cliente
+      // A própria URL da página de login (raiz na nuvem, caminho de dev local);
+      // normaliza o host local pra bater com as URIs cadastradas no cliente OAuth
       redirect_uri: location.protocol + '//' + location.host.replace('127.0.0.1', 'localhost') + (location.pathname.endsWith('/') ? location.pathname : location.pathname + '/'),
       response_type: 'id_token',
       scope: 'openid email profile',
@@ -1549,13 +1549,33 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (!(await ensureFirebaseReady())) throw { code: 'firebase-not-configured' }
 
-      const credential = await firebase.auth().createUserWithEmailAndPassword(
+      // A conta é criada pelo BACKEND (POST /api/auth/signup): assim a
+      // política de senha (mínimo 8 caracteres + número ou símbolo) vale
+      // no servidor, não só neste JavaScript. O displayName já vai junto.
+      const signupRes = await fetch(window.LIZ_API_BASE_URL + '/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nameInput.value.trim(),
+          email: emailInput.value.trim(),
+          password: passwordInput.value,
+        }),
+      })
+      if (!signupRes.ok) {
+        const errBody = await signupRes.json().catch(() => ({}))
+        if (signupRes.status === 409) throw { code: 'auth/email-already-in-use' }
+        throw {
+          code: 'signup-failed',
+          message: errBody.message || 'Não foi possível criar a conta. Tente novamente',
+        }
+      }
+
+      // Usuário criado — agora autentica no navegador e salva o perfil
+      // no banco (users/{uid}; as rules garantem acesso só ao dono).
+      const credential = await firebase.auth().signInWithEmailAndPassword(
         emailInput.value.trim(),
         passwordInput.value
       )
-      // Salva o nome no perfil do usuário Firebase
-      await credential.user.updateProfile({ displayName: nameInput.value.trim() })
-      // Cria a conta no banco (users/{uid})
       await saveUserToFirestore(credential.user, 'password')
 
       btnRegister.disabled = false
@@ -1583,7 +1603,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showFormAlert('register-alert',
         err.code === 'firebase-not-configured'
           ? FIREBASE_NOT_CONFIGURED_MSG
-          : firebaseErrorMessage(err.code))
+          : err.code === 'signup-failed'
+            ? err.message
+            : firebaseErrorMessage(err.code))
     }
   }
 

@@ -9,6 +9,7 @@ backend/node_modules/
 # Dados locais
 *.sqlite
 backend/liz.sqlite
+backend/data/
 
 # Logs
 backend-log.txt

@@ -204,6 +204,7 @@ LizUI.setStatus = function(text) {
 // ===================== MENSAGENS =====================
 LizUI.renderMessages = function(messages) {
   this.el.messagesList.innerHTML = messages.map((m, i) => this._messageHTML(m, i)).join('');
+  this.hydrateUploads(this.el.messagesList);
   this._scrollToBottom();
 };
 
@@ -212,6 +213,7 @@ LizUI.appendMessage = function(msg, index) {
   div.innerHTML = this._messageHTML(msg, index);
   const node = div.firstElementChild;
   this.el.messagesList.appendChild(node);
+  this.hydrateUploads(node);
   this._scrollToBottom();
   return node;
 };
