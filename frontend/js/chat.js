@@ -794,6 +794,26 @@ const LizChat = {
 
     this._saveCurrentConversation();
 
+    // Persiste a mensagem de arquivo na nuvem (histórico entre dispositivos):
+    // o conteúdo está no B2 (uploadId), o banco guarda só a referência.
+    if (upload) {
+      try {
+        if (this._backendCreatePromise) await this._backendCreatePromise;
+        if (!this.backendConversationId) {
+          await this._tryCreateBackendConversation(this.currentTitle || 'Nova conversa');
+        }
+        if (this.backendConversationId) {
+          await LizAPI.addMessage(this.backendConversationId, {
+            content: '',
+            role: 'user',
+            file: { uploadId: upload.id, name: file.name, size: file.size, type: file.type },
+          });
+        }
+      } catch (e) {
+        console.warn('[LizChat] Não deu pra salvar o anexo na nuvem:', e.message);
+      }
+    }
+
     // Se for o último arquivo, simula resposta
     if (isLast) {
       this._simulateFileReply(file);
@@ -820,6 +840,14 @@ const LizChat = {
       this.messages.push(msg);
       LizUI.appendMessage(msg, this.messages.length - 1);
       this._saveCurrentConversation();
+
+      // Espelha a resposta local na nuvem (não bloqueia a UI)
+      if (this.backendConversationId) {
+        LizAPI.addMessage(this.backendConversationId, {
+          content: reply,
+          role: 'assistant',
+        }).catch(() => { /* conversa segue salva no cache local */ });
+      }
     } finally {
       this._endGeneration();
     }

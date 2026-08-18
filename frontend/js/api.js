@@ -87,6 +87,15 @@ const LizAPI = {
 
   /* ---------- Mensagens ---------- */
 
+  /** Persiste uma mensagem isolada numa conversa (ex.: anexo de arquivo,
+   *  que não passa pelo /chat/send). */
+  async addMessage(conversationId, { content = '', role = 'user', file = null } = {}) {
+    return this._fetch(`/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content, role, file }),
+    });
+  },
+
   /**
    * Envia uma mensagem e recebe a resposta da IA.
    * Retorna: { conversationId, userMessage, assistantMessage }
@@ -191,6 +200,16 @@ const LizAPI = {
     return {
       role: this.mapRoleToFrontend(msg.role),
       content: msg.content,
+      // Anexo: só a referência (uploadId) — a imagem é reidratada sob
+      // demanda via getUploadDataUrl (atributo data-upload-id na tela).
+      file: msg.file && msg.file.uploadId
+        ? {
+            name: msg.file.name,
+            size: msg.file.size,
+            type: msg.file.type,
+            uploadId: msg.file.uploadId,
+          }
+        : undefined,
       time: msg.createdAt
         ? new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         : msg.time || '',
