@@ -201,6 +201,25 @@ LizUI.setStatus = function(text) {
   if (node && node.textContent !== text) node.textContent = text;
 };
 
+// ===================== FONTES DA WEB =====================
+LizUI.renderWebResults = function(results) {
+  if (!Array.isArray(results)) return '';
+  const cards = results.map((item) => {
+    const url = this._safeLinkUrl(item.url);
+    if (!url) return '';
+    const title = this._esc(item.title || 'Resultado da busca');
+    const description = this._esc(item.description || '');
+    const source = this._esc(item.source || 'Fonte consultada');
+    const age = item.age ? ' · ' + this._esc(item.age) : '';
+    return '<a class="web-result-card" href="' + this._esc(url) + '" target="_blank" rel="noopener noreferrer">' +
+      '<span class="web-result-title">' + title + '</span>' +
+      '<span class="web-result-description">' + description + '</span>' +
+      '<span class="web-result-source">' + source + age + '</span>' +
+      '</a>';
+  }).join('');
+  return cards ? '<section class="web-results" aria-label="Fontes consultadas"><div class="web-results-heading">Fontes consultadas</div><div class="web-results-list">' + cards + '</div></section>' : '';
+};
+
 // ===================== MENSAGENS =====================
 LizUI.renderMessages = function(messages) {
   this.el.messagesList.innerHTML = messages.map((m, i) => this._messageHTML(m, i)).join('');
@@ -233,8 +252,11 @@ LizUI._messageHTML = function(m, index) {
       '<div class="msg-user-actions">' + editBtn + '<button class="msg-action js-delete" type="button" title="Apagar">' + LizConfig.icons.trash + '</button>' + timeHtml + '</div></div>';
   }
   var reactionsHtml = index !== undefined ? this._reactionsHTML(index) : '';
+  var demoBadge = m.demo === true ? '<span class="msg-demo-badge">Modo demonstração</span>' : '';
+  var aiImages = typeof this.renderAIImages === 'function' ? this.renderAIImages(m.images) : '';
+  var webResults = typeof this.renderWebResults === 'function' ? this.renderWebResults(m.webResults) : '';
   return '<div class="msg msg-liz"' + dataIdx + '><div class="msg-avatar">' + LizConfig.crown + '</div><div>' +
-    '<div class="msg-bubble msg-bubble-liz"><span class="msg-name">Liz</span><div class="msg-text">' + this._markdown(m.content) + '</div></div>' + timeHtml +
+    '<div class="msg-bubble msg-bubble-liz"><span class="msg-name">Liz</span>' + demoBadge + '<div class="msg-text">' + this._markdown(m.content) + '</div>' + aiImages + webResults + '</div>' + timeHtml +
     '<div class="msg-actions"><button class="msg-action js-copy" type="button" title="Copiar">' + LizConfig.icons.copy + 'Copiar</button>' +
     '<button class="msg-action js-continue" type="button" title="Continuar">' + LizConfig.icons.continue + 'Continuar</button>' +
     '<button class="msg-action js-redo" type="button" title="Refazer">' + LizConfig.icons.redo + 'Refazer</button>' +

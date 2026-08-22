@@ -25,7 +25,7 @@ services:
         value: production
       # Origens aceitas pela API (a URL do frontend na nuvem + dev local)
       - key: CORS_ORIGIN
-        value: https://liz.onrender.com,http://localhost:8321,http://127.0.0.1:8321
+        value: https://lizia.qzz.io,https://liz.onrender.com,http://localhost:8321,http://127.0.0.1:8321
       # Postgres da Supabase (Settings > Database > Connection string)
       - key: DATABASE_URL
         sync: false
@@ -38,6 +38,17 @@ services:
         sync: false
       - key: AI_MAX_TOKENS
         sync: false
+      # Pesquisa web opcional; sem essa chave o backend usa as alternativas públicas.
+      - key: BRAVE_SEARCH_API_KEY
+        sync: false
+      - key: AI_IMAGE_API_URL
+        sync: false
+      - key: AI_IMAGE_API_KEY
+        sync: false
+      - key: AI_IMAGE_MODEL
+        value: gpt-image-1
+      - key: AI_IMAGE_SIZE
+        value: 1024x1024
       # Firebase (tela de login) — mesmos valores do backend/.env local
       - key: FIREBASE_API_KEY
         sync: false

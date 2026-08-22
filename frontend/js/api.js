@@ -215,6 +215,26 @@ const LizAPI = {
     return {
       role: this.mapRoleToFrontend(msg.role),
       content: msg.content,
+      demo: msg.demo === true,
+      images: Array.isArray(msg.images) ? msg.images.map((image) => ({
+        url: typeof image.url === 'string' ? image.url : '',
+        uploadId: typeof image.uploadId === 'string' ? image.uploadId : '',
+        sourceUrl: typeof image.sourceUrl === 'string' ? image.sourceUrl : '',
+        title: typeof image.title === 'string' ? image.title : '',
+        creator: typeof image.creator === 'string' ? image.creator : '',
+        license: typeof image.license === 'string' ? image.license : '',
+        licenseUrl: typeof image.licenseUrl === 'string' ? image.licenseUrl : '',
+        alt: typeof image.alt === 'string' ? image.alt : 'Imagem da Liz',
+        source: typeof image.source === 'string' ? image.source : '',
+      })) : [],
+      webResults: Array.isArray(msg.webResults) ? msg.webResults.map((item) => ({
+        title: typeof item.title === 'string' ? item.title : 'Resultado da busca',
+        url: typeof item.url === 'string' ? item.url : '',
+        description: typeof item.description === 'string' ? item.description : '',
+        source: typeof item.source === 'string' ? item.source : '',
+        age: typeof item.age === 'string' ? item.age : '',
+        provider: typeof item.provider === 'string' ? item.provider : '',
+      })) : [],
       // Anexo: só a referência (uploadId) — a imagem é reidratada sob
       // demanda via getUploadDataUrl (atributo data-upload-id na tela).
       file: msg.file && msg.file.uploadId
@@ -238,6 +258,13 @@ const LizAPI = {
       title: conv.title,
       pinned: !!conv.pinned,
       messages: (conv.messages || []).map((m) => this.mapMessageToFrontend(m)),
+      lastMessage: conv.lastMessage ? {
+        role: this.mapRoleToFrontend(conv.lastMessage.role),
+        content: conv.lastMessage.content || '',
+        time: conv.lastMessage.createdAt
+          ? new Date(conv.lastMessage.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          : '',
+      } : null,
       createdAt: conv.createdAt,
       updatedAt: conv.updatedAt,
     };

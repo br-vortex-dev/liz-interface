@@ -21,6 +21,43 @@ LizUI.renderFileMessage = function(file, index) {
     '<div class="file-info"><span class="file-name">' + name + '</span><span class="file-size">' + size + '</span></div></div>';
 };
 
+// ===================== IMAGENS DA IA =====================
+LizUI._safeImageUrl = function(value) {
+  const raw = String(value || '').trim();
+  if (/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'https:' ? url.toString() : '';
+  } catch (_) {
+    return '';
+  }
+};
+
+LizUI.renderAIImages = function(images) {
+  if (!Array.isArray(images)) return '';
+  return images.map((image) => {
+    const src = this._safeImageUrl(image.url || image.src);
+    const uploadAttr = (!src && image.uploadId)
+      ? ' data-upload-id="' + this._esc(image.uploadId) + '"' : '';
+    if (!src && !uploadAttr) return '';
+    const alt = this._esc(image.alt || image.title || 'Imagem da Liz');
+    const title = this._esc(image.title || 'Imagem');
+    const sourceUrl = this._safeImageUrl(image.sourceUrl);
+    const source = this._esc(image.source || 'Fonte');
+    const creator = image.creator ? ' · ' + this._esc(image.creator) : '';
+    const license = image.license ? ' · ' + this._esc(image.license) : '';
+    const link = sourceUrl
+      ? '<a class="ai-image-source-link" href="' + this._esc(sourceUrl) + '" target="_blank" rel="noopener noreferrer">Abrir fonte</a>'
+      : '';
+    return '<figure class="ai-image-card"' + uploadAttr + '>' +
+      '<div class="ai-image-preview" data-file-url="' + this._esc(src) + '" data-file-name="' + alt + '" role="button" tabindex="0">' +
+      '<img src="' + this._esc(src) + '" alt="' + alt + '" loading="lazy" />' +
+      '<span class="ai-image-expand">' + LizConfig.icons.expand + '</span></div>' +
+      '<figcaption><span class="ai-image-title">' + title + '</span><span class="ai-image-meta">' + source + creator + license + '</span>' + link + '</figcaption>' +
+      '</figure>';
+  }).join('');
+};
+
 // ===================== HIDRATAÇÃO DE UPLOADS =====================
 /** Baixa sob demanda o conteúdo de arquivos que estão no storage do
  *  backend (uploadId) e não têm dataUrl local. Cada id é baixado uma

@@ -87,21 +87,61 @@ const LizUI = {
     });
   },
 
+  _safeImageUrl(value) {
+    const raw = String(value || '').trim();
+    if (/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(raw)) return raw;
+    try {
+      const url = new URL(raw);
+      return url.protocol === 'https:' ? url.toString() : '';
+    } catch (_) {
+      return '';
+    }
+  },
+
+  _safeLinkUrl(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      return url.protocol === 'https:' ? url.toString() : '';
+    } catch (_) {
+      return '';
+    }
+  },
+
   _markdown(text) {
-    let html = this._esc(text);
+    const placeholders = [];
+    const token = (html) => {
+      const marker = `\u0000LIZ_TOKEN_${placeholders.length}\u0000`;
+      placeholders.push(html);
+      return marker;
+    };
+    let source = String(text || '');
     var copyIcon = LizConfig.icons.copy;
-    html = html.replace(/```(\w+)?\n?([\s\S]*?)```/g, function(_, lang, code) {
+
+    // Protege blocos de código antes de interpretar imagens, para que um
+    // exemplo de Markdown dentro do código continue sendo apenas código.
+    source = source.replace(/```(\w+)?\n?([\s\S]*?)```/g, function(_, lang, code) {
       var hasLang = lang ? true : false;
       var langLabel = lang || 'code';
       var header = '<div class="code-block-header">' +
         '<span class="code-block-lang">' + langLabel + '</span>' +
         '<button class="code-block-copy" type="button" data-copy-code>' + copyIcon + 'Copiar</button>' +
       '</div>';
-      return '<pre class="code-block' + (hasLang ? ' has-lang' : '') + '">' + header + '<code>' + code.replace(/\n$/, '') + '</code></pre>';
+      return token('<pre class="code-block' + (hasLang ? ' has-lang' : '') + '">' + header + '<code>' + this._esc(code).replace(/\n$/, '') + '</code></pre>');
+    }.bind(this));
+
+    source = source.replace(/!\[([^\]]{0,160})\]\((https:\/\/[^\s)]+|data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+)\)/gi, (match, alt, src) => {
+      const safe = this._safeImageUrl(src);
+      if (!safe) return match;
+      return token('<img class="md-image" src="' + this._esc(safe) + '" alt="' + this._esc(alt || 'Imagem') + '" loading="lazy" />');
     });
+
+    let html = this._esc(source);
     html = html.replace(/`([^`\n]+)`/g, '<code class="code-inline">$1</code>');
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\n/g, '<br>');
+    placeholders.forEach((value, index) => {
+      html = html.replace(`\u0000LIZ_TOKEN_${index}\u0000`, value);
+    });
     return html;
   },
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark" class="liz-booting liz-auth-gate">
 <head>
-  <script>if(/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)&&window.innerWidth<700){window.location.replace("mobile/index.html");}</script>
+  <script>(function(){var forceDesktop=new URLSearchParams(location.search).get('view')==='desktop';var mobile=/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&window.innerWidth<700);if(!forceDesktop&&mobile){window.location.replace("mobile/index.html");}})();</script>
 
   <!-- Auth guard: valida a sessão Firebase antes de liberar o chat.
        Quem abre a URL sem login é redirecionado para a tela de login. -->

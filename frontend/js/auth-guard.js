@@ -19,12 +19,21 @@
     return 'tela-login-html/index.html';
   }
 
+  var authReadyResolve;
+  window.lizAuthReadyPromise = new Promise(function (resolve) {
+    authReadyResolve = resolve;
+  });
+
   function goLogin() {
+    if (authReadyResolve) authReadyResolve(false);
+    window.lizAuthReady = false;
     window.location.replace(loginUrl());
   }
 
   function unlock() {
     document.documentElement.classList.remove('liz-auth-gate');
+    window.lizAuthReady = true;
+    if (authReadyResolve) authReadyResolve(true);
   }
 
   // O firebase-config.js busca as chaves no backend e inicializa o SDK;

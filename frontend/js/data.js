@@ -1,8 +1,8 @@
 /* ============================================================
  *  Liz Chat — data.js
  *  Camada de estado e persistência.
- *  Fonte primária: Backend (LizAPI via Supabase).
- *  Fallback: localStorage (modo offline ou cache imediato).
+ * Cache imediato: localStorage (a UI nunca espera a rede para salvar).
+ * Sincronização: Backend (LizAPI) em segundo plano quando disponível.
  * ============================================================ */
 
 const LizData = {
@@ -51,32 +51,49 @@ const LizData = {
 
   /**
    * Sincroniza o estado local com o backend.
-   * Deve ser chamado pelo ui-core/chat.js após o carregamento inicial.
+   * É chamado pelo chat após o carregamento inicial e a confirmação do login.
    */
   async syncWithBackend() {
-    if (typeof LizAPI === 'undefined') return;
+    if (typeof LizAPI === 'undefined') return false;
 
     const online = await LizAPI.checkBackend();
     this.isBackendOnline = online;
 
     if (!online) {
       console.log('[LizData] Backend offline. Operando apenas com cache local.');
-      return;
+      return false;
     }
 
     try {
-      // Busca as conversas do banco de dados
+      // Busca as conversas do banco de dados. A listagem traz apenas a
+      // última mensagem; o detalhe completo é carregado ao abrir a conversa.
       const response = await LizAPI.getConversations(1, 100);
-      const conversations = Array.isArray(response) ? response : (response.data || []);
-      
-      // Substitui o estado local pelo estado real do banco
-      this.savedConversations = conversations.map(conv => LizAPI.mapConversationToFrontend(conv));
-      
-      // Atualiza o cache local com os dados frescos
+      const conversations = Array.isArray(response)
+        ? response
+        : (response.conversations || response.data || []);
+      const localById = new Map(this.savedConversations.map((conv) => [String(conv.id), conv]));
+      const remote = conversations.map((conv) => {
+        const mapped = LizAPI.mapConversationToFrontend(conv);
+        const cached = localById.get(String(mapped.id));
+        // Preserva mensagens já cacheadas até o detalhe remoto ser aberto.
+        if (cached && Array.isArray(cached.messages) && cached.messages.length) {
+          mapped.messages = cached.messages;
+        }
+        return mapped;
+      });
+      const remoteIds = new Set(remote.map((conv) => String(conv.id)));
+      // Conversas locais sem ID remoto não são apagadas silenciosamente.
+      const localOnly = this.savedConversations.filter((conv) =>
+        String(conv.id).startsWith('local_') && !remoteIds.has(String(conv.id))
+      );
+
+      this.savedConversations = [...remote, ...localOnly];
       this._persistToLocalStorage();
-      console.log(`[LizData] Sincronizado com sucesso: ${this.savedConversations.length} conversas.`);
+      console.log(`[LizData] Sincronizado com sucesso: ${remote.length} conversas.`);
+      return true;
     } catch (e) {
       console.warn('[LizData] Falha ao buscar do backend, mantendo cache local:', e.message);
+      return false;
     }
   },
 
@@ -86,88 +103,87 @@ const LizData = {
     return 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
   },
 
-  async saveConversation(title, messages, id) {
+  saveConversation(title, messages, id) {
     const finalTitle = title || this.autoTitleFromMessages(messages) || 'Nova conversa';
-    
-    // Tenta sincronizar com o backend
-    if (this.isBackendOnline && typeof LizAPI !== 'undefined') {
-      try {
-        if (id && !String(id).startsWith('local_')) {
-          // Atualiza conversa existente
-          await LizAPI.renameConversation(id, finalTitle);
-          
-          const convIndex = this.savedConversations.findIndex(c => c.id === id);
-          if (convIndex > -1) {
-            this.savedConversations[convIndex].title = finalTitle;
-            this.savedConversations[convIndex].messages = messages;
-            this.savedConversations[convIndex].updatedAt = Date.now();
-          }
-          this._persistToLocalStorage();
-          return id;
-        } else {
-          // Cria nova conversa no banco
-          const newConv = await LizAPI.createConversation(finalTitle);
-          const mapped = LizAPI.mapConversationToFrontend(newConv);
-          mapped.messages = messages; 
-          
-          this.savedConversations.unshift(mapped);
-          this._persistToLocalStorage();
-          return mapped.id;
-        }
-      } catch (e) {
-        console.error('[LizData] Erro ao salvar no backend, caindo para local:', e);
-      }
-    }
+    const safeMessages = Array.isArray(messages) ? messages.map((m) => ({ ...m })) : [];
+    const existing = id ? this.savedConversations.find((c) => String(c.id) === String(id)) : null;
+    const previousTitle = existing?.title;
+    const now = Date.now();
 
-    // Salvamento local (Offline ou falha no backend)
-    const conv = id ? this.savedConversations.find((c) => c.id === id) : null;
-    if (conv) {
-      conv.title = finalTitle;
-      conv.messages = messages.map((m) => ({ ...m }));
-      conv.updatedAt = Date.now();
-      this._persistToLocalStorage();
-      return conv.id;
+    // O estado local é atualizado imediatamente. Assim, os chamadores
+    // recebem uma string de ID, e não uma Promise, mesmo quando a API está
+    // lenta ou indisponível. A atualização remota é secundária.
+    let conversationId;
+    if (existing) {
+      existing.title = finalTitle;
+      existing.messages = safeMessages;
+      existing.updatedAt = now;
+      conversationId = existing.id;
     } else {
-      const newId = this._genLocalId();
+      // Um ID desconhecido nunca é aceito como se já existisse; isso evita
+      // referências quebradas e mantém o contrato de criação local.
+      conversationId = this._genLocalId();
       this.savedConversations.unshift({
-        id: newId,
+        id: conversationId,
         title: finalTitle,
-        messages: messages.map((m) => ({ ...m })),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        messages: safeMessages,
+        createdAt: now,
+        updatedAt: now,
         pinned: false,
       });
-      this._persistToLocalStorage();
-      return newId;
     }
+    this._persistToLocalStorage();
+
+    // O endpoint /chat/send já persiste mensagens no backend. Aqui só
+    // mantemos o título remoto atualizado, sem bloquear a interface.
+    if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(conversationId).startsWith('local_') && previousTitle !== finalTitle) {
+      LizAPI.renameConversation(conversationId, finalTitle).catch((e) => {
+        console.warn('[LizData] Título remoto não atualizado:', e.message);
+      });
+    }
+
+    return conversationId;
   },
 
-  async deleteConversation(id) {
-    if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
-      try {
-        await LizAPI.deleteConversation(id);
-      } catch (e) {
-        console.error('[LizData] Erro ao deletar no backend:', e);
-      }
+  /** Troca um ID local pelo ID definitivo criado no backend. */
+  promoteConversationId(localId, remoteId) {
+    if (!localId || !remoteId || String(localId) === String(remoteId)) return remoteId;
+    const local = this.savedConversations.find((c) => String(c.id) === String(localId));
+    const remote = this.savedConversations.find((c) => String(c.id) === String(remoteId));
+    if (local && remote && local !== remote) {
+      remote.messages = local.messages?.length ? local.messages : remote.messages;
+      remote.title = local.title || remote.title;
+      remote.updatedAt = Math.max(local.updatedAt || 0, remote.updatedAt || 0);
+      this.savedConversations = this.savedConversations.filter((c) => c !== local);
+    } else if (local) {
+      local.id = remoteId;
     }
-    
-    this.savedConversations = this.savedConversations.filter((c) => c.id !== id);
+    this._persistToLocalStorage();
+    return remoteId;
+  },
+
+  deleteConversation(id) {
+    if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
+      LizAPI.deleteConversation(id).catch((e) => {
+        console.error('[LizData] Erro ao deletar no backend:', e);
+      });
+    }
+
+    this.savedConversations = this.savedConversations.filter((c) => String(c.id) !== String(id));
     this._persistToLocalStorage();
   },
 
-  async renameConversation(id, newTitle) {
+  renameConversation(id, newTitle) {
     if (!newTitle || !newTitle.trim()) return false;
     const finalTitle = newTitle.trim();
 
     if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
-      try {
-        await LizAPI.renameConversation(id, finalTitle);
-      } catch (e) {
+      LizAPI.renameConversation(id, finalTitle).catch((e) => {
         console.error('[LizData] Erro ao renomear no backend:', e);
-      }
+      });
     }
 
-    const conv = this.savedConversations.find((c) => c.id === id);
+    const conv = this.savedConversations.find((c) => String(c.id) === String(id));
     if (conv) {
       conv.title = finalTitle;
       conv.updatedAt = Date.now();
@@ -177,18 +193,16 @@ const LizData = {
     return false;
   },
 
-  async togglePinConversation(id) {
-    const conv = this.savedConversations.find((c) => c.id === id);
+  togglePinConversation(id) {
+    const conv = this.savedConversations.find((c) => String(c.id) === String(id));
     if (!conv) return false;
 
     const newPinned = !conv.pinned;
 
     if (this.isBackendOnline && typeof LizAPI !== 'undefined' && !String(id).startsWith('local_')) {
-      try {
-        await LizAPI.togglePinConversation(id, newPinned);
-      } catch (e) {
+      LizAPI.togglePinConversation(id, newPinned).catch((e) => {
         console.error('[LizData] Erro ao fixar no backend:', e);
-      }
+      });
     }
 
     conv.pinned = newPinned;
@@ -223,8 +237,10 @@ const LizData = {
         title: conv.title,
         pinned: !!conv.pinned,
         preview: conv.messages && conv.messages.length > 0
-          ? 'Última mensagem: ' + conv.messages[conv.messages.length - 1].content.slice(0, 50)
-          : 'Conversa vazia',
+          ? 'Última mensagem: ' + String(conv.messages[conv.messages.length - 1].content || '').slice(0, 50)
+          : conv.lastMessage && conv.lastMessage.content
+            ? 'Última mensagem: ' + String(conv.lastMessage.content).slice(0, 50)
+            : 'Conversa vazia',
       };
       if (date >= today) todayItems.push(item);
       else if (date >= yesterday) yesterdayItems.push(item);
@@ -264,7 +280,7 @@ const LizData = {
   /* ---------- Respostas Mockadas (fallback quando backend offline) ---------- */
   replies: {
     code: [
-      'Quando penso em código, não vejo só sintaxe — vejo intenção. Toda função conta uma história sobre o problema que resolve. Se a história é confusa, o código provavelmente também é. Vamos destrinchar isso juntos?',
+      'Quando penso em código, não vejo só sintaxe — vejo intenção. Toda função conta uma história sobre o problema que resolve. Se a história é confusa, o código provavelmente também é. Vamos destrinchar isso juntos?\n\n```js\nfunction exemplo() {\n  const objetivo = "clareza";\n  return objetivo;\n}\n```',
       'Código bom se lê como prosa clara: cada linha tem propósito, cada nome carrega significado. Se você precisa de comentário pra explicar o que a função faz, o nome da função está errado.'
     ],
     design: [

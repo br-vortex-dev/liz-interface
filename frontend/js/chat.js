@@ -54,6 +54,9 @@ const LizChat = {
     // 7. Executa animação de introdução
     this.runIntroAnimation();
 
+    // Sincroniza o histórico depois que o login foi confirmado.
+    this._syncHistoryOnBoot();
+
     // Verifica disponibilidade do backend (não bloqueia)
     LizAPI.checkBackend().then((online) => {
       if (online) {
@@ -85,6 +88,25 @@ const LizChat = {
       LizUI.updateSendState();
       this._autoResize(el.input);
     });
+    el.input.addEventListener('paste', (e) => {
+      const clipboard = e.clipboardData;
+      if (!clipboard) return;
+      const files = Array.from(clipboard.files || []);
+      if (!files.length && clipboard.items) {
+        Array.from(clipboard.items).forEach((item) => {
+          if (item.kind === 'file') {
+            const file = item.getAsFile();
+            if (file) files.push(file);
+          }
+        });
+      }
+      if (files.length) {
+        e.preventDefault();
+        this._handleFiles(files);
+        this.toast(files.length === 1 ? 'Arquivo colado e anexado' : files.length + ' arquivos colados e anexados');
+      }
+    });
+
     el.input.addEventListener('keydown', (e) => {
       const enterSends = localStorage.getItem('liz-enter-send') !== 'false';
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -176,7 +198,7 @@ const LizChat = {
     // Preview modal events
     // Delegated click para imagens nas mensagens
     el.messagesList.addEventListener('click', (e) => {
-      const previewBtn = e.target.closest('.file-image-preview');
+      const previewBtn = e.target.closest('.file-image-preview, .ai-image-preview');
       if (previewBtn) {
         const img = previewBtn.querySelector('img');
         if (img) {
@@ -588,8 +610,6 @@ const LizChat = {
       LizUI.renderMessages(this.messages);
       LizUI.addExportButton();
 
-      // Tenta criar a conversa no backend (guarda a promise pra evitar conversa duplicada)
-      this._backendCreatePromise = this._tryCreateBackendConversation(title);
     } else {
       LizUI.appendMessage(this.messages[this.messages.length - 1], this.messages.length - 1);
     }
@@ -599,8 +619,14 @@ const LizChat = {
     this._autoResize(el.input);
     LizUI.updateSendState();
 
-    // Salva progresso
+    // Salva progresso localmente e recebe um ID estável imediatamente.
     this._saveCurrentConversation();
+
+    // A criação remota começa depois que o ID local já existe, permitindo
+    // promovê-lo para o UUID definitivo sem duplicar a conversa.
+    if (wasEmpty) {
+      this._backendCreatePromise = this._tryCreateBackendConversation(this.currentTitle, this.currentConversationId);
+    }
 
     // Resposta simulada
     this._simulateReply(text);
@@ -694,16 +720,34 @@ const LizChat = {
   },
 
   /** Abre uma conversa salva a partir do painel (por id — título pode colidir). */
-  openConversationById(id) {
-    const savedConv = LizData.getConversationById(id);
+  async openConversationById(id) {
+    let savedConv = LizData.getConversationById(id);
     if (!savedConv) {
       this.toast('Conversa não encontrada');
       return;
     }
+
+    // A listagem remota traz somente a última mensagem. Busca o detalhe
+    // completo ao abrir uma conversa com UUID remoto.
+    if (!String(id).startsWith('local_') && LizData.isBackendOnline && typeof LizAPI !== 'undefined') {
+      try {
+        const remote = await LizAPI.getConversation(id);
+        const mapped = LizAPI.mapConversationToFrontend(remote);
+        const index = LizData.savedConversations.findIndex((c) => String(c.id) === String(id));
+        if (index >= 0) {
+          LizData.savedConversations[index] = mapped;
+          LizData._persistToLocalStorage();
+        }
+        savedConv = mapped;
+      } catch (e) {
+        console.warn('[LizChat] Não foi possível carregar a conversa completa:', e.message);
+      }
+    }
+
     // Cancela geração em andamento pra não contaminar a nova conversa
     if (this.isGenerating) this._stopRequested = true;
 
-    this.messages = savedConv.messages.map((m) => ({ ...m }));
+    this.messages = (savedConv.messages || []).map((m) => ({ ...m }));
     this.currentTitle = savedConv.title;
     this.currentConversationId = savedConv.id;
     this.messageReactions = {};
@@ -800,7 +844,7 @@ const LizChat = {
       try {
         if (this._backendCreatePromise) await this._backendCreatePromise;
         if (!this.backendConversationId) {
-          await this._tryCreateBackendConversation(this.currentTitle || 'Nova conversa');
+          await this._tryCreateBackendConversation(this.currentTitle || 'Nova conversa', this.currentConversationId);
         }
         if (this.backendConversationId) {
           await LizAPI.addMessage(this.backendConversationId, {
@@ -836,7 +880,7 @@ const LizChat = {
         reply = 'Arquivo recebido! Posso ler o conteúdo, resumir ou extrair informações. Me diga o que precisa.';
       }
 
-      const msg = { role: 'liz', content: reply, time: this._now() };
+      const msg = { role: 'liz', content: reply, demo: true, time: this._now() };
       this.messages.push(msg);
       LizUI.appendMessage(msg, this.messages.length - 1);
       this._saveCurrentConversation();
@@ -846,6 +890,7 @@ const LizChat = {
         LizAPI.addMessage(this.backendConversationId, {
           content: reply,
           role: 'assistant',
+          demo: true,
         }).catch(() => { /* conversa segue salva no cache local */ });
       }
     } finally {
@@ -953,9 +998,23 @@ const LizChat = {
           );
           LizUI.removeTyping();
           if (this._stopRequested) return; // parou durante a espera
-          if (response.conversationId) this.backendConversationId = response.conversationId;
+          if (response.conversationId) {
+            const previousId = this.currentConversationId;
+            this.backendConversationId = response.conversationId;
+            if (previousId && String(previousId).startsWith('local_')) {
+              LizData.promoteConversationId(previousId, response.conversationId);
+            }
+            this.currentConversationId = response.conversationId;
+          }
           const content = response.assistantMessage?.content || response.reply || 'Sem resposta.';
-          const msg = { role: 'liz', content, time: this._now() };
+          const msg = {
+            role: 'liz',
+            content,
+            demo: response.demo === true,
+            images: Array.isArray(response.assistantMessage?.images) ? response.assistantMessage.images : [],
+            webResults: Array.isArray(response.assistantMessage?.webResults) ? response.assistantMessage.webResults : [],
+            time: this._now(),
+          };
           if (insertAtIndex !== undefined) {
             this.messages.splice(insertAtIndex, 0, msg);
           } else {
@@ -1163,18 +1222,35 @@ const LizChat = {
   },
 
   /** Tenta criar a conversa no backend (não bloqueia a UI) */
-  async _tryCreateBackendConversation(title) {
+  async _tryCreateBackendConversation(title, localId) {
     try {
       const online = await LizAPI.checkBackend();
       if (online && !this.backendConversationId) {
         const res = await LizAPI.createConversation(title);
         if (res && res.id) {
           this.backendConversationId = res.id;
+          const previousId = localId || this.currentConversationId;
+          if (previousId && String(previousId).startsWith('local_')) {
+            LizData.promoteConversationId(previousId, res.id);
+          }
+          this.currentConversationId = res.id;
           console.log('%cLiz API → conversa criada no backend: ' + res.id, 'color:#4ade80');
         }
       }
     } catch (e) {
       console.warn('Não foi possível criar conversa no backend:', e.message);
+    }
+  },
+
+  /** Aguarda o login e sincroniza o histórico remoto sem travar a interface. */
+  async _syncHistoryOnBoot() {
+    try {
+      const authPromise = typeof window !== 'undefined' ? window.lizAuthReadyPromise : null;
+      const authenticated = authPromise ? await authPromise : true;
+      if (authenticated === false) return;
+      await LizData.syncWithBackend();
+    } catch (e) {
+      console.warn('[LizChat] Sincronização inicial indisponível:', e.message);
     }
   },
 

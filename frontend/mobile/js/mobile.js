@@ -6,6 +6,8 @@ const $$=s=>document.querySelectorAll(s);
 App.init=function(){
   LizData.loadSavedConversations();LizData.loadUploadedFiles();
   this._brand();this._theme();this._toggle();this._tabs();this._chat();
+  const authPromise=window.lizAuthReadyPromise;
+  (authPromise||Promise.resolve(true)).then(ok=>{if(ok!==false)this._syncHistoryOnBoot();});
   const s=localStorage.getItem('liz-chat-theme')||'dark';
   document.documentElement.setAttribute('data-theme',s);
   const m=document.querySelector('meta[name="theme-color"]');
@@ -152,7 +154,28 @@ App._chat=function(){
   const empty=$('#empty');const list=$('#ml');const content=$('#chatContent');
 
   form.addEventListener('submit',e=>{e.preventDefault();this._send();});
+  list.addEventListener('click',e=>{
+    const preview=e.target.closest('.ai-image-preview, .md-image');
+    if(!preview)return;
+    const img=preview.matches('img')?preview:preview.querySelector('img');
+    if(img&&img.getAttribute('src'))this._previewImg(img.src,preview.dataset.fileName||img.alt||'Imagem');
+  });
   input.addEventListener('input',()=>{this._updateSendBtn();});
+  input.addEventListener('paste',e=>{
+    const clipboard=e.clipboardData;
+    if(!clipboard)return;
+    const files=Array.from(clipboard.files||[]);
+    if(!files.length&&clipboard.items){
+      Array.from(clipboard.items).forEach(item=>{
+        if(item.kind==='file'){const file=item.getAsFile();if(file)files.push(file);}
+      });
+    }
+    if(files.length){
+      e.preventDefault();
+      this._attachFiles(files);
+      this._toast(files.length===1?'Arquivo colado e anexado':files.length+' arquivos colados e anexados');
+    }
+  });
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this._send();}});
 
   // Anexar arquivo — abre o seletor e processa via _attachFiles
@@ -187,7 +210,7 @@ App._chat=function(){
     else if(/(design|ui|visual|cor|css|estilo)/.test(l))r=LizData.replies.design[0];
     else if(/(erro|error|bug|falha)/.test(l))r=LizData.replies.error[0];
     else if(/(ideia|ideias|brainstorm|nome|sugest)/.test(l))r=LizData.replies.ideas[0];
-    const m={role:'liz',content:r,time:this._now()};
+    const m={role:'liz',content:r,demo:true,time:this._now()};
     this.msgs.push(m);this._append(m);this._save();
   };
 
@@ -195,27 +218,65 @@ App._chat=function(){
   this._append=function(m){const d=document.createElement('div');d.innerHTML=this._html(m,this.msgs.length-1);list.appendChild(d.firstElementChild);this._scroll();};
   this._html=function(m,idx){
     const t=m.time?'<p class="msg-time">'+m.time+'</p>':'';const di=idx!==undefined?' data-i="'+idx+'"':'';
-    if(m.file){return'<div class="msg msg-user"'+di+'><div class="msg-bubble msg-bubble-user">'+(m.file.type?.startsWith('image/')?'<img src="'+m.file.dataUrl+'" style="max-width:200px;border-radius:8px;display:block" loading="lazy">':'<span style="opacity:0.5;display:flex;gap:6px">'+LizConfig.icons.file+this._e(m.file.name)+'</span>')+'</div>'+t+'</div>';}
+    if(m.file){const fileSrc=m.file.dataUrl||'';return'<div class="msg msg-user"'+di+'><div class="msg-bubble msg-bubble-user">'+(m.file.type?.startsWith('image/')?'<img src="'+this._e(fileSrc)+'" alt="'+this._e(m.file.name||'Imagem')+'" style="max-width:200px;border-radius:8px;display:block" loading="lazy">':'<span style="opacity:0.5;display:flex;gap:6px">'+LizConfig.icons.file+this._e(m.file.name)+'</span>')+'</div>'+t+'</div>';}
     if(m.role==='user'){return'<div class="msg msg-user"'+di+'><div class="msg-bubble msg-bubble-user"><div>'+this._e(m.content)+'</div></div>'+t+'</div>';}
-    return'<div class="msg msg-liz"'+di+'><div class="msg-avatar">'+LizConfig.crown+'</div><div><div class="msg-bubble msg-bubble-liz"><span class="msg-name">Liz</span><div>'+this._md(m.content)+'</div></div>'+t+'</div></div>';
+    const demo=m.demo===true?'<span class="msg-demo-badge">Modo demonstração</span>':'';
+    const images=this._aiImagesHTML(m.images);
+    const webResults=this._webResultsHTML(m.webResults);
+    return'<div class="msg msg-liz"'+di+'><div class="msg-avatar">'+LizConfig.crown+'</div><div><div class="msg-bubble msg-bubble-liz"><span class="msg-name">Liz</span>'+demo+'<div>'+this._md(m.content)+'</div>'+images+webResults+'</div>'+t+'</div></div>';
   };
-  this._md=function(t){let h=this._e(t);h=h.replace(/```(\w+)?\n?([\s\S]*?)```/g,'<pre style="margin:6px 0;padding:8px 10px;background:rgba(0,0,0,0.3);border-radius:8px;font-size:0.78rem;overflow-x:auto"><code>$2</code></pre>');h=h.replace(/`([^`\n]+)`/g,'<code style="background:rgba(139,92,246,0.1);padding:1px 5px;border-radius:4px;font-size:0.85em">$1</code>');h=h.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');return h.replace(/\n/g,'<br>');};
+  this._md=function(t){
+    const tokens=[];const token=h=>{const mark='\\u0000LIZ_MOBILE_'+tokens.length+'\\u0000';tokens.push(h);return mark;};
+    let s=String(t||'');
+    s=s.replace(/```(\w+)?\n?([\s\S]*?)```/g,(_,lang,code)=>token('<pre style="margin:6px 0;padding:8px 10px;background:rgba(0,0,0,0.3);border-radius:8px;font-size:0.78rem;overflow-x:auto"><code>'+this._e(code)+'</code></pre>'));
+    s=s.replace(/!\[([^\]]{0,160})\]\((https:\/\/[^\s)]+|data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+)\)/gi,(match,alt,src)=>{
+      const safe=this._safeImageUrl(src);return safe?token('<img class="md-image" src="'+this._e(safe)+'" alt="'+this._e(alt||'Imagem')+'" loading="lazy">'):match;
+    });
+    let h=this._e(s);h=h.replace(/`([^`\n]+)`/g,'<code style="background:rgba(139,92,246,0.1);padding:1px 5px;border-radius:4px;font-size:0.85em">$1</code>');h=h.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');h=h.replace(/\n/g,'<br>');tokens.forEach((value,i)=>{h=h.replace('\\u0000LIZ_MOBILE_'+i+'\\u0000',value);});return h;
+  };
   this._e=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
   this._now=function(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
   this._scroll=function(){requestAnimationFrame(()=>{if(content)content.scrollTop=content.scrollHeight;});};
   this._save=function(){if(!this.msgs.length)return;this.title=this.title||'Nova conversa';this.convId=LizData.saveConversation(this.title,this.msgs,this.convId);};
   this._send=function(){if(this.isGenerating){this._stopReply();return;}const t=input.value.trim();if(t)this._sendMsg(t);};
 
-  /* ---- Lock de geração + parar resposta ---- */
+  /* ---- Resposta compartilhada com o desktop ---- */
   this._beginReply=function(t){
-    this.isGenerating=true;this._updateSendBtn();this._showTyping();
-    this._replyTimer=setTimeout(()=>{
-      this._replyTimer=null;this._removeTyping();
-      this._reply(t);
-      this.isGenerating=false;this._updateSendBtn();
-    },600+Math.random()*400);
+    this.isGenerating=true;this._stopRequested=false;this._updateSendBtn();this._showTyping();
+    this._replyPromise=(async()=>{
+      let online=false;
+      try{
+        online=await LizAPI.checkBackend();
+        LizData.isBackendOnline=online;
+        if(online){
+          const response=await LizAPI.sendMessage(this.backendConversationId||null,t,null,localStorage.getItem('liz-model')||'liz-3');
+          if(this._stopRequested)return;
+          const remoteId=response&&response.conversationId;
+          if(remoteId){
+            if(this.convId&&String(this.convId).startsWith('local_'))LizData.promoteConversationId(this.convId,remoteId);
+            this.convId=remoteId;this.backendConversationId=remoteId;
+          }
+          const contentText=response?.assistantMessage?.content||response?.reply||'Sem resposta.';
+          const m={role:'liz',content:contentText,demo:response?.demo===true,images:Array.isArray(response?.assistantMessage?.images)?response.assistantMessage.images:[],webResults:Array.isArray(response?.assistantMessage?.webResults)?response.assistantMessage.webResults:[],time:this._now()};
+          this.msgs.push(m);this._append(m);this._save();
+          this._hydrateRemoteFiles();
+          return;
+        }
+      }catch(e){
+        if(this._stopRequested)return;
+        this._removeTyping();
+        const m={role:'liz',content:'Não consegui falar com a IA agora. Tente novamente em alguns instantes.',time:this._now()};
+        this.msgs.push(m);this._append(m);this._save();
+        return;
+      }
+      if(!this._stopRequested){
+        await new Promise(resolve=>setTimeout(resolve,400));
+        if(!this._stopRequested)this._reply(t);
+      }
+    })().finally(()=>{this._removeTyping();this.isGenerating=false;this._updateSendBtn();});
   };
   this._stopReply=function(){
+    this._stopRequested=true;
     if(this._replyTimer){clearTimeout(this._replyTimer);this._replyTimer=null;}
     this._removeTyping();this.isGenerating=false;this._updateSendBtn();
   };
@@ -240,6 +301,68 @@ App._chat=function(){
     list.appendChild(d);this._scroll();
   };
   this._removeTyping=function(){const t=document.getElementById('typingMsg');if(t)t.remove();};
+};
+
+App._safeImageUrl=function(value){
+  const raw=String(value||'').trim();
+  if(/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(raw))return raw;
+  try{const u=new URL(raw);return u.protocol==='https:'?u.toString():'';}catch(e){return '';}
+};
+
+App._aiImagesHTML=function(images){
+  if(!Array.isArray(images))return '';
+  return images.map(image=>{
+    const src=this._safeImageUrl(image.url||image.src);
+    const uploadId=typeof image.uploadId==='string'?image.uploadId:'';
+    if(!src&&!uploadId)return '';
+    const alt=this._e(image.alt||image.title||'Imagem da Liz');
+    const title=this._e(image.title||'Imagem');
+    const source=this._e(image.source||'Fonte');
+    const creator=image.creator?' · '+this._e(image.creator):'';
+    const license=image.license?' · '+this._e(image.license):'';
+    const sourceUrl=this._safeImageUrl(image.sourceUrl);
+    const link=sourceUrl?'<a class="ai-image-source-link" href="'+this._e(sourceUrl)+'" target="_blank" rel="noopener noreferrer">Abrir fonte</a>':'';
+    return'<figure class="ai-image-card"'+(uploadId?' data-upload-id="'+this._e(uploadId)+'"':'')+'><div class="ai-image-preview" data-file-name="'+alt+'"><img src="'+this._e(src)+'" alt="'+alt+'" loading="lazy"><span class="ai-image-expand">⌕</span></div><figcaption><span class="ai-image-title">'+title+'</span><span class="ai-image-meta">'+source+creator+license+'</span>'+link+'</figcaption></figure>';
+  }).join('');
+};
+
+App._webResultsHTML=function(results){
+  if(!Array.isArray(results))return '';
+  const cards=results.map(item=>{
+    const url=this._safeLinkUrl(item.url);if(!url)return '';
+    const title=this._e(item.title||'Resultado da busca');
+    const description=this._e(item.description||'');
+    const source=this._e(item.source||'Fonte consultada');
+    const age=item.age?' · '+this._e(item.age):'';
+    return'<a class="web-result-card" href="'+this._e(url)+'" target="_blank" rel="noopener noreferrer"><span class="web-result-title">'+title+'</span><span class="web-result-description">'+description+'</span><span class="web-result-source">'+source+age+'</span></a>';
+  }).join('');
+  return cards?'<section class="web-results" aria-label="Fontes consultadas"><div class="web-results-heading">Fontes consultadas</div><div class="web-results-list">'+cards+'</div></section>':'';
+};
+
+App._safeLinkUrl=function(value){
+  try{const u=new URL(String(value||'').trim());return u.protocol==='https:'?u.toString():'';}catch(e){return '';}
+};
+
+/* ---- Histórico remoto compartilhado com o desktop ---- */
+App._syncHistoryOnBoot=async function(){
+  try{
+    const ok=await LizData.syncWithBackend();
+    if(!ok)return;
+    // A lista inicial serve para o histórico; o detalhe completo é buscado
+    // quando o usuário abre uma conversa remota.
+  }catch(e){console.warn('[Liz Mobile] Sincronização inicial indisponível:',e.message);}
+};
+
+App._ensureRemoteConversation=async function(title){
+  if(this.backendConversationId)return this.backendConversationId;
+  if(this._remoteConversationPromise)return this._remoteConversationPromise;
+  this._remoteConversationPromise=LizAPI.createConversation(title||this.title||'Nova conversa').then(res=>{
+    if(!res?.id)throw new Error('Servidor não devolveu o ID da conversa');
+    if(this.convId&&String(this.convId).startsWith('local_'))LizData.promoteConversationId(this.convId,res.id);
+    this.convId=res.id;this.backendConversationId=res.id;
+    return res.id;
+  }).finally(()=>{this._remoteConversationPromise=null;});
+  return this._remoteConversationPromise;
 };
 
 /* ---- Feedback tátil ---- */
@@ -283,7 +406,7 @@ App._attachFiles=function(files){
   [...files].forEach((file)=>{
     if(file.size>10*1024*1024){this._toast('Arquivo muito grande (máx. 10 MB)');return;}
     const r=new FileReader();
-    r.onload=(e)=>{
+    r.onload=async(e)=>{
       const dataUrl=e.target.result;
       const wasEmpty=!this.msgs.length;
       const msg={role:'user',content:'',file:{name:file.name,size:file.size,type:file.type,dataUrl},time:this._now()};
@@ -297,17 +420,37 @@ App._attachFiles=function(files){
       }else{
         this._append(msg);
       }
-      LizData.saveUploadedFile({name:file.name,size:file.size,type:file.type,dataUrl,convTitle:this.title||'Arquivos'});
+
+      let upload=null;
+      try{
+        if(await LizAPI.checkBackend()){
+          LizData.isBackendOnline=true;
+          const conversationId=await this._ensureRemoteConversation(this.title);
+          upload=await LizAPI.uploadFile(file,conversationId);
+          if(upload?.id){
+            msg.file.uploadId=upload.id;msg.file.url=upload.url;
+            await LizAPI.addMessage(conversationId,{content:'',role:'user',file:{uploadId:upload.id,name:file.name,size:file.size,type:file.type}});
+          }
+        }
+      }catch(err){
+        console.warn('[Liz Mobile] Upload remoto falhou; usando cópia local:',err.message);
+      }
+
+      LizData.saveUploadedFile({name:file.name,size:file.size,type:file.type,dataUrl:upload?undefined:dataUrl,uploadId:upload?.id,url:upload?.url,convTitle:this.title||'Arquivos'});
       this._save();
-      // Resposta da Liz sobre o arquivo recebido
-      setTimeout(()=>{
+      // Ainda não existe análise de imagem/arquivo neste fluxo, então o
+      // aviso é persistido como resposta demonstrativa nos dois clientes.
+      this._replyTimer=setTimeout(async()=>{
         const isImage=file.type&&file.type.startsWith('image/');
         const reply={role:'liz',content:isImage
           ?'Recebi sua imagem! Posso analisá-la ou ajudar com edições. O que você quer fazer?'
-          :'Arquivo recebido! Posso ler o conteúdo, resumir ou extrair informações. Me diga o que precisa.',time:this._now()};
+          :'Arquivo recebido! Posso ler o conteúdo, resumir ou extrair informações. Me diga o que precisa.',demo:true,time:this._now()};
         this.msgs.push(reply);
         this._append(reply);
         this._save();
+        if(this.backendConversationId){
+          LizAPI.addMessage(this.backendConversationId,{content:reply.content,role:'assistant',demo:true}).catch(()=>{});
+        }
       },600+Math.random()*400);
     };
     r.readAsDataURL(file);
@@ -389,7 +532,8 @@ App._settings=function(){
     '<button class="si" data-s="history"><span>'+LizConfig.icons.folder+'</span><span>Histórico</span><span>'+LizConfig.icons.continue+'</span></button>'+
     '<button class="si" data-s="shortcuts"><span>'+LizConfig.icons.code+'</span><span>Atalhos</span><span>'+LizConfig.icons.continue+'</span></button>'+
     '<button class="si" data-s="memory"><span>'+LizConfig.icons.filesMenu+'</span><span>Memória</span><span>'+LizConfig.icons.continue+'</span></button>'+
-    '<button class="si" data-s="about"><span>'+LizConfig.icons.code+'</span><span>Sobre</span></button></div>';
+    '<button class="si" data-s="about"><span>'+LizConfig.icons.code+'</span><span>Sobre</span></button>'+
+    '<button class="si" data-s="desktop"><span>'+LizConfig.icons.continue+'</span><span>Usar versão desktop</span><span>'+LizConfig.icons.continue+'</span></button></div>';
 
   p.querySelectorAll('.si[data-s]').forEach(btn=>{
     btn.addEventListener('click',()=>{
@@ -400,6 +544,7 @@ App._settings=function(){
       else if(s==='history')this._set('Histórico','<div style="font-size:0.85rem;color:var(--text-sec)">'+LizData.savedConversations.length+' conversas salvas</div><div style="font-size:0.85rem;color:var(--text-sec);margin-top:6px">Arquivos: '+LizData.uploadedFiles.length+'</div>');
       else if(s==='shortcuts')this._set('Atalhos','<div style="font-size:0.85rem;color:var(--text-sec)"><kbd style="background:rgba(139,92,246,0.1);padding:2px 6px;border-radius:4px;font-size:0.8rem">Enter</kbd> Enviar<br><kbd style="background:rgba(139,92,246,0.1);padding:2px 6px;border-radius:4px;font-size:0.8rem">Shift+Enter</kbd> Nova linha<br><kbd style="background:rgba(139,92,246,0.1);padding:2px 6px;border-radius:4px;font-size:0.8rem">Esc</kbd> Fechar<br></div>');
       else if(s==='memory')this._set('Memória','<div style="font-size:0.85rem;color:var(--text-sec)">Cache do navegador</div>');
+      else if(s==='desktop')window.location.href='../?view=desktop';
       else this._toast('Liz Mobile — Liz Ai Studios');
     });
   });
@@ -436,7 +581,7 @@ App._showConvs=function(){
     if(!modal)return;
     // Delegação: abrir, fixar, renomear, excluir
     modal.querySelectorAll('.conv-card').forEach(card=>{
-      card.addEventListener('click',(e)=>{
+      card.addEventListener('click',async(e)=>{
         const actBtn=e.target.closest('.cv-act');
         const id=card.dataset.id;
         if(actBtn){
@@ -457,21 +602,48 @@ App._showConvs=function(){
           }
           return;
         }
-        // Clique normal → abre conversa
-        const s=LizData.getConversationById(id);
-        if(s&&s.messages.length){
+        // Clique normal → abre a conversa completa
+        let s=LizData.getConversationById(id);
+        if(!s)return;
+        if(!String(id).startsWith('local_')&&LizData.isBackendOnline){
+          try{
+            const remote=await LizAPI.getConversation(id);
+            s=LizAPI.mapConversationToFrontend(remote);
+            const index=LizData.savedConversations.findIndex(c=>String(c.id)===String(id));
+            if(index>=0){LizData.savedConversations[index]=s;LizData._persistToLocalStorage();}
+          }catch(err){console.warn('[Liz Mobile] Não foi possível carregar a conversa completa:',err.message);}
+        }
+        if(s.messages&&s.messages.length){
           this.msgs=s.messages.map(m=>({...m}));
           this.title=s.title;
           this.convId=s.id;
+          this.backendConversationId=String(s.id).startsWith('local_')?null:s.id;
           this._closeModal();
           $('#pChat .empty').classList.add('is-hidden');
           $('#pChat .msg-list').classList.remove('is-hidden');
           this._render();
           $('#hSub').textContent=s.title;
+          this._hydrateRemoteFiles();
         }
       });
     });
   },100);
+};
+
+App._hydrateRemoteFiles=async function(){
+  const pendingFiles=this.msgs.filter(m=>m.file?.uploadId&&!m.file.dataUrl);
+  const pendingImages=[];
+  this.msgs.forEach(m=>(m.images||[]).forEach(image=>{if(image.uploadId&&!image.url)pendingImages.push(image);}));
+  if(!pendingFiles.length&&!pendingImages.length)return;
+  await Promise.all([
+    ...pendingFiles.map(async m=>{
+      try{m.file.dataUrl=await LizAPI.getUploadDataUrl(m.file.uploadId);}catch(e){console.warn('[Liz Mobile] Anexo não carregado:',e.message);}
+    }),
+    ...pendingImages.map(async image=>{
+      try{image.url=await LizAPI.getUploadDataUrl(image.uploadId);}catch(e){console.warn('[Liz Mobile] Imagem da IA não carregada:',e.message);}
+    }),
+  ]);
+  this._render();
 };
 
 App._goChat=function(){
@@ -490,7 +662,7 @@ App._goChat=function(){
 App._newChat=function(){
   if(this.isGenerating)this._stopReply();
   if(this.msgs.length>0)this._save();
-  this.msgs=[];this.title=null;this.convId=null;
+  this.msgs=[];this.title=null;this.convId=null;this.backendConversationId=null;this._remoteConversationPromise=null;this._stopRequested=false;
   $('#ci').value='';$('#sb').disabled=true;
   $('#pChat .empty').classList.remove('is-hidden');$('#pChat .msg-list').classList.add('is-hidden');$('#pChat .msg-list').innerHTML='';
   $('#hSub').textContent='';

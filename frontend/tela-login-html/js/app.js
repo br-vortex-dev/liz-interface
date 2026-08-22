@@ -366,8 +366,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // URL do app principal: localmente o login vive em /tela-login-html/ e o app
   // na raiz; na nuvem o login fica na raiz e o app em /chat/.
+  function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 1 && window.innerWidth < 700)
+  }
+
   function appUrl() {
-    return location.pathname.includes('tela-login-html') ? '../index.html' : 'chat/'
+    const local = location.pathname.includes('tela-login-html')
+    if (local) return isMobileDevice() ? '../mobile/index.html' : '../index.html'
+    return isMobileDevice() ? 'chat/mobile/' : 'chat/'
   }
 
   // Overlay de sucesso de login → "Continuar" leva ao app principal
